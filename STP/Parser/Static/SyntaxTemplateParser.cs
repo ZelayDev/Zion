@@ -69,7 +69,14 @@
 
                     if (Reader.Read(ref ReaderSource, out Token Token) && Token is not null)
                     {
-                        ArgumentNullException.ThrowIfNull(ReaderSource);
+                        if (ReaderSource is null)
+                        {
+                            throw new NullReferenceException("After reading the Source token, it cannot be null");
+                        }
+                        if (Token.Length <= 0)
+                        {
+                            throw new ParsingException($"Token.Length(={Token.Length}) can not by negative or zero");
+                        }
 
                         TokenReaded = true;
                         ErrorCollector.AddIfInvalid(Tokens.Count);
@@ -117,13 +124,13 @@
             {
                 SemanticContext Context = new SemanticContext
                 (
-                    new TokenSlice(Tokens.Tokens, Start, Node.TokensCount),
+                    new TokenSlice(Tokens.Tokens, Start, Node.TokenCount),
                     Start,
                     Semantic,
                     ErrorCollector
                 );
 
-                Start += Node.TokensCount;
+                Start += Node.TokenCount;
 
                 Node.Verificate(Context);
             }

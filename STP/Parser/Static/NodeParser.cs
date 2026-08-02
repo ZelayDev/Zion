@@ -44,9 +44,9 @@
                     {
                         SemanticTree.AddIfNotNull(Node.GetSymbol());
 
-                        Node.ApplyFormat(new TokenSlice(Slice, 0, Node.TokensCount));
+                        Node.ApplyFormat(new TokenSlice(Slice, 0, Node.TokenCount));
 
-                        Start += Node.TokensCount;
+                        Start += Node.TokenCount;
                         NodeReaded = true;
                         Nodes.Add(Node);
                         break;
@@ -59,11 +59,11 @@
 
                     Node ErrorNode = ErrorHandler.Handle(Slice);
 
-                    ErrorNode.ApplyFormat(new TokenSlice(Slice, 0, ErrorNode.TokensCount));
+                    ErrorNode.ApplyFormat(new TokenSlice(Slice, 0, ErrorNode.TokenCount));
 
                     ErrorCount++;
 
-                    Start += ErrorNode.TokensCount;
+                    Start += ErrorNode.TokenCount;
                     Nodes.Add(ErrorNode);
                 }
             }
