@@ -8,17 +8,14 @@
 
   <ItemGroup>
     <Compile Remove="MathExpressions\**" />
-    <Compile Remove="Serialization\BinarySerialization\ADF\IO\Writing\ObjectWriter\**" />
+    <Compile Remove="Serialization\BinarySerialization\ADF\**" />
     <Compile Remove="Serialization\BinarySerialization\NSD\**" />
-    <Compile Remove="Types\Collections\Hierarchical\Trie\**" />
     <EmbeddedResource Remove="MathExpressions\**" />
-    <EmbeddedResource Remove="Serialization\BinarySerialization\ADF\IO\Writing\ObjectWriter\**" />
+    <EmbeddedResource Remove="Serialization\BinarySerialization\ADF\**" />
     <EmbeddedResource Remove="Serialization\BinarySerialization\NSD\**" />
-    <EmbeddedResource Remove="Types\Collections\Hierarchical\Trie\**" />
     <None Remove="MathExpressions\**" />
-    <None Remove="Serialization\BinarySerialization\ADF\IO\Writing\ObjectWriter\**" />
+    <None Remove="Serialization\BinarySerialization\ADF\**" />
     <None Remove="Serialization\BinarySerialization\NSD\**" />
-    <None Remove="Types\Collections\Hierarchical\Trie\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -29,11 +26,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="Serialization\BinarySerialization\ADF\IO\Reading\Context\" />
-    <Folder Include="Serialization\BinarySerialization\ADF\IO\Writing\Strategies\Management\" />
-    <Folder Include="Serialization\BinarySerialization\ADF\IO\Writing\Helpers\" />
-    <Folder Include="Serialization\BinarySerialization\ADF\Registries\Containers\Containers\" />
-    <Folder Include="Serialization\BinarySerialization\ADF\Registries\Registries\TypeAssociation\" />
     <Folder Include="Serialization\BinarySerialization\Serializers\Object\" />
     <Folder Include="STP\Parser\Static\" />
     <Folder Include="STP\Parser\Dynamic\" />

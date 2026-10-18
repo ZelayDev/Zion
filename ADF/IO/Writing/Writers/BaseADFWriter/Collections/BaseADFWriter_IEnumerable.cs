@@ -456,7 +456,7 @@ namespace Zion.ADF
 
         public void Write<T>(string Name, IEnumerator<T> Enumerator)
         {
-            //TODO: Write IEnumerator<T>
+            //TODO: Write IEnumerator<Node>
         }
 
 

@@ -19,8 +19,8 @@ namespace Zion.ADF
         {
             References      = new();
             StringRegistry  = new();
-            TypeAssociation = new();
             FormatRegistry  = new();
+            TypeAssociation = new(StringRegistry);
             DataRegistry    = new(StringRegistry);
             Registries      = new()
             {

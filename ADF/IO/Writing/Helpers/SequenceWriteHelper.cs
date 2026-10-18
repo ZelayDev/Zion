@@ -184,7 +184,7 @@ namespace Zion.ADF
 
             var Stream = GetSubStream(Context, Target, Span.Length, Span.Length * 5);
 
-            //TODO: SequenceWriteHelper.Write<T>
+            //TODO: SequenceWriteHelper.Write<Node>
 
             Target.Add(Stream);
         }
