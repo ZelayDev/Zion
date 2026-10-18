@@ -29,20 +29,29 @@
 
         private IEnumerable<uint> GetTypePath(Type Type)
         {
-            //TODO: Check Null
-            foreach (var Id in Split(Type.Assembly.GetName().Name!))
+            yield return StringRegistry.GetOrAdd
+            (
+                Type.Assembly?.GetName()?.Name
+            );
+
+            foreach (var Id in Split(Type.Namespace))
             {
                 yield return Id;
             }
-            foreach (var Id in Split(Type.FullName!))
-            {
-                yield return Id;
-            }
+
+            yield return StringRegistry.GetOrAdd(Type.Name);
         }
 
-        private IEnumerable<uint> Split(string Path)
+        private IEnumerable<uint> Split(string? Path)
         {
-            return Path.Split('.').Select(StringRegistry.GetOrAdd);
+            return Path is null
+                ? GetNullPath()
+                : Path.Split('.').Select(StringRegistry.GetOrAdd);
+        }
+
+        private static IEnumerable<uint> GetNullPath()
+        {
+            yield return StringIdRegistry.Null;
         }
     }
 }
