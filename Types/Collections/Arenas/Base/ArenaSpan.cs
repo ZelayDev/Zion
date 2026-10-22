@@ -8,6 +8,10 @@
 
         public ArenaSpan(Arena<T> Source, int Start, int Length)
         {
+            ArgumentOutOfRangeException.ThrowIfNegative(Start);
+            ArgumentOutOfRangeException.ThrowIfNegative(Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Length, Source.Capacity);
+            
             this.Source = Source.NotNull();
             this.Start  = Start;
             this.Length = Length;

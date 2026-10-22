@@ -21,7 +21,7 @@
 
         public void Write(ADFObjectWriter Writer)
         {
-            Writer.WriteStrings(NewItems);
+            Writer.WriteStrings("NewItems", NewItems);
             NewItems.Clear();
         }
 

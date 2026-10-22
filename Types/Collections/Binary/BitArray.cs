@@ -81,7 +81,7 @@ namespace Zion
         #endregion
 
         #region StaticMethods
-        public static BitArray Resize(BitArray Source, int NewLength)
+        public static BitArray Resize(BitArray? Source, int NewLength)
         {
             if (Source is null)
             {

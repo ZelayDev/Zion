@@ -572,9 +572,9 @@ namespace Zion
             }
         }
 
-        public void TrimExcess(int Size)
+        public new void TrimExcess(int Size)
         {
-            //TODO: ArenaStraem.TrimExcess
+            base.TrimExcess(Size);
         }
 
         public void TrimExcess()

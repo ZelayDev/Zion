@@ -3,6 +3,25 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
+#JetBrains rider
+.idea/
+*.sln.iml
+*.iml
+_ReSharper*/
+*.ReSharper
+
+*.DotSettings.user
+
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+.vs/
+
+# Build results
+[Bb]in/
+[Oo]bj/
+
 # User-specific files
 *.rsuser
 *.suo

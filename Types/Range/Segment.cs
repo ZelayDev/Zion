@@ -1,4 +1,5 @@
 ﻿using System.Collections;
+using System.Runtime.InteropServices.Marshalling;
 using Zion.Serialization;
 
 namespace Zion
@@ -46,6 +47,12 @@ namespace Zion
             return Object is Segment Segment && this == Segment;
         }
 
+
+        public void Out(out int Start, out int Count)
+        {
+            Start = this.Start;
+            Count = this.Count;
+        }
 
         public bool IsWithin(ICollection Collection)
         {

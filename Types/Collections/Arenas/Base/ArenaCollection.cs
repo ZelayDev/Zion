@@ -1,5 +1,4 @@
 ﻿using System.Collections;
-using System.Diagnostics.CodeAnalysis;
 
 namespace Zion
 {
@@ -8,42 +7,39 @@ namespace Zion
         #region Data
         private readonly ReaderWriterLockSlim Lock = new(LockRecursionPolicy.SupportsRecursion);
 
+        private Arena<T>? _Source;
+
         internal Arena<T> Source
         {
-            get => field is not null
-                ? field
-                : throw new ObjectDisposedException(GetType().Name);
-            private set;
+            get => _Source ?? throw new ObjectDisposedException(GetType().Name);
+            private set => _Source = value;
         }
 
         internal int Start;
         internal int Length;
 
-        private int Version;
-
+        private volatile int Version;
         #endregion
 
         #region Properties
-        public bool IsDisposed => Source is null;
-
+        public bool IsDisposed => _Source is null;
         #endregion
 
         #region Constructors
-        public ArenaCollection(ArenaSpan<T> Span)
+        protected ArenaCollection(ArenaSpan<T> Span)
         {
             Source = Span.Source;
-            Start  = Span.Start;
+            Start = Span.Start;
             Length = Span.Length;
         }
-
         #endregion
-
+        
         #region Indexers
-        public T this[int Index]
+        protected T this[int Index]
         {
             get
             {
-                ThrowIfWithout(Index);
+                ArgumentOutOfRangeException.ThrowIfWithout(Index, Length);
                 Lock.EnterReadLock();
                 try
                 {
@@ -56,11 +52,11 @@ namespace Zion
             }
             set
             {
-                ThrowIfWithout(Index);
+                ArgumentOutOfRangeException.ThrowIfWithout(Index, Length);
                 Lock.EnterReadLock();
-                Modify();
                 try
                 {
+                    Modify();
                     Source[Start + Index] = value;
                 }
                 finally
@@ -70,38 +66,10 @@ namespace Zion
             }
         }
 
-        public T this[Index Index]
+        protected T this[Index Index]
         {
-            get
-            {
-                return this[Index.GetOffset(Length)];
-            }
-            set
-            {
-                this[Index.GetOffset(Length)] = value;
-            }
-        }
-
-        #endregion
-
-        #region Operators
-        public static bool operator ==(ArenaCollection<T> A, ArenaCollection<T> B)
-        {
-            if (A.IsDisposed == B.IsDisposed)
-            {
-                return true;
-            }
-            else if (A.IsDisposed || B.IsDisposed)
-            {
-                return false;
-            }
-
-            return ReferenceEquals(A.Source, B.Source) && A.Start == B.Start && A.Length == B.Length;
-        }
-
-        public static bool operator !=(ArenaCollection<T> A, ArenaCollection<T> B)
-        {
-            return !(A == B);
+            get => this[Index.GetOffset(Length)];
+            set => this[Index.GetOffset(Length)] = value ?? throw new ArgumentNullException(nameof(value));
         }
 
         #endregion
@@ -113,44 +81,29 @@ namespace Zion
                 ? "[Disposed]"
                 : StringFormatter.ToString(this);
         }
-
-        public override bool Equals([NotNullWhen(true)] object? Object)
-        {
-            return Object is ArenaCollection<T> Collection && this == Collection;
-        }
-
-        public override int GetHashCode()
-        {
-            return HashCode.Combine(Source, Start, Length);
-        }
-
         #endregion
 
         #region AbstractMethods
         protected abstract IEnumerator<int> GetIndexEnumerator();
 
         protected abstract int GetSpanLimit();
-
         #endregion
 
         #region PublicMethods
-
         public bool IsFrom(Arena<T> Arena)
         {
-            return IsFrom(Arena);
+            return ReferenceEquals(_Source, Arena);
         }
-
         #endregion
 
         #region ProtectedMethods
         protected void UseSpan(Action<Span<T>> Action)
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan();
-                Action.Invoke(Span);
+                Modify();
+                Action.Invoke(AsSpan());
             }
             finally
             {
@@ -166,11 +119,10 @@ namespace Zion
         protected void UseSpan(int Start, int Count, Action<Span<T>> Action)
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan(Start, Count);
-                Action.Invoke(Span);
+                Modify();
+                Action.Invoke(AsSpan(Start, Count));
             }
             finally
             {
@@ -182,11 +134,10 @@ namespace Zion
         protected void UseSpan<I>(I Other, Action<Span<T>, I> Action) where I : allows ref struct
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan();
-                Action.Invoke(Span, Other);
+                Modify();
+                Action.Invoke(AsSpan(), Other);
             }
             finally
             {
@@ -202,11 +153,10 @@ namespace Zion
         protected void UseSpan<I>(int Start, int Count, I Other, Action<Span<T>, I> Action) where I : allows ref struct
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan(Start, Count);
-                Action.Invoke(Span, Other);
+                Modify();
+                Action.Invoke(AsSpan(Start, Count), Other);
             }
             finally
             {
@@ -218,11 +168,10 @@ namespace Zion
         protected R UseSpan<R>(Func<Span<T>, R> Function)
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan();
-                return Function.Invoke(Span);
+                Modify();
+                return Function.Invoke(AsSpan());
             }
             finally
             {
@@ -238,11 +187,10 @@ namespace Zion
         protected R UseSpan<R>(int Start, int Count, Func<Span<T>, R> Function)
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan(Start, Count);
-                return Function.Invoke(Span);
+                Modify();
+                return Function.Invoke(AsSpan(Start, Count));
             }
             finally
             {
@@ -251,14 +199,14 @@ namespace Zion
         }
 
 
-        protected R UseSpan<I, R>(I Other, Func<Span<T>, I, R> Action) where I : allows ref struct where R : allows ref struct
+        protected R UseSpan<I, R>(I Other, Func<Span<T>, I, R> Action)
+            where I : allows ref struct where R : allows ref struct
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan();
-                return Action.Invoke(Span, Other);
+                Modify();
+                return Action.Invoke(AsSpan(), Other);
             }
             finally
             {
@@ -266,19 +214,20 @@ namespace Zion
             }
         }
 
-        protected R UseSpan<I, R>(int Count, I Other, Func<Span<T>, I, R> Action) where I : allows ref struct where R : allows ref struct
+        protected R UseSpan<I, R>(int Count, I Other, Func<Span<T>, I, R> Action)
+            where I : allows ref struct where R : allows ref struct
         {
             return UseSpan(0, Count, Other, Action);
         }
 
-        protected R UseSpan<I, R>(int Start, int Count, I Other, Func<Span<T>, I, R> Action) where I : allows ref struct where R : allows ref struct
+        protected R UseSpan<I, R>(int Start, int Count, I Other, Func<Span<T>, I, R> Action)
+            where I : allows ref struct where R : allows ref struct
         {
             Lock.EnterReadLock();
-            Modify();
             try
             {
-                Span<T> Span = AsSpan(Start, Count);
-                return Action.Invoke(Span, Other);
+                Modify();
+                return Action.Invoke(AsSpan(Start, Count), Other);
             }
             finally
             {
@@ -290,6 +239,7 @@ namespace Zion
         protected void UseReadOnlySpan(Action<ReadOnlySpan<T>> Action)
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> ReadOnlySpan = AsSpan();
@@ -309,6 +259,7 @@ namespace Zion
         protected void UseReadOnlySpan(int Start, int Count, Action<ReadOnlySpan<T>> Action)
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> ReadOnlySpan = AsSpan(Start, Count);
@@ -324,6 +275,7 @@ namespace Zion
         protected void UseReadOnlySpan<I>(I Other, Action<ReadOnlySpan<T>, I> Action) where I : allows ref struct
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> Span = AsSpan();
@@ -335,14 +287,17 @@ namespace Zion
             }
         }
 
-        protected void UseReadOnlySpan<I>(int Count, I Other, Action<ReadOnlySpan<T>, I> Action) where I : allows ref struct
+        protected void UseReadOnlySpan<I>(int Count, I Other, Action<ReadOnlySpan<T>, I> Action)
+            where I : allows ref struct
         {
             UseReadOnlySpan(0, Count, Other, Action);
         }
 
-        protected void UseReadOnlySpan<I>(int Start, int Count, I Other, Action<ReadOnlySpan<T>, I> Action) where I : allows ref struct
+        protected void UseReadOnlySpan<I>(int Start, int Count, I Other, Action<ReadOnlySpan<T>, I> Action)
+            where I : allows ref struct
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> Span = AsSpan(Start, Count);
@@ -358,9 +313,11 @@ namespace Zion
         protected R UseReadOnlySpan<R>(Func<ReadOnlySpan<T>, R> Function)
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> Span = AsSpan();
+
                 return Function.Invoke(Span);
             }
             finally
@@ -377,9 +334,11 @@ namespace Zion
         protected R UseReadOnlySpan<R>(int Start, int Count, Func<ReadOnlySpan<T>, R> Function)
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> Span = AsSpan(Start, Count);
+
                 return Function.Invoke(Span);
             }
             finally
@@ -389,12 +348,15 @@ namespace Zion
         }
 
 
-        protected R UseReadOnlySpan<I, R>(I Other, Func<ReadOnlySpan<T>, I, R> Action) where I : allows ref struct where R : allows ref struct
+        protected R UseReadOnlySpan<I, R>(I Other, Func<ReadOnlySpan<T>, I, R> Action)
+            where I : allows ref struct where R : allows ref struct
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> Span = AsSpan();
+
                 return Action.Invoke(Span, Other);
             }
             finally
@@ -403,17 +365,21 @@ namespace Zion
             }
         }
 
-        protected R UseReadOnlySpan<I, R>(int Count, I Other, Func<ReadOnlySpan<T>, I, R> Action) where I : allows ref struct where R : allows ref struct
+        protected R UseReadOnlySpan<I, R>(int Count, I Other, Func<ReadOnlySpan<T>, I, R> Action)
+            where I : allows ref struct where R : allows ref struct
         {
             return UseReadOnlySpan(0, Count, Other, Action);
         }
 
-        protected R UseReadOnlySpan<I, R>(int Start, int Count, I Other, Func<ReadOnlySpan<T>, I, R> Action) where I : allows ref struct where R : allows ref struct
+        protected R UseReadOnlySpan<I, R>(int Start, int Count, I Other, Func<ReadOnlySpan<T>, I, R> Action)
+            where I : allows ref struct where R : allows ref struct
         {
             Lock.EnterReadLock();
+
             try
             {
                 ReadOnlySpan<T> Span = AsSpan(Start, Count);
+
                 return Action.Invoke(Span, Other);
             }
             finally
@@ -436,37 +402,54 @@ namespace Zion
             }
 
             Lock.EnterWriteLock();
-            Modify();
             try
             {
-                var Area = Source.Expand(this, Capacity);
-                Start = Area.Start;
-                Length = Area.Count;
+                Modify();
+                Source.Expand(this, Capacity).Out(out Start, out Length);
             }
             finally
             {
                 Lock.ExitWriteLock();
             }
-
         }
 
-        protected void Move(int SourceIndex, int DestinationIndex, int Count)
+        protected void TrimExcess(int Count)
         {
-            if (Count <= 0 || SourceIndex == DestinationIndex)
+            if (Count >= Length)
             {
                 return;
             }
 
-            ThrowIfWithout(SourceIndex);
-            ThrowIfWithout(SourceIndex + Count - 1);
-            ThrowIfWithout(DestinationIndex);
-            ThrowIfWithout(DestinationIndex + Count - 1);
-
             Lock.EnterWriteLock();
-            Modify();
             try
             {
-                Span<T> TotalSpan = Source.AsSpan(this);
+                Modify();
+                Source.TrimExcess(this, Count).Out(out Start, out Length);
+            }
+            finally
+            {
+                Lock.ExitWriteLock();
+            }
+        }
+
+        protected void Move(int SourceIndex, int DestinationIndex, int Count)
+        {
+            Lock.EnterWriteLock();
+            try
+            {
+                if (Count <= 0 || SourceIndex == DestinationIndex)
+                {
+                    return;
+                }
+
+                ArgumentOutOfRangeException.ThrowIfWithout(SourceIndex, Length);
+                ArgumentOutOfRangeException.ThrowIfWithout(SourceIndex + Count - 1, Length);
+                ArgumentOutOfRangeException.ThrowIfWithout(DestinationIndex, Length);
+                ArgumentOutOfRangeException.ThrowIfWithout(DestinationIndex + Count - 1, Length);
+
+                Modify();
+
+                var TotalSpan = Source.AsSpan(this);
 
                 if (DestinationIndex > SourceIndex)
                 {
@@ -477,7 +460,7 @@ namespace Zion
                     }
                     else
                     {
-                        for (int i = Count - 1; i >= 0; i--)
+                        for (var i = Count - 1; i >= 0; i--)
                         {
                             TotalSpan[DestinationIndex + i] = TotalSpan[SourceIndex + i];
                         }
@@ -488,11 +471,11 @@ namespace Zion
                     if (DestinationIndex + Count <= SourceIndex)
                     {
                         TotalSpan.Slice(SourceIndex, Count)
-                            .CopyTo(TotalSpan.Slice(DestinationIndex, Count));
+                                 .CopyTo(TotalSpan.Slice(DestinationIndex, Count));
                     }
                     else
                     {
-                        for (int i = 0; i < Count; i++)
+                        for (var i = 0; i < Count; i++)
                         {
                             TotalSpan[DestinationIndex + i] = TotalSpan[SourceIndex + i];
                         }
@@ -520,142 +503,136 @@ namespace Zion
 
         protected void CopyTo(int Start, int Count, Span<T> Destination)
         {
-            Lock.EnterWriteLock();
+            Lock.EnterReadLock();
             try
             {
                 Source.AsSpan(this, Start, Count).CopyTo(Destination);
             }
             finally
             {
-                Lock.ExitWriteLock();
+                Lock.ExitReadLock();
             }
         }
 
 
         protected void Modify()
         {
-            Version++;
+            Interlocked.Increment(ref Version);
         }
 
 
-        protected bool IsWithin(int Index)
+        protected T[] ToArray(int Start, int Count)
         {
-            return Index >= 0 && Index < Length;
+            ArgumentOutOfRangeException.ThrowIfWithout(Start, Length);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, Length);
+
+            return Source.ToArray(this.Start + Start, Count);
         }
-
-        protected bool IsWithout(int Index)
-        {
-            return Index < 0 || Index >= Length;
-        }
-
-
-        protected T[] ToArray(int Start, int Length)
-        {
-            ArgumentOutOfRangeException.ThrowIfWithout(Start, this.Length);
-            ArgumentOutOfRangeException.ThrowIfWithout(Start + Length, this.Length);
-
-            return Source.ToArray(this.Start + Start, Length);
-        }
-
         #endregion
 
         #region PrivateMethods
-        private void ThrowIfWithout(int Index)
-        {
-            if (IsWithout(Index))
-            {
-                throw new ArgumentOutOfRangeException($"Index(={Index}) out of range [0..{Length})");
-            }
-        }
-
         private Span<T> AsSpan()
         {
-            int Limit = GetAbsoluteLimit();
-            return Source.AsSpan(this, 0, Limit);
+            return Source.AsSpan(this, 0, GetAbsoluteLimit());
         }
 
         private Span<T> AsSpan(int Start, int Count)
         {
-            int Limit = GetAbsoluteLimit();
+            var Limit = GetAbsoluteLimit();
 
             if ((uint)Start > (uint)Limit || (uint)Count > (uint)(Limit - Start))
             {
-                throw new IndexOutOfRangeException($"Index out of range: Start(={Start}); Count(={Count}); Limit(={Limit})");
+                throw new IndexOutOfRangeException
+                (
+                    $"Index out of range: Start(={Start}); Count(={Count}); Limit(={Limit})"
+                );
             }
 
             return Source.AsSpan(this, Start, Count);
         }
 
-
         private int GetAbsoluteLimit()
         {
-            int Limit  = GetSpanLimit();
-            int Length = this.Length;
+            var Limit = GetSpanLimit();
+            var Count = Length;
 
-            return Limit < 0 || Limit > this.Length
-                ? Length
+            return Limit < 0 || Limit > Count
+                ? Count
                 : Limit;
         }
-
         #endregion
 
         #region IDisposable
         public void Dispose()
         {
-            if (IsDisposed) { return; }
-
             Lock.EnterWriteLock();
-            Modify();
             try
             {
-                Source.Release(this);
-                ResetToZero();
+                if (IsDisposed)
+                {
+                    return;
+                }
+
+                Modify();
+
+                var Arena = Source;
+                Source = null!;
+                Arena.Release(this);
             }
             finally
             {
                 Lock.ExitWriteLock();
             }
-
-            Lock.Dispose();
         }
-
-        public void ResetToZero()
-        {
-            Source = null!;
-        }
-
         #endregion
 
         #region IEnumerable
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public IEnumerator<T> GetEnumerator()
         {
-            return new Enumerator(this, GetIndexEnumerator());
-        }
+            if (IsDisposed)
+            {
+                return EmptyEnumerator<T>.Instance;
+            }
 
+            Lock.EnterReadLock();
+            try
+            {
+                return new Enumerator(this, GetIndexEnumerator());
+            }
+            finally
+            {
+                Lock.ExitReadLock();
+            }
+        }
         #endregion
 
         #region Enumerator
-        public struct Enumerator : IEnumerator<T>
+        private sealed class Enumerator : IEnumerator<T>
         {
-            private readonly IEnumerator<int> IndexEnumerator;
             private readonly ArenaCollection<T> Collection;
-            private readonly Memory<T> Memory;
-            private readonly int Version;
-
-            object? IEnumerator.Current => Current;
-
-            public T Current { get; private set; }
+            private readonly IEnumerator<int>   IndexEnumerator;
+            private readonly Memory<T>          Memory;
+            private readonly int                Version;
 
 
             public Enumerator(ArenaCollection<T> Collection, IEnumerator<int> IndexEnumerator)
             {
                 this.Collection = Collection;
                 this.IndexEnumerator = IndexEnumerator.NotNull();
-                this.Memory = Collection.Source.AsMemory(Collection);
-                this.Version = Collection.Version;
+                Memory = Collection.Source.AsMemory(Collection);
+                Version = Collection.Version;
+                Current = default!;
             }
+
+            #region IEnumerator<T> Members
+            object? IEnumerator.Current => Current;
+
+            public T Current { get; private set; }
 
 
             public bool MoveNext()
@@ -664,8 +641,9 @@ namespace Zion
 
                 if (IndexEnumerator.MoveNext())
                 {
-                    int Index = IndexEnumerator.Current;
+                    var Index = IndexEnumerator.Current;
                     Current = Memory.Span[Index];
+
                     return true;
                 }
 
@@ -675,20 +653,25 @@ namespace Zion
             public void Reset()
             {
                 IndexEnumerator.Reset();
+                Current = default!;
             }
 
-            public void Dispose() { }
+            public void Dispose()
+            {
+                IndexEnumerator.Dispose();
+            }
+            #endregion
 
 
             private void CheckVersion()
             {
                 if (Collection.Version != Version)
                 {
-                    throw new InvalidOperationException("Collection was modified; enumeration operation may not execute.");
+                    throw new InvalidOperationException(
+                        "Collection was modified; enumeration operation may not execute.");
                 }
             }
         }
-
         #endregion
     }
 }
