@@ -17,9 +17,6 @@ namespace Zion
         public bool IsReadOnly => false;
 
 
-        public ArenaList(ArenaSpan<T> Data) : base(Data) { }
-
-
         public new T this[int Index]
         {
             get => base[Index];

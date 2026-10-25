@@ -4,6 +4,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
@@ -33,6 +34,7 @@
     <Folder Include="STP\Source\Text\Document\" />
     <Folder Include="STP\Source\Text\Source\Base\" />
     <Folder Include="STP\Source\Text\Source\Source\" />
+    <Folder Include="Types\Collections\Arenas\Base\Core\" />
   </ItemGroup>
 
 </Project>

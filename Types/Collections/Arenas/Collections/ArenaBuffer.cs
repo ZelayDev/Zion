@@ -12,9 +12,6 @@ namespace Zion
                 Modify();
             }
         }
-
-
-        public ArenaBuffer(ArenaSpan<T> Data) : base(Data) { }
         
         
         public new T this[int Index]

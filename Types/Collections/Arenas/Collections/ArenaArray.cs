@@ -5,12 +5,6 @@ namespace Zion
         public readonly new int Length;
 
 
-        public ArenaArray(ArenaSpan<T> Data) : base(Data)
-        {
-            Length = base.Length;
-        }
-
-
         public new T this[int Index]
         {
             get => base[Index];

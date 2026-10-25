@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using Zion.Serialization;
 
 namespace Zion
@@ -7,16 +8,15 @@ namespace Zion
     public class SortedList<T> : IList<T>, IBinarySerializable<SortedList<T>, T>
     {
         #region Data
-        private readonly bool IsReference = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
+        private readonly bool         IsReference = RuntimeHelpers.IsReferenceOrContainsReferences<T>();
         private readonly IComparer<T> Comparer;
 
         private T[] Data;
 
         public int Count { get; private set; }
 
-        public int Capacity    => Data.Length;
+        public int  Capacity   => Data.Length;
         public bool IsReadOnly => false;
-
         #endregion
 
         #region Constructors
@@ -30,17 +30,16 @@ namespace Zion
         {
             ArgumentOutOfRangeException.ThrowIfNegativeOrZero(Capacity);
             this.Comparer = Comparer ?? Comparer<T>.Default;
-            this.Data     = new T[Capacity];
+            Data = new T[Capacity];
         }
 
         private SortedList(T[] Data, int Count)
         {
-            this.Comparer = Comparer<T>.Default;
+            Comparer = Comparer<T>.Default;
             this.Data = Data;
             this.Count = Count;
-            Resort();
+            Update();
         }
-
         #endregion
 
         #region Indexers
@@ -48,14 +47,15 @@ namespace Zion
         {
             get
             {
+                ArgumentOutOfRangeException.ThrowIfWithout(Index, Count);
                 return Data[Index];
             }
             set
             {
                 ArgumentOutOfRangeException.ThrowIfWithout(Index, Count);
 
-                bool ValidLeft = Index == 0 || Compare(value, Data[Index - 1]) >= 0;
-                bool ValidRight = Index == Count - 1 || Compare(value, Data[Index + 1]) <= 0;
+                var ValidLeft = Index == 0 || Compare(value, Data[Index - 1]) >= 0;
+                var ValidRight = Index == Count - 1 || Compare(value, Data[Index + 1]) <= 0;
 
                 if (ValidLeft && ValidRight)
                 {
@@ -84,7 +84,6 @@ namespace Zion
                 return Data[Range];
             }
         }
-
         #endregion
 
         #region OverrideMethods
@@ -92,26 +91,18 @@ namespace Zion
         {
             return StringFormatter.ToString(this);
         }
-
-        public override bool Equals(object? Object)
-        {
-            return Object is SortedList<T> SortedList
-                && Count == SortedList.Count
-                && this.SequenceEqual(SortedList);
-        }
-
-        public override int GetHashCode()
-        {
-            return base.GetHashCode();
-        }
-
         #endregion
 
         #region IList
+        public void Update()
+        {
+            Array.Sort(Data, 0, Count);
+        }
+
+
         public void Add(T Item)
         {
-            EnsureCapacity(Count + 1);
-            Insert(Item, GetInsertIndex(Item));
+            InsertAt(Item, GetInsertIndex(Item));
         }
 
         public void AddRange(ICollection<T> Items)
@@ -120,10 +111,9 @@ namespace Zion
 
             EnsureCapacity(Count + Items.Count);
 
-            foreach (T Item in Items)
+            foreach (var Item in Items)
             {
-                ArgumentNullException.ThrowIfNull(Item);
-                Insert(Item, GetInsertIndex(Item));
+                InsertAt(Item, GetInsertIndex(Item));
             }
         }
 
@@ -138,12 +128,12 @@ namespace Zion
                 return;
             }
 
-            bool ValidLeft  = TargetIndex == 0     || Compare(Item, Data[TargetIndex - 1]) >= 0;
-            bool ValidRight = TargetIndex == Count || Compare(Item, Data[TargetIndex])     <= 0;
+            var ValidLeft = TargetIndex == 0 || Compare(Item, Data[TargetIndex - 1]) >= 0;
+            var ValidRight = TargetIndex == Count || Compare(Item, Data[TargetIndex]) <= 0;
 
             if (ValidLeft && ValidRight)
             {
-                Insert(Item, TargetIndex);
+                InsertAt(Item, TargetIndex);
             }
             else
             {
@@ -159,19 +149,19 @@ namespace Zion
                 return -1;
             }
 
-            int Min = 0;
-            int Max = Count - 1;
+            var Min = 0;
+            var Max = Count - 1;
 
             while (Min <= Max)
             {
-                int Target = Min + ((Max - Min) >> 1);
-                int Comparing = Compare(Item, Data[Target]);
+                var Target = Min + ((Max - Min) >> 1);
+                var Comparing = Compare(Item, Data[Target]);
 
                 if (Comparing == 0)
                 {
                     return Target;
                 }
-                if (int.IsNegative(Comparing))
+                if (Int32.IsNegative(Comparing))
                 {
                     Max = Target - 1;
                 }
@@ -189,6 +179,42 @@ namespace Zion
             return IndexOf(Item) != -1;
         }
 
+        public bool TryFindFirstAtLeast(T Target, out int Index)
+        {
+            Index = FindFirstAtLeast(Target);
+            return Index != -1;
+        }
+
+        public int FindFirstAtLeast(T Target)
+        {
+            var Data = this.Data;
+            var Comparer = this.Comparer;
+
+            if (Count == 0 || Comparer.Compare(Data[Count - 1], Target) < 0)
+            {
+                return -1;
+            }
+            
+            var Min = 0;
+            var Max = Count;
+
+            while (Min < Max)
+            {
+                var Middle = Min + ((Max - Min) >> 1);
+
+                if (Comparer.Compare(Data[Middle], Target) < 0)
+                {
+                    Min = Middle + 1;
+                }
+                else
+                {
+                    Max = Middle;
+                }
+            }
+
+            return Min;
+        }
+
 
         public void CopyTo(T[] Array, int ArrayIndex)
         {
@@ -201,7 +227,7 @@ namespace Zion
 
         public bool Remove(T Item)
         {
-            int Index = IndexOf(Item);
+            var Index = IndexOf(Item);
             if (Index == -1)
             {
                 return false;
@@ -214,7 +240,7 @@ namespace Zion
         {
             ArgumentOutOfRangeException.ThrowIfWithout(Index, Count);
 
-            for (int i = Index; i < Count - 1; i++)
+            for (var i = Index; i < Count - 1; i++)
             {
                 Data[i] = Data[i + 1];
             }
@@ -228,17 +254,19 @@ namespace Zion
 
         public void RemoveRange(int Start, int Count)
         {
-            ArgumentException.ThrowIf(Start < 0 || Start > this.Count, $"Start(={Start}) out of range [0..{this.Count})");
-            ArgumentException.ThrowIf(Count < 0 || Start + Count > this.Count, $"Count(={Count}) out of range [0..{this.Count})");
+            ArgumentException.ThrowIf(Start < 0 || Start > this.Count,
+                $"Start(={Start}) out of range [0..{this.Count})");
+            ArgumentException.ThrowIf(Count < 0 || Start + Count > this.Count,
+                $"Count(={Count}) out of range [0..{this.Count})");
 
             if (Count == 0)
             {
                 return;
             }
 
-            int End = Start + Count;
+            var End = Start + Count;
 
-            foreach (int i in ZEnumerable.Range(this.Count - End))
+            foreach (var i in ZEnumerable.Range(this.Count - End))
             {
                 Data[Start + i] = Data[End + i];
             }
@@ -267,16 +295,45 @@ namespace Zion
         }
 
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        public void EnsureCapacity(int Capacity)
+        {
+            if (Capacity <= Data.Length)
+            {
+                return;
+            }
+
+            var NewCapacity = Math.Max(Data.Length * 2, Capacity);
+            Array.Resize(ref Data, NewCapacity);
+        }
+
+
+        public T[] ToArray()
+        {
+            var Result = new T[Count];
+            Array.Copy(Data, Result, Count);
+            return Result;
+        }
+
+        public List<T> ToList()
+        {
+            var Result = new List<T>(Count);
+            Data.AsSpan(0, Count).CopyTo(CollectionsMarshal.AsSpan(Result));
+            return Result;
+        }
+
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public IEnumerator<T> GetEnumerator()
         {
-            for (int i = 0; i < Count; i++)
+            for (var i = 0; i < Count; i++)
             {
                 yield return Data[i];
             }
         }
-
         #endregion
 
         #region BinarySerializable
@@ -287,10 +344,10 @@ namespace Zion
 
         public static SortedList<T> Read(BinaryReader Reader, Func<T> Read)
         {
-            int Count = Reader.ReadInt32();
-            int Index = 0;
+            var Count = Reader.ReadInt32();
+            var Index = 0;
 
-            SortedList<T> Result = new SortedList<T>(Count);
+            var Result = new SortedList<T>(Count);
 
             while (Index < Count)
             {
@@ -300,60 +357,6 @@ namespace Zion
 
             return Result;
         }
-
-        #endregion
-
-        #region PublicMethods
-        public T[] ToArray()
-        {
-            T[] Array = new T[Count];
-            System.Array.Copy(Data, Array, Count);
-            return Array;
-        }
-
-        public List<T> ToList()
-        {
-            List<T> List = new List<T>(Count);
-            foreach (T Item in this)
-            {
-                List.Add(Item);
-            }
-            return List;
-        }
-
-
-        public int FirstAfter(T Item)
-        {
-            if (Count == 0) { return -1; }
-
-            int Index = GetInsertIndex(Item);
-            
-            if (Index < Count && Compare(Item, Data[Index]) == 0)
-            {
-                Index++;
-            }
-
-            return Index < Count ? Index : -1;
-        }
-
-
-        public void EnsureCapacity(int Capacity)
-        {
-            if (Capacity <= Data.Length)
-            {
-                return;
-            }
-
-            int NewCapacity = Math.Max(Data.Length * 2, Capacity);
-            Array.Resize(ref Data, NewCapacity);
-        }
-
-
-        public void Resort()
-        {
-            Array.Sort(Data, 0, Count);
-        }
-
         #endregion
 
         #region PrivateMethods
@@ -369,13 +372,13 @@ namespace Zion
                 return 0;
             }
 
-            int Min = 0;
-            int Max = Count - 1;
+            var Min = 0;
+            var Max = Count - 1;
 
             while (Min <= Max)
             {
-                int Target = Min + ((Max - Min) >> 1);
-                int Comparing = Compare(Item, Data[Target]);
+                var Target = Min + ((Max - Min) >> 1);
+                var Comparing = Compare(Item, Data[Target]);
 
                 if (Comparing == 0)
                 {
@@ -395,14 +398,14 @@ namespace Zion
             return Min;
         }
 
-        private void Insert(T Item, int Index)
+        private void InsertAt(int Index, T Item)
         {
             if (Count == Data.Length)
             {
                 EnsureCapacity(Count + 1);
             }
 
-            for (int i = Count; i > Index; i--)
+            for (var i = Count; i > Index; i--)
             {
                 Data[i] = Data[i - 1];
             }
@@ -410,7 +413,6 @@ namespace Zion
             Data[Index] = Item;
             Count++;
         }
-
         #endregion
     }
 }

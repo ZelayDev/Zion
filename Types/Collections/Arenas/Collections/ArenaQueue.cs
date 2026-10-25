@@ -18,9 +18,6 @@
         public bool IsReadOnly => false;
 
 
-        public ArenaQueue(ArenaSpan<T> Data) : base(Data) { }
-
-
         protected override int GetSpanLimit() => -1;
 
         protected override IEnumerator<int> GetIndexEnumerator()

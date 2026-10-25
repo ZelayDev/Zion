@@ -19,9 +19,6 @@ namespace Zion
         }
 
 
-        public ArenaStack(ArenaSpan<T> Data) : base(Data) { }
-
-
         protected override int GetSpanLimit() => Count;
 
         protected override IEnumerator<int> GetIndexEnumerator()

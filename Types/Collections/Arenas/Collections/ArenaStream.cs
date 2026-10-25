@@ -34,9 +34,6 @@ namespace Zion
         }
 
 
-        public ArenaStream(ArenaSpan<byte> Data) : base(Data) { }
-
-
         public new byte this[int Index]
         {
             get => base[Index];

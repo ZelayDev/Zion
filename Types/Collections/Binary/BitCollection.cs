@@ -294,6 +294,11 @@ namespace Zion
             Fill(0, Count, Value);
         }
 
+        public void Fill(Segment Range, bool Value)
+        {
+            Fill(Range.Start, Range.Length, Value);
+        }
+        
         public void Fill(int Start, int Count, bool Value)
         {
             int Length = this.Count;

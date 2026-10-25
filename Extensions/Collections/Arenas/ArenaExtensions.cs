@@ -4,13 +4,9 @@
     {
         extension(Arena<byte> Arena)
         {
-            public ArenaStream GetStream(int Size)
+            public ArenaStream GetStream(int Capacity)
             {
-                return Arena.Allocate
-                (
-                    Arena<byte>.RoundToGroup(Size),
-                    static Span => new ArenaStream(Span)
-                );
+                return Arena.GetCollection<ArenaStream>(Capacity);
             }
         }
     }
