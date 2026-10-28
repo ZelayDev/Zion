@@ -20,7 +20,7 @@
             {
                 if (Context.Compression)
                 {
-                    Stream.Write7BitEncodedUInt(Value);
+                    Stream.Write7BitEncoded(Value);
                 }
                 else
                 {
@@ -32,7 +32,7 @@
             {
                 if (Context.Compression)
                 {
-                    Stream.Write7BitEncodedUInt64(Value);
+                    Stream.Write7BitEncoded(Value);
                 }
                 else
                 {

@@ -89,7 +89,7 @@ namespace Zion.ADF
             {
                 foreach (var Value in Span)
                 {
-                    Stream.Write7BitEncodedUInt(Registry.GetOrAdd(Value));
+                    Stream.Write7BitEncoded(Registry.GetOrAdd(Value));
                 }
             }
             else

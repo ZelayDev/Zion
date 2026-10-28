@@ -6,6 +6,7 @@ namespace Zion.ADF
     {
         extension<T>(List<T> List)
         {
+            //TODO: Check SetCount
             public Span<T> AsSpan()
             {
                 return CollectionsMarshal.AsSpan(List);

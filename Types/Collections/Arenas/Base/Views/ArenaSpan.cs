@@ -1,4 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Zion
 {
@@ -36,33 +37,103 @@ namespace Zion
         #region PublicMethods
         public ArenaSpan<T> Slice(int Start)
         {
-            if (Start < 0 || Start >= Region.Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(Start));
-            }
-            if (Start == 0)
-            {
-                return this;
-            }
-
-            return new ArenaSpan<T>(new ArenaRegion<T>(Region.Chunks, Start, Region.Length - Start));
+            return new ArenaSpan<T>(Region.Slice(Start));
         }
 
-        public ArenaSpan<T> Slice(int Start, int Length)
+        public ArenaSpan<T> Slice(int Start, int Count)
         {
-            if (Start < 0 || Start >= Region.Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(Start));
-            }
-            if (Length < 0 || Start + Length > this.Length)
-            {
-                throw new ArgumentOutOfRangeException(nameof(Length));
-            }
-
-            return new ArenaSpan<T>(new ArenaRegion<T>(Region.Chunks, Start, Length - Start));
+            return new ArenaSpan<T>(Region.Slice(Start, Count));
         }
 
 
+        public void Sort(IComparer<T>? Comparer = null)
+        {
+            throw new NotImplementedException(); //TODO
+        }
+
+        public void Reverse()
+        {
+            throw new NotImplementedException(); //TODO
+        }
+
+
+        public int IndexOf(T Item, IEqualityComparer<T>? Comparer = null)
+        {
+            
+        }
+
+        public int LastIndexOf(T Item, IEqualityComparer<T>? Comparer = null)
+        {
+            
+        }
+        
+        
+        public int FindIndex(Predicate<T> Match)
+        {
+            
+        }
+
+        public int FindLastIndex(Predicate<T> Match)
+        {
+            
+        }
+
+
+        public int BinarySearch(T Item, IComparer<T>? Comparer = null)
+        {
+            
+        }
+        
+        public T? Find(Predicate<T> Match)
+        {
+            var Index = FindIndex(Match);
+            return Index == -1
+                ? default
+                : Region[Index];
+        }
+
+        public T? FindLast(Predicate<T> Match)
+        {
+            var Index = FindLastIndex(Match);
+            return Index == -1
+                ? default
+                : Region[Index];
+        }
+
+        public List<T> FindAll(Predicate<T> Match)
+        {
+            
+        }
+        
+        
+        public bool Exists(Predicate<T> Match)
+        {
+            
+        }
+        
+        public bool Contains(T Item, IEqualityComparer<T>? Comparer = null)
+        {
+            
+        }
+        
+        
+        public bool Remove(T Item, IEqualityComparer<T>? Comparer = null)
+        {
+            
+        }
+
+
+        public void ForEach(Action<T> Action)
+        {
+            
+        }
+
+        public bool TrueForAll(Predicate<T> Match)
+        {
+            
+        }
+        
+        
         public void CopyTo(Span<T> Destination)
         {
             //TODO
@@ -73,9 +144,21 @@ namespace Zion
             
         }
         
+        
         public T[] ToArray()
         {
-            throw new NotImplementedException(); //TODO
+            var Array = new T[Length];
+            CopyTo(Array);
+            return Array;
+        }
+
+        public List<T> ToList()
+        {
+            var List = new List<T>(Length);
+            var Span = CollectionsMarshal.AsSpan(List);
+            CollectionsMarshal.SetCount(List, Length);
+            CopyTo(Span);
+            return List;
         }
 
 

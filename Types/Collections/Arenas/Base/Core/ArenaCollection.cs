@@ -4,6 +4,7 @@
     {
         #region Data
         private ArenaBridge<T> Bridge;
+        private int            Limit;
         #endregion
 
         #region Properties
@@ -21,6 +22,8 @@
         internal void Initialize(ArenaBridge<T> Bridge)
         {
             this.Bridge = Bridge;
+            UpdateLimit(GetLimit());
+            OnInitialized();
         }
 
         internal ArenaBridge<T> GetBridge()
@@ -37,24 +40,43 @@
         #region ProtectedMethods
         protected T GetValueAt(int Index)
         {
+            ThrowIfDisposed();
+            ThrowIfWithout(Index);
             return Bridge[Index];
         }
 
         protected T GetValueAt(Index Index)
         {
-            return Bridge[Index];
+            ThrowIfDisposed();
+            return GetValueAt(Index.GetOffset(Limit));
         }
 
         protected void SetValueAt(int Index, T Value)
         {
+            ThrowIfDisposed();
+            ThrowIfWithout(Index);
             Bridge[Index] = Value;
         }
 
         protected void SetValueAt(Index Index, T Value)
         {
-            Bridge[Index] = Value;
+            ThrowIfDisposed();
+            SetValueAt(Index.GetOffset(Limit), Value);
         }
 
+
+        protected void UpdateLimit(int Limit)
+        {
+            ThrowIfDisposed();
+            ArgumentOutOfRangeException.ThrowIfNegative(Limit);
+            this.Limit = Math.Min(Bridge.Length, Limit);
+        }
+
+
+        protected int GetLength()
+        {
+            return Bridge.Length;
+        }
 
         protected int GetCapacity()
         {
@@ -72,6 +94,11 @@
             ArenaBridge<T>.Trim(this, Length, ref Bridge);
         }
 
+
+        protected void ClearAll()
+        {
+            Bridge.Clear(Limit);
+        }
 
         protected void Move(int SourceIndex, int DestinationIndex, int Count)
         {
@@ -119,14 +146,15 @@
             }
         }
 
-        protected void CopyTo(Span<T> Destination)
+        
+        protected ArenaItemEnumerator<T> GetEnumerator(int Start)
         {
-            Bridge.AsSpan().CopyTo(Destination);
+            return new ArenaItemEnumerator<T>(Bridge.GetRegion().Slice(Start));
         }
 
-        protected void CopyTo(int Start, int Count, Span<T> Destination)
+        protected ArenaItemEnumerator<T> GetEnumerator(int Start, int Count)
         {
-            Bridge.AsSpan().Slice(Start, Count).CopyTo(Destination);
+            return new ArenaItemEnumerator<T>(Bridge.GetRegion().Slice(Start, Count));
         }
 
 
@@ -196,10 +224,41 @@
         {
             return Function.Invoke(AsSpan(Start, Count), Other);
         }
+
+
+        protected void ThrowIfWithout(int Index)
+        {
+            if (Index < 0 || Index >= Limit)
+            {
+                throw new IndexOutOfRangeException(nameof(Index));
+            }
+        }
+
+        protected void ThrowIfWithout(int Index, int Length)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(Index);
+            ArgumentOutOfRangeException.ThrowIfNegative(Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Index + Length, Limit);
+        }
+
+        protected void ThrowIfDisposed()
+        {
+            if (Bridge.IsDisposed)
+            {
+                throw new ObjectDisposedException(GetType().FullName);
+            }
+        }
         #endregion
 
         #region VirtualMethods
+        protected virtual void OnInitialized() { }
+
         protected virtual void OnDisposed() { }
+
+        protected virtual int GetLimit()
+        {
+            return Bridge.Length;
+        }
         #endregion
 
         #region IDisposable
@@ -215,18 +274,23 @@
         #endregion
 
         #region PrivateMethods
-        private ArenaSpan<T> AsSpan()
+        private protected ArenaSpan<T> AsSpan()
         {
-            return Bridge.AsSpan();
+            ThrowIfDisposed();
+            return Bridge.AsSpan().Slice(0, Limit);
         }
 
-        private ArenaSpan<T> AsSpan(int Start)
+        private protected ArenaSpan<T> AsSpan(int Start)
         {
-            return Bridge.AsSpan().Slice(Start);
+            ThrowIfDisposed();
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Start, Limit, nameof(Start));
+            return Bridge.AsSpan().Slice(Start, Limit - Start);
         }
 
-        private ArenaSpan<T> AsSpan(int Start, int Count)
+        private protected ArenaSpan<T> AsSpan(int Start, int Count)
         {
+            ThrowIfDisposed();
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Start + Count, Limit, nameof(Count));
             return Bridge.AsSpan().Slice(Start, Count);
         }
         #endregion

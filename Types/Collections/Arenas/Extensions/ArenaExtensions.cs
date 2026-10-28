@@ -1,4 +1,4 @@
-﻿namespace Zion
+namespace Zion
 {
     public static class ArenaExtensions
     {

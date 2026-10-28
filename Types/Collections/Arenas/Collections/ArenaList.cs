@@ -1,15 +1,13 @@
-using System.Runtime.InteropServices;
-
 namespace Zion
 {
-    public sealed class ArenaList<T> : ArenaCollection<T>, IList<T>
+    public sealed class ArenaList<T> : ArenaCollection<T>
     {
         public int Count
         {
             get;
             private set
             {
-                Modify();
+                UpdateLimit(value);
                 field = value;
             }
         }
@@ -17,28 +15,16 @@ namespace Zion
         public bool IsReadOnly => false;
 
 
-        public new T this[int Index]
+        public T this[int Index]
         {
-            get => base[Index];
-            set => base[Index] = value;
+            get => GetValueAt(Index);
+            set => SetValueAt(Index, value);
         }
 
-        public new T this[Index Index]
+        public T this[Index Index]
         {
-            get => base[Index];
-            set => base[Index] = value;
-        }
-
-
-        protected override int GetSpanLimit() => Count;
-
-        protected override IEnumerator<int> GetIndexEnumerator()
-        {
-            int Count = this.Count;
-            for (int i = 0; i < Count; i++)
-            {
-                yield return i;
-            }
+            get => GetValueAt(Index);
+            set => SetValueAt(Index, value);
         }
 
 
@@ -61,11 +47,11 @@ namespace Zion
                 Expand(TotalCount);
                 UseSpan
                 (
-                    Count, ItemsCount, Span =>
+                    Count, ItemsCount, Items, static (Span, Other) =>
                     {
                         int Index = 0;
 
-                        foreach (T Item in Items)
+                        foreach (T Item in Other)
                         {
                             Span[Index++] = Item;
                         }
@@ -89,9 +75,9 @@ namespace Zion
             UseSpan
             (
                 Count, ItemsCount, Items,
-                (Span, Other) =>
+                static (Span, Other) =>
                 {
-                    for (int i = 0; i < ItemsCount; i++)
+                    for (int i = 0; i < Other.Length; i++)
                     {
                         Span[i] = Other[i];
                     }
@@ -130,10 +116,10 @@ namespace Zion
 
                 UseSpan
                 (
-                    Index, ItemsCount, Span =>
+                    Index, ItemsCount, Items, static (Span, Other) =>
                     {
                         int SpanIndex = 0;
-                        foreach (T Item in Items)
+                        foreach (T Item in Other)
                         {
                             Span[SpanIndex++] = Item;
                         }
@@ -145,205 +131,117 @@ namespace Zion
             else
             {
                 int TailLength = Count - Index;
-                using var Tail = Source.GetArray(TailLength);
+                using var Tail = Source.GetBuffer(TailLength);
 
                 if (TailLength > 0)
                 {
-                    Tail.UseSpan(Span => CopyTo(Index, Count - Index, Span));
+                    Tail.UseSpan(static (Span, State) => State.Self.CopyTo(State.Index, State.Count, Span), (this, Index, Count - Index));
                 }
 
                 InsertItems(Index, Items, out int TotalCount);
 
                 Expand(TotalCount + TailLength);
-                UseSpan(TotalCount, TailLength, Tail.CopyTo);
+                UseSpan(TotalCount, TailLength, static (Span, Tail) => Tail.CopyTo(Span), Tail);
 
                 Count = TotalCount + TailLength;
             }
         }
 
 
-        public int IndexOf(T Item)
-        {
-            return IndexOf(Item, null);
-        }
-
         public int IndexOf(T Item, IEqualityComparer<T>? Comparer = null)
         {
-            return UseReadOnlySpan(Count, Span => Span.IndexOf(Item, Comparer));
+            return AsSpan().IndexOf(Item, Comparer);
         }
 
         public int IndexOf(T Item, int Index, IEqualityComparer<T>? Comparer = null)
         {
-            return UseReadOnlySpan(Index, Count, Span => Span.IndexOf(Item, Comparer));
+            return AsSpan(Index).IndexOf(Item, Comparer);
         }
 
         public int IndexOf(T Item, int Index, int Count, IEqualityComparer<T>? Comparer = null)
         {
-            ThrowIfWithout(Index, Count);
-            return UseReadOnlySpan(Index, Count, Span => Span.IndexOf(Item, Comparer));
+            return AsSpan(Index, Count).IndexOf(Item, Comparer);
         }
 
 
         public int FindIndex(Predicate<T> Match)
         {
-            return FindIndex(Count, Match);
+            return AsSpan().FindIndex(Match);
         }
 
         public int FindIndex(int Index, Predicate<T> Match)
         {
-            return FindIndex(Index, Count - Index, Match);
+            return AsSpan(Index).FindIndex(Match);
         }
 
         public int FindIndex(int Index, int Count, Predicate<T> Match)
         {
-            ThrowIfWithout(Index, Count);
-            return UseReadOnlySpan
-            (
-                Count, Span =>
-                {
-                    int Count = Span.Length;
-                    for (int i = 0; i < Count; i++)
-                    {
-                        if (Match(Span[i]))
-                        {
-                            return i;
-                        }
-                    }
-                    return -1;
-                }
-            );
+            return AsSpan(Index, Count).FindIndex(Match);
         }
 
 
         public T? Find(Predicate<T> Match)
         {
-            return UseReadOnlySpan
-            (
-                Count, Span =>
-                {
-                    int Count = Span.Length;
-                    for (int i = 0; i < Count; i++)
-                    {
-                        T Item = Span[i];
-                        if (Match(Item))
-                        {
-                            return Item;
-                        }
-                    }
-                    return default;
-                }
-            );
+            return AsSpan().Find(Match);
         }
 
         public T? FindLast(Predicate<T> Match)
         {
-            return UseReadOnlySpan
-            (
-                Count, Span =>
-                {
-                    for (int i = Span.Length - 1; i >= 0; i--)
-                    {
-                        T Item = Span[i];
-                        if (Match(Item))
-                        {
-                            return Item;
-                        }
-                    }
-                    return default;
-                }
-            );
+            return AsSpan().FindLast(Match);
         }
 
         public List<T> FindAll(Predicate<T> Match)
         {
-            return UseReadOnlySpan
-            (
-                Count, Span =>
-                {
-                    var Count = Span.Length;
-                    var Result = new List<T>();
-                    
-                    for (int i = 0; i < Count; i++)
-                    {
-                        T Item = Span[i];
-                        if (Match(Item))
-                        {
-                            Result.Add(Item);
-                        }
-                    }
-
-                    return Result;
-                }
-            );
+            return AsSpan().FindAll(Match);
         }
 
 
         public int LastIndexOf(T Item, IEqualityComparer<T>? Comparer = null)
         {
-            return UseReadOnlySpan(Count, Span => Span.LastIndexOf(Item, Comparer));
+            return AsSpan().LastIndexOf(Item, Comparer);
         }
 
         public int LastIndexOf(T Item, int Index, IEqualityComparer<T>? Comparer = null)
         {
-            return UseReadOnlySpan(Index, Count, Span => Span.LastIndexOf(Item, Comparer));
+            return AsSpan(Index).LastIndexOf(Item, Comparer);
         }
 
         public int LastIndexOf(T Item, int Index, int Count, IEqualityComparer<T>? Comparer = null)
         {
-            ThrowIfWithout(Index, Count);
-            return UseReadOnlySpan(Index, Count, Span => Span.LastIndexOf(Item, Comparer));
+            return AsSpan(Index, Count).LastIndexOf(Item, Comparer);
         }
 
 
         public int FindLastIndex(Predicate<T> Match)
         {
-            return FindLastIndex(0, Match);
+            return AsSpan().FindLastIndex(Match);
         }
 
         public int FindLastIndex(int Index, Predicate<T> Match)
         {
-            return FindLastIndex(Index, Count - Index, Match);
+            return AsSpan(Index).FindLastIndex(Match);
         }
 
         public int FindLastIndex(int Index, int Count, Predicate<T> Match)
         {
-            ThrowIfWithout(Index, Count);
-            return UseReadOnlySpan
-            (
-                Count, Span =>
-                {
-                    for (int i = Span.Length; i >= 0; i--)
-                    {
-                        if (Match(Span[i]))
-                        {
-                            return i;
-                        }
-                    }
-                    return -1;
-                }
-            );
+            return AsSpan(Index, Count).FindLastIndex(Match);
         }
 
-
-        public bool Contains(T Item)
-        {
-            return Contains(Item, null);
-        }
 
         public bool Contains(T Item, IEqualityComparer<T>? Comparer = null)
         {
-            return IndexOf(Item, Comparer) != -1;
+            return AsSpan().Contains(Item, Comparer);
         }
 
         public bool Exists(Predicate<T> Match)
         {
-            return FindIndex(Match) != -1;
+            return AsSpan().Exists(Match);
         }
 
 
         public void CopyTo(T[] Array)
         {
-            CopyTo(Array);
+            AsSpan().CopyTo(Array);
         }
 
         public void CopyTo(T[] Array, int ArrayIndex)
@@ -353,14 +251,7 @@ namespace Zion
 
         public void CopyTo(int Index, T[] Array, int ArrayIndex, int Count)
         {
-            ThrowIfWithout(Index, Count);
-            UseReadOnlySpan
-            (
-                Index, Count, Span =>
-                {
-                    Span.CopyTo(Array.AsSpan(ArrayIndex, Count));
-                }
-            );
+            AsSpan(Index).CopyTo(Array.AsSpan(ArrayIndex, Count));
         }
 
 
@@ -368,20 +259,20 @@ namespace Zion
         {
             ThrowIfWithout(Index);
             Move(Index + 1, Index, Count - Index - 1);
-            Count --;
+            Count--;
         }
 
         public void RemoveRange(int Index, int Count)
         {
             ThrowIfWithout(Index, Count);
-            Move(Index + Count, Index, Count);
+            Move(Index + Count, Index, this.Count - Index - Count);
             this.Count -= Count;
         }
 
         public bool Remove(T Item)
         {
             int Index = IndexOf(Item);
-            
+
             if (Index == -1)
             {
                 return false;
@@ -425,303 +316,156 @@ namespace Zion
 
         public void Clear()
         {
+            ClearAll();
             Count = 0;
         }
-
-
-        public void Reverse(int Index, int Count)
-        {
-            UseSpan(Index, Count, static Span => Span.Reverse());
-        }
+        
 
         public void Reverse()
         {
-            UseSpan(Count, static Span => Span.Reverse());
+            AsSpan().Reverse();
         }
 
-
-        public void Sort()
+        public void Reverse(int Index, int Count)
         {
-            UseSpan(Count, static Span => Span.Sort());
+            AsSpan(Index, Count).Reverse();
         }
 
-        public void Sort(IComparer<T>? Comparer)
+        public void Sort(IComparer<T>? Comparer = null)
         {
-            UseSpan(Count, Span => Span.Sort(Comparer));
-        }
-
-        public void Sort(Comparison<T> Comparison)
-        {
-            UseSpan(Count, Span => Span.Sort(Comparison));
+            AsSpan().Sort(Comparer);
         }
 
         public void Sort(int Index, int Count, IComparer<T>? Comparer = null)
         {
-            ThrowIfWithout(Index, Count);
-            UseSpan(Index, Count, Span => Span.Sort(Comparer));
+            AsSpan(Index, Count).Sort(Comparer);
         }
 
 
         public int BinarySearch(T Item, IComparer<T>? Comparer = null)
         {
-            return UseReadOnlySpan
-            (
-                Count, Span => Span.BinarySearch(Item, Comparer ?? Comparer<T>.Default)
-            );
+            return AsSpan().BinarySearch(Item, Comparer);
         }
 
-        public int BinarySearch(int Index, int Count, T Item, IComparer<T> Comparer)
+        public int BinarySearch(int Index, int Count, T Item, IComparer<T>? Comparer = null)
         {
-            ThrowIfWithout(Index, Count);
-            return UseReadOnlySpan
-            (
-                Index, Count, Span => Span.BinarySearch(Item, Comparer ?? Comparer<T>.Default)
-            );
+            return AsSpan(Index, Count).BinarySearch(Item, Comparer);
         }
 
 
         public List<T> GetRange(int Index, int Count)
         {
-            ThrowIfWithout(Index, Count);
-            return UseReadOnlySpan
-            (
-                Index, Count, Span =>
-                {
-                    var List = new List<T>(Span.Length);
-                    Span.CopyTo(CollectionsMarshal.AsSpan(List));
-                    return List;
-                }
-            );
+            return AsSpan(Index, Count).ToList();
         }
 
 
         public void ForEach(Action<T> Action)
         {
-            UseReadOnlySpan
-            (
-                Span =>
-                {
-                    int Count = Span.Length;
-                    for (int i = 0; i < Count; i++)
-                    {
-                        Action(Span[i]);
-                    }
-                }
-            );
+            AsSpan().ForEach(Action);
         }
 
         public bool TrueForAll(Predicate<T> Match)
         {
-            return UseReadOnlySpan
-            (
-                Span =>
-                {
-                    int Count = Span.Length;
-                    for (int i = 0; i < Count; i++)
-                    {
-                        if (!Match(Span[i]))
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-            );
+            return AsSpan().TrueForAll(Match);
         }
 
         public List<TOut> ConvertAll<TOut>(Converter<T, TOut> Converter)
         {
-            return UseReadOnlySpan
-            (
-                Count, Span =>
-                {
-                    int Count = Span.Length;
-
-                    var List = new List<TOut>(Count);
-                    var Destination = CollectionsMarshal.AsSpan(List);
-
-                    for (int i = 0; i < Count; i++)
-                    {
-                        Destination[i] = Converter(Span[i]);
-                    }
-
-                    return List;
-                }
-            );
+            
         }
 
 
         public T[] ToArray()
         {
-            return UseReadOnlySpan(Count, static Span => Span.ToArray());
+            return AsSpan().ToArray();
         }
 
         public List<T> ToList()
         {
-            return UseReadOnlySpan
-            (
-                Count,
-                Span =>
-                {
-                    var List = new List<T>(Span.Length);
-                    Span.CopyTo(CollectionsMarshal.AsSpan(List));
-                    return List;
-                }
-            );
+            return AsSpan().ToList();
         }
 
 
-        public new void UseSpan(Action<Span<T>> Action)
+        public new void UseSpan(Action<ArenaSpan<T>> Action)
         {
             base.UseSpan(Action);
         }
 
-        public new void UseSpan(int Count, Action<Span<T>> Action)
+        public new void UseSpan(int Start, Action<ArenaSpan<T>> Action)
         {
-            base.UseSpan(Count, Action);
+            base.UseSpan(Start, Action);
         }
 
-        public new void UseSpan(int Start, int Count, Action<Span<T>> Action)
+        public new void UseSpan(int Start, int Count, Action<ArenaSpan<T>> Action)
         {
             base.UseSpan(Start, Count, Action);
         }
 
 
-        public new void UseSpan<I>(I Other, Action<Span<T>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(I Other, Action<ArenaSpan<T>, I> Action) where I : allows ref struct
         {
             base.UseSpan(Other, Action);
         }
 
-        public new void UseSpan<I>(int Count, I Other, Action<Span<T>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(int Start, I Other, Action<ArenaSpan<T>, I> Action) where I : allows ref struct
         {
-            base.UseSpan(Count, Other, Action);
+            base.UseSpan(Start, Other, Action);
         }
 
-        public new void UseSpan<I>(int Start, int Count, I Other, Action<Span<T>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(int Start, int Count, I Other, Action<ArenaSpan<T>, I> Action) where I : allows ref struct
         {
             base.UseSpan(Start, Count, Other, Action);
         }
 
 
-        public new R UseSpan<R>(Func<Span<T>, R> Function)
+        public new R UseSpan<R>(Func<ArenaSpan<T>, R> Function)
         {
             return base.UseSpan(Function);
         }
 
-        public new R UseSpan<R>(int Count, Func<Span<T>, R> Function)
+        public new R UseSpan<R>(int Start, Func<ArenaSpan<T>, R> Function)
         {
-            return base.UseSpan(Count, Function);
+            return base.UseSpan(Start, Function);
         }
 
-        public new R UseSpan<R>(int Start, int Count, Func<Span<T>, R> Function)
+        public new R UseSpan<R>(int Start, int Count, Func<ArenaSpan<T>, R> Function)
         {
             return base.UseSpan(Start, Count, Function);
         }
 
 
-        public new R UseSpan<I, R>(I Other, Func<Span<T>, I, R> Action) where I : allows ref struct
+        public new R UseSpan<I, R>(I Other, Func<ArenaSpan<T>, I, R> Function) where I : allows ref struct where R : allows ref struct
         {
-            return base.UseSpan(Other, Action);
+            return base.UseSpan(Other, Function);
         }
 
-        public new R UseSpan<I, R>(int Count, I Other, Func<Span<T>, I, R> Action) where I : allows ref struct
+        public new R UseSpan<I, R>(int Start, I Other, Func<ArenaSpan<T>, I, R> Function) where I : allows ref struct where R : allows ref struct
         {
-            return base.UseSpan(Count, Other, Action);
+            return base.UseSpan(Start, Other, Function);
         }
 
-        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<Span<T>, I, R> Action) where I : allows ref struct
+        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<ArenaSpan<T>, I, R> Function) where I : allows ref struct where R : allows ref struct
         {
-            return base.UseSpan(Start, Count, Other, Action);
-        }
-
-
-        public new void UseReadOnlySpan(Action<ReadOnlySpan<T>> Action)
-        {
-            base.UseReadOnlySpan(Action);
-        }
-
-        public new void UseReadOnlySpan(int Count, Action<ReadOnlySpan<T>> Action)
-        {
-            base.UseReadOnlySpan(Count, Action);
-        }
-
-        public new void UseReadOnlySpan(int Start, int Count, Action<ReadOnlySpan<T>> Action)
-        {
-            base.UseReadOnlySpan(Start, Count, Action);
+            return base.UseSpan(Start, Count, Other, Function);
         }
 
 
-        public new void UseReadOnlySpan<I>(I Other, Action<ReadOnlySpan<T>, I> Action) where I : allows ref struct
+        public void Expand(int Capacity)
         {
-            base.UseReadOnlySpan(Other, Action);
+            Extend(Count + Capacity);
         }
 
-        public new void UseReadOnlySpan<I>(int Count, I Other, Action<ReadOnlySpan<T>, I> Action) where I : allows ref struct
+        public void EnsureCapacity(int Capacity)
         {
-            base.UseReadOnlySpan(Count, Other, Action);
+            Extend(Capacity);
         }
 
-        public new void UseReadOnlySpan<I>(int Start, int Count, I Other, Action<ReadOnlySpan<T>, I> Action) where I : allows ref struct
+        
+        public ArenaItemEnumerator<T> GetEnumerator()
         {
-            base.UseReadOnlySpan(Start, Count, Other, Action);
+            return GetEnumerator(0, Count);
         }
-
-
-        public new R UseReadOnlySpan<R>(Func<ReadOnlySpan<T>, R> Function)
-        {
-            return base.UseReadOnlySpan(Function);
-        }
-
-        public new R UseReadOnlySpan<R>(int Count, Func<ReadOnlySpan<T>, R> Function)
-        {
-            return base.UseReadOnlySpan(Count, Function);
-        }
-
-        public new R UseReadOnlySpan<R>(int Start, int Count, Func<ReadOnlySpan<T>, R> Function)
-        {
-            return base.UseReadOnlySpan(Start, Count, Function);
-        }
-
-
-        public new R UseReadOnlySpan<I, R>(I Other, Func<ReadOnlySpan<T>, I, R> Action) where I : allows ref struct
-        {
-            return base.UseReadOnlySpan(Other, Action);
-        }
-
-        public new R UseReadOnlySpan<I, R>(int Count, I Other, Func<ReadOnlySpan<T>, I, R> Action) where I : allows ref struct
-        {
-            return base.UseReadOnlySpan(Count, Other, Action);
-        }
-
-        public new R UseReadOnlySpan<I, R>(int Start, int Count, I Other, Func<ReadOnlySpan<T>, I, R> Action) where I : allows ref struct
-        {
-            return base.UseReadOnlySpan(Start, Count, Other, Action);
-        }
-
-
-        public new void Expand(int Additional)
-        {
-            base.Expand(Additional);
-        }
-
-        public new void EnsureCapacity(int Capacity)
-        {
-            base.EnsureCapacity(Capacity);
-        }
-
-
-        private void ThrowIfWithout(int Index)
-        {
-            ArgumentOutOfRangeException.ThrowIfWithout(Index, Count);
-        }
-
-        private void ThrowIfWithout(int Index, int Count)
-        {
-            int TotalCount = this.Count;
-            ArgumentOutOfRangeException.ThrowIfWithout(Index, TotalCount);
-            ArgumentOutOfRangeException.ThrowIfWithout(Index + Count, TotalCount);
-        }
-
+        
 
         private void InsertItems(int Index, IEnumerable<T> Items, out int Count)
         {
@@ -741,11 +485,12 @@ namespace Zion
                 Expand(TotalIndex + LocalIndex);
                 UseSpan
                 (
-                    TotalIndex, LocalIndex, Span =>
+                    TotalIndex, LocalIndex, Buffer.AsSpan(0, LocalIndex),
+                    static (Span, Other) =>
                     {
-                        for (int i = 0; i < LocalIndex; i++)
+                        for (int i = 0; i < Other.Length; i++)
                         {
-                            Span[i] = Buffer[i];
+                            Span[i] = Other[i];
                         }
                     }
                 );

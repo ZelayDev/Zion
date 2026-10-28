@@ -1,61 +1,40 @@
-﻿using System.Numerics;
+﻿using System.Buffers;
+using System.Drawing;
+using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
-using Zion.Vectors;
 using static System.Buffers.Binary.BinaryPrimitives;
-using Vector2 = Zion.Vectors.Vector2;
-using Vector3 = Zion.Vectors.Vector3;
 
 namespace Zion
 {
     public sealed class ArenaStream : ArenaCollection<byte>
     {
-        public new int Length
+        private const int BufferThreshold = 256;
+        
+        private int Position;
+
+        public int Length
         {
             get;
             private set
             {
-                Modify();
                 field = value;
-            }
-        }
-
-        private int _Position;
-        public int Position
-        {
-            get => _Position;
-            set
-            {
-                ArgumentOutOfRangeException.ThrowIfNegative(value);
-                Modify();
-                _Position = value;
+                UpdateLimit(value);
             }
         }
 
 
-        public new byte this[int Index]
+        public byte this[int Index]
         {
-            get => base[Index];
-            set => base[Index] = value;
+            get => GetValueAt(Index);
+            set => SetValueAt(Index, value);
         }
 
-        public new byte this[Index Index]
+        public byte this[Index Index]
         {
-            get => base[Index];
-            set => base[Index] = value;
-        }
-
-
-        protected override int GetSpanLimit() => -1;
-
-        protected override IEnumerator<int> GetIndexEnumerator()
-        {
-            int Count = Length;
-            for (int i = 0; i < Count; i++)
-            {
-                yield return i;
-            }
+            get => GetValueAt(Index);
+            set => SetValueAt(Index, value);
         }
 
 
@@ -68,7 +47,6 @@ namespace Zion
         {
             Reserve(1);
             this[Position] = Value;
-            UpdateLengthFromPosition(Position + 1);
         }
 
         public void Write(sbyte Value)
@@ -76,304 +54,464 @@ namespace Zion
             Write((byte)Value);
         }
 
-        public void Write(char Value)
-        {
-            Write((ushort)Value);
-        }
-
-        public void Write(decimal Value)
-        {
-            Reserve(sizeof(decimal));
-            UseSpan
-            (
-                Span =>
-                {
-                    var Destination = MemoryMarshal.Cast<byte, int>(Span);
-                    decimal.GetBits(Value, Destination);
-                    UpdateLengthFromPosition(_Position + sizeof(decimal));
-                }
-            );
-        }
-
-        public void Write(double Value)
-        {
-            Write(Value, sizeof(double), WriteDoubleLittleEndian);
-        }
-
-        public void Write(float Value)
-        {
-            Write(Value, sizeof(float), WriteSingleLittleEndian);
-        }
-
         public void Write(int Value)
         {
-            Write(Value, sizeof(int), WriteInt32LittleEndian);
+            Reserve(sizeof(int));
+
+            Span<byte> Buffer = stackalloc byte[sizeof(int)];
+            WriteInt32LittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, sizeof(int)));
+
+            Advance(sizeof(int));
         }
 
         public void Write(uint Value)
         {
-            Write(Value, sizeof(uint), WriteUInt32LittleEndian);
+            const int Size = sizeof(uint);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteUInt32LittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(long Value)
         {
-            Write(Value, sizeof(long), WriteInt64LittleEndian);
+            const int Size = sizeof(long);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteInt64LittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(ulong Value)
         {
-            Write(Value, sizeof(ulong), WriteUInt64LittleEndian);
+            const int Size = sizeof(ulong);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteUInt64LittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(short Value)
         {
-            Write(Value, sizeof(short), WriteInt16LittleEndian);
+            const int Size = sizeof(short);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteInt16LittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(ushort Value)
         {
-            Write(Value, sizeof(ushort), WriteUInt16LittleEndian);
+            const int Size = sizeof(ushort);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteUInt32LittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
+        }
+
+        public void Write(float Value)
+        {
+            const int Size = sizeof(float);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteSingleLittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
+        }
+
+        public void Write(double Value)
+        {
+            const int Size = sizeof(double);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteDoubleLittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
+        }
+
+        public void Write(decimal Value)
+        {
+            const int Size = sizeof(decimal);
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            Decimal.GetBits(Value, MemoryMarshal.Cast<byte, int>(Buffer));
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
+        }
+
+        public void Write(char Value)
+        {
+            Write((ushort)Value);
         }
 
         public void Write(string Value)
         {
             ArgumentNullException.ThrowIfNull(Value);
 
-            int Length = Encoding.UTF8.GetByteCount(Value);
-            
-            Write7BitEncodedInt(Length);
-            Reserve(Length);
+            var MaxLength = Value.Length * 3;
 
-            UseSpan
-            (
-                Span => Encoding.UTF8.GetBytes(Value, Span)
-            );
+            if (MaxLength <= BufferThreshold)
+            {
+                Span<byte> Buffer = stackalloc byte[MaxLength];
 
-            UpdateLengthFromPosition(Position + Length);
+                var Length = Encoding.UTF8.GetBytes(Value, Buffer);
+
+                Write7BitEncoded(Length);
+                Reserve(Length);
+
+                Buffer.CopyTo(AsSpan(Position, Length));
+
+                Advance(Length);
+            }
+            else
+            {
+                var Encoder = Encoding.UTF8.GetEncoder();
+                var Length = Encoding.UTF8.GetByteCount(Value);
+
+                ReadOnlySpan<char> Chars = Value;
+
+                Write7BitEncoded(Length);
+                Reserve(Length);
+
+                foreach (var Chunk in AsSpan(Position, Length).Chunks)
+                {
+                    Encoder.Convert(Chars, Chunk, false, out var CharsUsed, out _, out _);
+                    Chars = Chars.Slice(CharsUsed);
+
+                    if (Chars.IsEmpty)
+                    {
+                        break;
+                    }
+                }
+
+                if (!Chars.IsEmpty)
+                {
+                    Encoder.Convert(Chars, Span<byte>.Empty, true, out _, out _, out _);
+                }
+
+                Advance(Length);
+            }
         }
 
 
         public void Write(Half Value)
         {
-            Write(Value, 2, WriteHalfLittleEndian);
+            const int Size = 2;
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteHalfLittleEndian(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(Index Value)
         {
-            Reserve(4);
-            Write(Unsafe.As<Index, uint>(ref Value));
+            Write(Unsafe.As<Index, int>(ref Value));
         }
 
         public void Write(Range Value)
         {
-            Reserve(2 * (sizeof(bool) + sizeof(int)));
-            WriteIndex(Value.Start);
-            WriteIndex(Value.End);
+            const int Size = 8;
+            Reserve(Size);
+
+            var Start = Value.Start;
+            var End = Value.End;
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            WriteInt32LittleEndian(Buffer, Unsafe.As<Index, int>(ref Start));
+            WriteInt32LittleEndian(Buffer.Slice(4), Unsafe.As<Index, int>(ref End));
+
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(BigInteger Value)
         {
-            int Position = _Position;
-            int Length = Value.GetByteCount();
+            var Length = Value.GetByteCount();
 
-            Reserve(Length + 4);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteInt32LittleEndian(Span, Length);
-                    Value.TryWriteBytes(Span.Slice(4), out _);   
-                }
-            );
-            UpdateLengthFromPosition(Position + Length + 4);
+            Write7BitEncoded(Length);
+            Reserve(Length);
+
+            var Span = AsSpan(Position, Length);
+            
+            if (Length <= BufferThreshold)
+            {
+                Span<byte> Buffer = stackalloc byte[Length];
+                
+                Value.TryWriteBytes(Buffer, out _);
+                Buffer.CopyTo(Span);
+            }
+            else
+            {
+                var Buffer = ArrayPool<byte>.Shared.Rent(Length);
+                
+                Value.TryWriteBytes(Buffer, out _);
+                Buffer.CopyTo(Span);
+                
+                ArrayPool<byte>.Shared.Return(Buffer);
+            }
+            
+            Advance(Length);
         }
 
 
         public void Write(RGBColor Value)
         {
-            Reserve(3);
-            UseSpan
-            (
-                Span =>
-                {
-                    Span[0] = Value.R;
-                    Span[1] = Value.G;
-                    Span[2] = Value.B;
-                }
-            );
-            UpdateLengthFromPosition(_Position + 3);
+            const int Size = 3;
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
         public void Write(RGBAColor Value)
         {
-            Reserve(4);
-            UseSpan
-            (
-                Span =>
-                {
-                    Span[0] = Value.R;
-                    Span[1] = Value.G;
-                    Span[2] = Value.B;
-                    Span[3] = Value.A;
-                }
-            );
-            UpdateLengthFromPosition(_Position + 4);
+            const int Size = 4;
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+
+            Advance(Size);
         }
 
 
-        public void Write(Vector2 Value)
+        public void Write(Vectors.Vector2 Value)
         {
-            Reserve(8);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteSingleLittleEndian(Span, Value.X);
-                    WriteSingleLittleEndian(Span.Slice(4), Value.Y);
-                }
-            );
-            UpdateLengthFromPosition(_Position + 8);
-        }
+            var Size = Unsafe.SizeOf<Vectors.Vector2>();
+            Reserve(Size);
 
-        public void Write(Vector2Int Value)
-        {
-            Reserve(8);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteInt32LittleEndian(Span, Value.X);
-                    WriteInt32LittleEndian(Span.Slice(4), Value.Y);
-                }
-            );
-            UpdateLengthFromPosition(_Position + 8);
-        }
-
-        public void Write(Vector3 Value)
-        {
-            Reserve(12);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteSingleLittleEndian(Span, Value.X);
-                    WriteSingleLittleEndian(Span.Slice(4), Value.Y);
-                    WriteSingleLittleEndian(Span.Slice(8), Value.Z);
-                }
-            );
-            UpdateLengthFromPosition(_Position + 12);
-        }
-
-        public void Write(Vector3Int Value)
-        {
-            Reserve(12);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteInt32LittleEndian(Span, Value.X);
-                    WriteInt32LittleEndian(Span.Slice(4), Value.Y);
-                    WriteInt32LittleEndian(Span.Slice(8), Value.Z);
-                }
-            );
-            UpdateLengthFromPosition(_Position + 12);
-        }
-
-        public void Write(System.Numerics.Vector2 Value)
-        {
-            Reserve(8);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteSingleLittleEndian(Span, Value.X);
-                    WriteSingleLittleEndian(Span.Slice(4), Value.Y);
-                }
-            );
-            UpdateLengthFromPosition(_Position + 8);
-        }
-
-        public void Write(System.Numerics.Vector3 Value)
-        {
-            Reserve(8);
-            UseSpan
-            (
-                Span =>
-                {
-                    WriteSingleLittleEndian(Span, Value.X);
-                    WriteSingleLittleEndian(Span.Slice(4), Value.Y);
-                }
-            );
-            UpdateLengthFromPosition(_Position + 8);
-        }
-
-
-        public void Write(ArenaStream Value)
-        {
-            int Length = Value.Length;
-            Reserve(Length);
-
-            UseSpan( Value.CopyTo);
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
             
-            UpdateLengthFromPosition(_Position + Length);
+            Advance(Size);
         }
 
-
-        public void Write7BitEncodedInt(int Value)
+        public void Write(Vectors.Vector2Int Value)
         {
-            Write7BitEncodedUInt((uint)((Value << 1) ^ (Value >> 31)));
-        }
+            var Size = Unsafe.SizeOf<Vectors.Vector2Int>();
+            Reserve(Size);
 
-        public void Write7BitEncodedInt64(long Value)
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+            
+            Advance(Size);
+        }
+        
+        public void Write(Vectors.Vector2<byte> Value)
         {
-            Write7BitEncodedUInt64((ulong)((Value << 1) ^ (Value >> 63)));
+            WriteVector<byte>(Value);
         }
 
-        public void Write7BitEncodedUInt(uint Value)
+        public void Write(Vectors.Vector2<sbyte> Value)
+        {
+            WriteVector<sbyte>(Value);
+        }
+
+        public void Write(Vectors.Vector2<int> Value)
+        {
+            WriteVector<int>(Value);
+        }
+
+        public void Write(Vectors.Vector2<uint> Value)
+        {
+            WriteVector<uint>(Value);
+        }
+
+        public void Write(Vectors.Vector2<long> Value)
+        {
+            WriteVector<long>(Value);
+        }
+
+        public void Write(Vectors.Vector2<ulong> Value)
+        {
+            WriteVector<ulong>(Value);
+        }
+
+        public void Write(Vectors.Vector2<short> Value)
+        {
+            WriteVector<short>(Value);
+        }
+
+        public void Write(Vectors.Vector2<ushort> Value)
+        {
+            WriteVector<ushort>(Value);
+        }
+
+        public void Write(Vectors.Vector2<float> Value)
+        {
+            WriteVector<float>(Value);
+        }
+
+        public void Write(Vectors.Vector2<double> Value)
+        {
+            WriteVector<double>(Value);
+        }
+
+        public void Write(Vectors.Vector2<decimal> Value)
+        {
+            WriteVector<decimal>(Value);
+        }
+        
+        
+        public void Write(Vectors.Vector3 Value)
+        {
+            var Size = Unsafe.SizeOf<Vectors.Vector3>();
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+            
+            Advance(Size);
+        }
+        
+        public void Write(Vectors.Vector3Int Value)
+        {
+            var Size = Unsafe.SizeOf<Vectors.Vector3Int>();
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+            
+            Advance(Size);
+        }
+
+        public void Write(Vectors.Vector3<byte> Value)
+        {
+            WriteVector<byte>(Value);
+        }
+
+        public void Write(Vectors.Vector3<sbyte> Value)
+        {
+            WriteVector<sbyte>(Value);
+        }
+
+        public void Write(Vectors.Vector3<int> Value)
+        {
+            WriteVector<int>(Value);
+        }
+
+        public void Write(Vectors.Vector3<uint> Value)
+        {
+            WriteVector<uint>(Value);
+        }
+
+        public void Write(Vectors.Vector3<long> Value)
+        {
+            WriteVector<long>(Value);
+        }
+
+        public void Write(Vectors.Vector3<ulong> Value)
+        {
+            WriteVector<ulong>(Value);
+        }
+
+        public void Write(Vectors.Vector3<short> Value)
+        {
+            WriteVector<short>(Value);
+        }
+
+        public void Write(Vectors.Vector3<ushort> Value)
+        {
+            WriteVector<ushort>(Value);
+        }
+
+        public void Write(Vectors.Vector3<float> Value)
+        {
+            WriteVector<float>(Value);
+        }
+
+        public void Write(Vectors.Vector3<double> Value)
+        {
+            WriteVector<double>(Value);
+        }
+
+        public void Write(Vectors.Vector3<decimal> Value)
+        {
+            WriteVector<decimal>(Value);
+        }
+
+
+        public void Write7BitEncoded(int Value)
+        {
+            Write7BitEncoded((uint)((Value << 1) ^ (Value >> 31)));
+        }
+
+        public void Write7BitEncoded(long Value)
+        {
+            Write7BitEncoded((ulong)((Value << 1) ^ (Value >> 63)));
+        }
+
+        public void Write7BitEncoded(uint Value)
         {
             Reserve(5);
+
             var Index = 0;
+            var Span = AsSpan(0, 5);
 
-            UseSpan
-            (
-                Span =>
-                {
-                    while (Value >= 0x80)
-                    {
-                        Span[Index++] = (byte)(Value | 0x80);
-                        Value >>= 7;
-                    }
-                    Span[Index++] = (byte)Value;
-                }
-            );
+            while (Value >= 0x80)
+            {
+                Span[Index++] = (byte)(Value | 0x80);
+                Value >>= 7;
+            }
+            Span[Index++] = (byte)Value;
 
-            UpdateLengthFromPosition(_Position + Index);
+            Advance(Index);
         }
 
-        public void Write7BitEncodedUInt64(ulong Value)
+        public void Write7BitEncoded(ulong Value)
         {
             Reserve(10);
+
             var Index = 0;
+            var Span = AsSpan(0, 10);
 
-            UseSpan
-            (
-                Span =>
-                {
-                    while (Value >= 0x80)
-                    {
-                        Span[Index++] = (byte)(Value | 0x80);
-                        Value >>= 7;
-                    }
-                    Span[Index++] = (byte)Value;
-                }
-            );
+            while (Value >= 0x80)
+            {
+                Span[Index++] = (byte)(Value | 0x80);
+                Value >>= 7;
+            }
+            Span[Index++] = (byte)Value;
 
-            UpdateLengthFromPosition(_Position + Index);
+            Advance(Index);
         }
 
-        public void Write7BitEncodedIndex(Index Value)
+        public void Write7BitEncoded(Index Value)
         {
-            Write7BitEncodedUInt(Unsafe.As<Index, uint>(ref Value));
+            Write7BitEncoded(Unsafe.As<Index, uint>(ref Value));
         }
 
 
@@ -381,11 +519,7 @@ namespace Zion
         {
             Reserve(Size);
             UseSpan
-            (
-                Span =>
-                {
-                    Write(Span, Value);
-                }
+            (Span => { Write(Span, Value); }
             );
             UpdateLengthFromPosition(_Position + Size);
         }
@@ -399,194 +533,168 @@ namespace Zion
 
         public byte[] ToArray()
         {
-            return ToArray(0, Length);
+            return AsSpan().ToArray();
         }
 
 
-        public new void UseSpan(Action<Span<byte>> Action)
+        public new void UseSpan(Action<ArenaSpan<byte>> Action)
         {
-            base.UseSpan(Action);
+            base.UseSpan(Position, Action);
+            Position = Length;
         }
 
-        public new void UseSpan(int Count, Action<Span<byte>> Action)
+        public new void UseSpan(int Count, Action<ArenaSpan<byte>> Action)
         {
-            base.UseSpan(_Position, Count, Action);
-            UpdateLengthFromPosition(Count);
+            base.UseSpan(Position, Count, Action);
+            Advance(Count);
         }
 
-        public new void UseSpan(int Start, int Count, Action<Span<byte>> Action)
+        public new void UseSpan(int Start, int Count, Action<ArenaSpan<byte>> Action)
         {
+            EnsureCapacity(Start + Count);
             base.UseSpan(Start, Count, Action);
-            UpdateLengthFromPosition(Start + Count);
         }
 
 
-        public new void UseSpan<I>(I Other, Action<Span<byte>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(I Other, Action<ArenaSpan<byte>, I> Action) where I : allows ref struct
         {
-            base.UseSpan(Other, Action);
+            base.UseSpan(Position, Other, Action);
+            Position = Length;
         }
 
-        public new void UseSpan<I>(int Count, I Other, Action<Span<byte>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(int Count, I Other, Action<ArenaSpan<byte>, I> Action) where I : allows ref struct
         {
-            base.UseSpan(_Position, Count, Other, Action);
-            UpdateLengthFromPosition(Count);
+            base.UseSpan(Position, Count, Other, Action);
+            Advance(Count);
         }
 
-        public new void UseSpan<I>(int Start, int Count, I Other, Action<Span<byte>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(int Start, int Count, I Other, Action<ArenaSpan<byte>, I> Action)
+            where I : allows ref struct
         {
+            EnsureCapacity(Start + Count);
             base.UseSpan(Start, Count, Other, Action);
-            UpdateLengthFromPosition(Start + Count);
         }
 
 
-        public new R UseSpan<R>(Func<Span<byte>, R> Function)
+        public new R UseSpan<R>(Func<ArenaSpan<byte>, R> Function)
         {
-            return base.UseSpan(Function);
-        }
-
-        public new R UseSpan<R>(int Count, Func<Span<byte>, R> Function)
-        {
-            var Result = base.UseSpan(_Position, Count, Function);
-            UpdateLengthFromPosition(Count);
+            var Result = base.UseSpan(Position, Function);
+            Position = Length;
             return Result;
         }
 
-        public new R UseSpan<R>(int Start, int Count, Func<Span<byte>, R> Function)
+        public new R UseSpan<R>(int Count, Func<ArenaSpan<byte>, R> Function)
         {
-            var Result = base.UseSpan(Start, Count, Function);
-            UpdateLengthFromPosition(Start + Count);
+            var Result = base.UseSpan(Position, Count, Function);
+            Advance(Count);
             return Result;
         }
 
-
-        public new R UseSpan<I, R>(I Other, Func<Span<byte>, I, R> Action) where I : allows ref struct
+        public new R UseSpan<R>(int Start, int Count, Func<ArenaSpan<byte>, R> Function)
         {
-            return base.UseSpan(Other, Action);
+            EnsureCapacity(Start + Count);
+            return base.UseSpan(Start, Count, Function);
         }
 
-        public new R UseSpan<I, R>(int Count, I Other, Func<Span<byte>, I, R> Action) where I : allows ref struct
+
+        public new R UseSpan<I, R>(I Other, Func<ArenaSpan<byte>, I, R> Function) where I : allows ref struct
         {
-            var Result = base.UseSpan(_Position, Count, Other, Action);
-            UpdateLengthFromPosition(Count);
+            var Result = base.UseSpan(Other, Function);
+            Position = Length;
             return Result;
         }
 
-        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<Span<byte>, I, R> Action) where I : allows ref struct
+        public new R UseSpan<I, R>(int Count, I Other, Func<ArenaSpan<byte>, I, R> Function) where I : allows ref struct
         {
-            var Result = base.UseSpan(Start, Count, Other, Action);
-            UpdateLengthFromPosition(Start + Count);
+            var Result = base.UseSpan(Position, Count, Other, Function);
+            Advance(Count);
             return Result;
         }
 
-
-        public new void UseReadOnlySpan(Action<ReadOnlySpan<byte>> Action)
+        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<ArenaSpan<byte>, I, R> Function)
+            where I : allows ref struct
         {
-            base.UseReadOnlySpan(Action);
-        }
-
-        public new void UseReadOnlySpan(int Count, Action<ReadOnlySpan<byte>> Action)
-        {
-            base.UseReadOnlySpan(_Position, Count, Action);
-        }
-
-        public new void UseReadOnlySpan(int Start, int Count, Action<ReadOnlySpan<byte>> Action)
-        {
-            base.UseReadOnlySpan(Start, Count, Action);
+            EnsureCapacity(Start + Count);
+            return base.UseSpan(Start, Count, Other, Function);
         }
 
 
-        public new void UseReadOnlySpan<I>(I Other, Action<ReadOnlySpan<byte>, I> Action) where I : allows ref struct
+        public void CopyTo(Span<byte> Destination)
         {
-            base.UseReadOnlySpan(Other, Action);
+            AsSpan().CopyTo(Destination);
         }
 
-        public new void UseReadOnlySpan<I>(int Count, I Other, Action<ReadOnlySpan<byte>, I> Action) where I : allows ref struct
+        public void CopyTo(ArenaSpan<byte> Destination)
         {
-            base.UseReadOnlySpan(_Position, Count, Other, Action);
+            AsSpan().CopyTo(Destination);
         }
 
-        public new void UseReadOnlySpan<I>(int Start, int Count, I Other, Action<ReadOnlySpan<byte>, I> Action) where I : allows ref struct
+        public void CopyTo(Stream Destination)
         {
-            base.UseReadOnlySpan(Start, Count, Other, Action);
-        }
-
-
-        public new R UseReadOnlySpan<R>(Func<ReadOnlySpan<byte>, R> Function)
-        {
-            return base.UseReadOnlySpan(Function);
-        }
-
-        public new R UseReadOnlySpan<R>(int Count, Func<ReadOnlySpan<byte>, R> Function)
-        {
-            return base.UseReadOnlySpan(_Position, Count, Function);
-        }
-
-        public new R UseReadOnlySpan<R>(int Start, int Count, Func<ReadOnlySpan<byte>, R> Function)
-        {
-            return base.UseReadOnlySpan(Start, Count, Function);
-        }
-
-
-        public new R UseReadOnlySpan<I, R>(I Other, Func<ReadOnlySpan<byte>, I, R> Action) where I : allows ref struct
-        {
-            return base.UseReadOnlySpan(Other, Action);
-        }
-
-        public new R UseReadOnlySpan<I, R>(int Count, I Other, Func<ReadOnlySpan<byte>, I, R> Action) where I : allows ref struct
-        {
-            return base.UseReadOnlySpan(_Position, Count, Other, Action);
-        }
-
-        public new R UseReadOnlySpan<I, R>(int Start, int Count, I Other, Func<ReadOnlySpan<byte>, I, R> Action) where I : allows ref struct
-        {
-            return base.UseReadOnlySpan(Start, Count, Other, Action);
-        }
-
-
-        public new void CopyTo(Span<byte> Destination)
-        {
-            CopyTo(0, Length, Destination);
-        }
-
-        public void CopyTo(Stream Stream)
-        {
-            ArgumentNullException.ThrowIfNull(Stream);
-            UseReadOnlySpan(Span => Stream.Write(Span.Slice(0, Length)));
-        }
-
-
-        public void Reserve(int Size)
-        {
-            int Required = _Position + Size;
-
-            if (Required > base.Length)
+            foreach (var Span in AsSpan().Chunks)
             {
-                int NewSize = base.Length < 256
-                    ? Math.Max(base.Length * 2, Required)
-                    : Math.Max(base.Length + 256, Required);
-
-                Expand(NewSize);
+                Destination.Write(Span);
             }
         }
 
-        public new void TrimExcess(int Size)
+        public void CopyTo(ArenaStream Destination)
         {
-            base.TrimExcess(Size);
+            -
+        }
+
+
+        public void Reserve(int Capacity)
+        {
+            EnsureCapacity(Position + Capacity);
+        }
+
+        public void EnsureCapacity(int Capacity)
+        {
+            Extend(Capacity);
+        }
+
+        public void TrimExcess(int Size)
+        {
+            Trim(Math.Min(Length, Size));
         }
 
         public void TrimExcess()
         {
-            TrimExcess(Length);
+            Trim(Length);
         }
 
 
-        private void UpdateLengthFromPosition(int Position)
+        private void Advance(int Offset)
         {
-            _Position = Position;
-            if (Position > Length)
+            var NewPosition = Position += Offset;
+            if (NewPosition > Length)
             {
-                Length = Position;
+                Length = NewPosition;
             }
+        }
+
+        private void WriteVector<T>(Vectors.Vector2<T> Value) where T : INumber<T>
+        {
+            var Size = Unsafe.SizeOf<Vectors.Vector2<T>>();
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+            
+            Advance(Size);
+        }
+        
+        private void WriteVector<T>(Vectors.Vector3<T> Value) where T : INumber<T>
+        {
+            var Size = Unsafe.SizeOf<Vectors.Vector3<T>>();
+            Reserve(Size);
+
+            Span<byte> Buffer = stackalloc byte[Size];
+            MemoryMarshal.Write(Buffer, Value);
+            Buffer.CopyTo(AsSpan(Position, Size));
+            
+            Advance(Size);
         }
     }
 }

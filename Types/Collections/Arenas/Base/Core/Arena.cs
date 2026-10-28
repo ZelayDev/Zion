@@ -146,6 +146,10 @@ namespace Zion
             {
                 throw new ArgumentException("Collection is not from the arena collection.");
             }
+            if (Collection.IsDisposed)
+            {
+                throw new ObjectDisposedException(Collection.GetType().FullName);
+            }
         }
 
         private ArenaBridge<T> GetNewBridge(int Capacity)

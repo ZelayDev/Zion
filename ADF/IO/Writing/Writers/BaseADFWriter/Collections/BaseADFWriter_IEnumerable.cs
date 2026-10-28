@@ -307,7 +307,7 @@ namespace Zion.ADF
                 while (Enumerator.MoveNext())
                 {
                     var Id = Registry.GetOrAdd(Enumerator.Current);
-                    Stream.Write7BitEncodedUInt(Id);
+                    Stream.Write7BitEncoded(Id);
                 }
             }
             else

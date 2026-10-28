@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 
 namespace Zion
 {
-    public readonly struct ArenaBridge<T>
+    internal readonly struct ArenaBridge<T>
     {
         private readonly Arena<T>       Source;
         private readonly ArenaRegion<T> Region;
@@ -58,6 +58,11 @@ namespace Zion
 
 
         internal void Clear()
+        {
+            Clear(Length);
+        }
+        
+        internal void Clear(int Length)
         {
             if (Length == 0)
             {

@@ -58,7 +58,7 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedInt(Value);
+                Target.BaseStream.Write7BitEncoded(Value);
             }
             else
             {
@@ -70,7 +70,7 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedInt64(Value);
+                Target.BaseStream.Write7BitEncoded(Value);
             }
             else
             {
@@ -87,7 +87,7 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedUInt(Value);
+                Target.BaseStream.Write7BitEncoded(Value);
             }
             else
             {
@@ -99,7 +99,7 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedUInt64(Value);
+                Target.BaseStream.Write7BitEncoded(Value);
             }
             else
             {
@@ -133,7 +133,7 @@ namespace Zion.ADF
 
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedUInt(Id);
+                Target.BaseStream.Write7BitEncoded(Id);
             }
             else
             {
@@ -150,7 +150,7 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedIndex(Value);
+                Target.BaseStream.Write7BitEncoded(Value);
             }
             else
             {
@@ -162,8 +162,8 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedIndex(Value.Start);
-                Target.BaseStream.Write7BitEncodedIndex(Value.End);
+                Target.BaseStream.Write7BitEncoded(Value.Start);
+                Target.BaseStream.Write7BitEncoded(Value.End);
             }
             else
             {
@@ -197,8 +197,8 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedInt(Value.X);
-                Target.BaseStream.Write7BitEncodedInt(Value.Y);
+                Target.BaseStream.Write7BitEncoded(Value.X);
+                Target.BaseStream.Write7BitEncoded(Value.Y);
             }
             else
             {
@@ -210,9 +210,9 @@ namespace Zion.ADF
         {
             if (Context.Compression)
             {
-                Target.BaseStream.Write7BitEncodedInt(Value.X);
-                Target.BaseStream.Write7BitEncodedInt(Value.Y);
-                Target.BaseStream.Write7BitEncodedInt(Value.Z);
+                Target.BaseStream.Write7BitEncoded(Value.X);
+                Target.BaseStream.Write7BitEncoded(Value.Y);
+                Target.BaseStream.Write7BitEncoded(Value.Z);
             }
             else
             {

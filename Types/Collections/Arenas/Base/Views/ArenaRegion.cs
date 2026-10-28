@@ -62,6 +62,35 @@ namespace Zion
         }
 
         
+        public ArenaRegion<T> Slice(int Start)
+        {
+            if (Start < 0 || Start >= Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(Start));
+            }
+            if (Start == 0)
+            {
+                return this;
+            }
+
+            return new ArenaRegion<T>(Chunks, Start, Length - Start);
+        }
+
+        public ArenaRegion<T> Slice(int Start, int Count)
+        {
+            if (Start < 0 || Start >= Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(Start));
+            }
+            if (Count < 0 || Start + Count > Length)
+            {
+                throw new ArgumentOutOfRangeException(nameof(Length));
+            }
+
+            return new ArenaRegion<T>(Chunks, Start, Length - Start);
+        }
+        
+        
         public ArenaSpan<T> AsSpan()
         {
             return new ArenaSpan<T>(this);
