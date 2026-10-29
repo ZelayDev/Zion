@@ -149,7 +149,7 @@ namespace Zion
 
                 Tail.UseSpan
                 (
-                    AsSpan(TotalCount, Tail.Length),
+                    AsSpan(TotalCount, Tail.Count),
                     static (TailSpan, Destination) => TailSpan.CopyTo(Destination)
                 );
 

@@ -1,5 +1,4 @@
 ﻿using System.Buffers;
-using System.Drawing;
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
@@ -515,22 +514,6 @@ namespace Zion
         }
 
 
-        private void Write<T>(T Value, int Size, Action<Span<byte>, T> Write)
-        {
-            Reserve(Size);
-            UseSpan
-            (Span => { Write(Span, Value); }
-            );
-            UpdateLengthFromPosition(_Position + Size);
-        }
-
-        private void WriteIndex(Index Value)
-        {
-            this[_Position++] = Value.IsFromEnd ? (byte)1 : (byte)0;
-            Write(Value.Value, sizeof(int), WriteInt32LittleEndian);
-        }
-
-
         public byte[] ToArray()
         {
             return AsSpan().ToArray();
@@ -639,7 +622,12 @@ namespace Zion
 
         public void CopyTo(ArenaStream Destination)
         {
-            -
+            Destination.EnsureCapacity(Length);
+            
+            var SourceSpan = AsSpan();
+            var DestinationSpan = Destination.AsSpan(0, SourceSpan.Length);
+            
+            SourceSpan.CopyTo(DestinationSpan);
         }
 
 
@@ -673,7 +661,7 @@ namespace Zion
             }
         }
 
-        private void WriteVector<T>(Vectors.Vector2<T> Value) where T : INumber<T>
+        private void WriteVector<T>(Vectors.Vector2<T> Value) where T : INumber<T>s
         {
             var Size = Unsafe.SizeOf<Vectors.Vector2<T>>();
             Reserve(Size);
