@@ -1,86 +1,116 @@
-﻿using System.Collections;
-using Zion.Serialization;
+﻿using Zion.Serialization;
 
 namespace Zion
 {
-    public class BitArray : IBinarySerializable<BitArray>, IEnumerable<bool>
+    public sealed class BitArray : BitCollection, IBinarySerializable<BitArray>, IParsable<BitArray>
     {
-        #region Constants
-        private const int Filter = 0b111;
-
-        #endregion
-
         #region Data
-        private readonly byte[] Data;
-        
-        public readonly int Length;
+        public static readonly BitArray Empty = new BitArray(0);
+
+        public override int Count { get; }
 
         #endregion
 
         #region Constructors
-        public BitArray(int Length)
+        public BitArray(int Count)
         {
-            this.Data = new byte[GetByteCount(Length)];
-            this.Length = Length;
+            ArgumentOutOfRangeException.ThrowIfNegative(Count);
+
+            this.Data = new ulong[GetGroupCount(Count)];
+            this.Count = Count;
         }
 
-        public BitArray(byte[] Data, int Length)
+        public BitArray(IEnumerable<ulong> Data, int Count)
         {
-            ArgumentNullException.ThrowIfNull(Data);
-            ArgumentOutOfRangeException.ThrowIfWithout(Length >> 3, Data.Length);
+            ArgumentOutOfRangeException.ThrowIfNegative(Count);
 
-            this.Data   = ZArray.Clone(Data);
-            this.Length = Length;
+            var GroupCount = GetGroupCount(Count);
+            var Array = Data.ToArray();
+
+            if (Array.Length < GroupCount)
+            {
+                System.Array.Resize(ref Array, GroupCount);
+            }
+
+            this.Data = Array;
+            this.Count = Count;
         }
 
-        private BitArray(int Length, byte[] Data)
+        private BitArray(int Length, ulong[] Data)
         {
-            this.Length = Length;
+            this.Count = Length;
             this.Data = Data;
         }
 
         #endregion
 
-        #region Indexers
-        public bool this[int Index]
+        #region Operators
+        public static BitArray operator &(BitArray A, BitArray B)
         {
-            get
-            {
-                if (Index < 0 || Index >= Length)
-                {
-                    throw new ArgumentOutOfRangeException($"Index(={Index}) out of range [0..{Length})");
-                }
-                return Data[Index >> 3].GetBit(Index & Filter);
-            }
-            set
-            {
-                if (Index < 0 || Index >= Length)
-                {
-                    throw new ArgumentOutOfRangeException($"Index(={Index}) out of range [0..{Length})");
-                }
-                int ByteIndex = Index >> 3;
-                Data[ByteIndex] = Data[ByteIndex].SetBit(Index & Filter, value);
-            }
+            return ConvertBits(A, B, static (A, B) => (byte)(A & B));
         }
 
-        public bool this[Index Index]
+        public static BitArray operator |(BitArray A, BitArray B)
         {
-            get => this[Index.GetOffset(Length)];
-            set => this[Index.GetOffset(Length)] = value;
+            return ConvertBits(A, B, static (A, B) => (byte)(A | B));
+        }
+
+        public static BitArray operator ^(BitArray A, BitArray B)
+        {
+            return ConvertBits(A, B, static (A, B) => (byte)(A ^ B));
+
+        }
+
+        public static BitArray operator ~(BitArray Value)
+        {
+            ArgumentNullException.ThrowIfNull(Value);
+
+            var GroupCount = Value.Data.Length;
+            var Result = new ulong[GroupCount];
+
+            Span<ulong> Span = Value.AsSpan();
+
+            for (int i = 0; i < GroupCount; i++)
+            {
+                Result[i] = ~Span[i];
+            }
+
+            return new BitArray(GroupCount, Result);
+        }
+
+        #endregion
+
+        #region StaticMethods
+        public static BitArray Resize(BitArray? Source, int NewLength)
+        {
+            if (Source is null)
+            {
+                return new BitArray(NewLength);
+            }
+
+            if (NewLength <= 0)
+            {
+                Source = Empty;
+            }
+
+            ulong[] Result = new ulong[GetGroupCount(NewLength)];
+
+            Array.Copy(Source.Data, Result, Math.Min(Source.Count, NewLength));
+
+            return new BitArray(NewLength, Result);
         }
 
         #endregion
 
         #region PublicMethods
-
         public BitArray Clone()
         {
-            return new BitArray(Data, Length);
+            return new BitArray(Data, Count);
         }
 
         public BitList ToBitList()
         {
-            return new BitList(Data, Length);
+            return new BitList(Data, Count);
         }
 
         #endregion
@@ -88,70 +118,67 @@ namespace Zion
         #region IBinarySerializable
         public void Write(BinaryWriter Writer)
         {
-            Writer.Write(Length);
-            Writer.Write(Data, 0, GetByteCount(Length));
+            Writer.Write(Count);
+            Writer.BaseStream.Write(AsByteSpan());
         }
 
         public static BitArray Read(BinaryReader Reader)
         {
             int Count = Reader.ReadInt32();
-            byte[] Data = Reader.ReadBytes(GetByteCount(Count));
+            int GroupCount = GetGroupCount(Count);
+            ulong[] Buffer = new ulong[GroupCount];
 
-            return new BitArray(Count, Data);
+            for (int i = 0; i < GroupCount; i++)
+            {
+                Buffer[i] = Reader.ReadUInt64();
+            }
+
+            return new BitArray(Count, Buffer);
         }
 
         #endregion
 
-        #region IEnumerable
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
-
-        public IEnumerator<bool> GetEnumerator()
+        #region IParsable
+        public static BitArray Parse(string String, IFormatProvider? Provider)
         {
-            int FullBytes = Length >> 3;
+            var Pair = ParseBitCollection(String);
+            return new BitArray(Pair.Item1, Pair.Item2);
+        }
 
-            for (int i = 0; i < FullBytes; i++)
+        public static bool TryParse(string? String, IFormatProvider? Provider, out BitArray Result)
+        {
+            if (TryParseBitCollection(String, out var Data, out var Count))
             {
-                byte Current = Data[i];
-                yield return (Current & 0b0000_0001) != 0;
-                yield return (Current & 0b0000_0010) != 0;
-                yield return (Current & 0b0000_0100) != 0;
-                yield return (Current & 0b0000_1000) != 0;
-                yield return (Current & 0b0001_0000) != 0;
-                yield return (Current & 0b0010_0000) != 0;
-                yield return (Current & 0b0100_0000) != 0;
-                yield return (Current & 0b1000_0000) != 0;
+                Result = new BitArray(Data, Count);
+                return true;
             }
-
-            int LastByteLength = Length & Filter;
-            if (LastByteLength != 0)
-            {
-                byte Current = Data[FullBytes];
-                int BitIndex = 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0000_0001) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0000_0010) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0000_0100) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0000_1000) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0001_0000) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0010_0000) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b0100_0000) != 0;
-                if (++BitIndex > LastByteLength) { yield break; }
-                yield return (Current & 0b1000_0000) != 0;
-            }
+            Result = null!;
+            return false;
         }
 
         #endregion
 
         #region PrivateMethods
-        private static int GetByteCount(int Count)
+
+        private static BitArray ConvertBits(BitArray A, BitArray B, Func<ulong, ulong, ulong> Convert)
         {
-            return (Count + 7) >> 3;
+            ArgumentNullException.ThrowIfNull(A);
+            ArgumentNullException.ThrowIfNull(B);
+
+            int MinLength = Math.Min(A.Data.Length, B.Data.Length);
+            int MaxLength = Math.Max(A.Data.Length, B.Data.Length);
+
+            ulong[] Result = new ulong[MaxLength];
+            
+            Span<ulong> ASpan = A.AsSpan();
+            Span<ulong> BSpan = B.AsSpan();
+
+            for (int i = 0; i < MinLength; i++)
+            {
+                Result[i] = Convert(ASpan[i], BSpan[i]);
+            }
+
+            return new BitArray(MaxLength, Result);
         }
 
         #endregion

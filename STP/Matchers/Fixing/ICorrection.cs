@@ -2,6 +2,6 @@
 {
     public interface ICorrection
     {
-        //TODO
+        //Do
     }
 }

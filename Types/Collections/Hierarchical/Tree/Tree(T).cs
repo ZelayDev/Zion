@@ -219,6 +219,8 @@ namespace Zion
         }
 
         #endregion
+
+        #region Parent
         public Tree<T>? GetParent(int Level)
         {
             TryGetParent(Level, out Tree<T>? Parent);
@@ -253,7 +255,6 @@ namespace Zion
             return true;
         }
 
-
         public bool IsAncestor(Tree<T> Tree)
         {
             ArgumentNullException.ThrowIfNull(Tree);
@@ -271,8 +272,6 @@ namespace Zion
 
             return false;
         }
-
-        #region Parent
 
         #endregion
 
@@ -311,7 +310,7 @@ namespace Zion
 
         #endregion
 
-        #region
+        #region IList
         public void Add(T Item)
         {
             Add(ToTree(Item));

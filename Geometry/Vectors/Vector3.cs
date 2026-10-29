@@ -1,11 +1,12 @@
 ﻿using System.Diagnostics.CodeAnalysis;
+using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
-using Zion.Serialization.NSD;
+using Zion.Serialization;
 
 namespace Zion.Geometry
 {
-    [Serializable]
-    public struct Vector3 : INSDSizable<Vector3>, IEquatable<Vector3>, IEqualityComparer<Vector3>,  IRandomizable<Vector3>
+    [Serializable, StructLayout(LayoutKind.Sequential)]
+    public struct Vector3 : IBinarySerializable<Vector3>, IEquatable<Vector3>, IEqualityComparer<Vector3>,  IRandomizable<Vector3>
     {
         #region Constants
         public static readonly Vector3 Zero    = new Vector3(0f);
@@ -24,8 +25,6 @@ namespace Zion.Geometry
         #endregion
 
         #region Properties
-        public int BinarySize => 12;
-
         public float Magnitude => MathF.Sqrt(LengthSquared);
 
         public float LengthSquared => (X * X) + (Y * Y) + (Z * Z);

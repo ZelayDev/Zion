@@ -4,15 +4,19 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>
     <Compile Remove="MathExpressions\**" />
-    <Compile Remove="Serialization\BinarySerialization\NSD\Serializer\File\**" />
+    <Compile Remove="Serialization\BinarySerialization\ADF\**" />
+    <Compile Remove="Serialization\BinarySerialization\NSD\**" />
     <EmbeddedResource Remove="MathExpressions\**" />
-    <EmbeddedResource Remove="Serialization\BinarySerialization\NSD\Serializer\File\**" />
+    <EmbeddedResource Remove="Serialization\BinarySerialization\ADF\**" />
+    <EmbeddedResource Remove="Serialization\BinarySerialization\NSD\**" />
     <None Remove="MathExpressions\**" />
-    <None Remove="Serialization\BinarySerialization\NSD\Serializer\File\**" />
+    <None Remove="Serialization\BinarySerialization\ADF\**" />
+    <None Remove="Serialization\BinarySerialization\NSD\**" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,12 +32,14 @@
     <Folder Include="Extensions\Collections\Linear\" />
     <Folder Include="Extensions\Collections\Dictionaries\" />
     <Folder Include="Extensions\Collections\Buffers\" />
+    <Folder Include="Serialization\BinarySerialization\Serializers\Object\" />
     <Folder Include="STP\Parser\Static\" />
     <Folder Include="STP\Parser\Dynamic\" />
     <Folder Include="STP\Semantic\Data\" />
     <Folder Include="STP\Source\Text\Document\" />
     <Folder Include="STP\Source\Text\Source\Base\" />
     <Folder Include="STP\Source\Text\Source\Source\" />
+    <Folder Include="Types\Collections\Arenas\Base\Core\" />
   </ItemGroup>
 
 </Project>

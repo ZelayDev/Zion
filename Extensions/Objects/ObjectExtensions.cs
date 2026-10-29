@@ -66,6 +66,25 @@
                 A = B;
                 B = Temp;
             }
+
+
+            public static bool CompareReferences<T>(T? A, T? B, out bool Result) where T : class
+            {
+                if (ReferenceEquals(A, B))
+                {
+                    Result = true;
+                    return true;
+                }
+
+                if (A is null || B is null)
+                {
+                    Result = false;
+                    return true;
+                }
+
+                Result = false;
+                return false;
+            }
         }
     }
 }

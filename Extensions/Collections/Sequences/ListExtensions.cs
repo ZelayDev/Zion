@@ -175,7 +175,16 @@
                     return;
                 }
 
-                Indexes = Indexes.Distinct().OrderBy(i => i).ToArray();
+                Array.Sort(Indexes);
+
+                int UniqueCount = 1;
+                for (int i = 1; i < Indexes.Length; i++)
+                {
+                    if (Indexes[i] != Indexes[UniqueCount - 1])
+                    {
+                        Indexes[UniqueCount++] = Indexes[i];
+                    }
+                }
 
                 if (Indexes[0] < 0 || Indexes[^1] >= List.Count)
                 {
@@ -210,6 +219,16 @@
                 }
 
                 List.RemoveRange(WritePosition, List.Count - WritePosition);
+            }
+
+            public TOut[] ConvertToArray<TOut>(Func<T, TOut> Converter)
+            {
+                var Result = new TOut[List.Count];
+                for (int i = 0; i < List.Count; i++)
+                {
+                    Result[i] = Converter(List[i]);
+                }
+                return Result;
             }
         }
     }

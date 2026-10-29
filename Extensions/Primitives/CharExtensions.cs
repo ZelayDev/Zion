@@ -1,9 +1,19 @@
-﻿namespace Zion
+﻿using Zion.Serialization;
+
+namespace Zion
 {
     public static class CharExtensions
     {
+        public static IBinarySerializer<char> _Serializer = new BinarySerializer<char>
+        (
+            static (Writer, Value) => Writer.Write(Value),
+            static Reader => Reader.ReadChar()
+        );
+
         extension(char Char)
         {
+            public static IBinarySerializer<char> Serializer => _Serializer;
+
             public bool IsBinaryDigit()
             {
                 return Char == '0' || Char == '1';

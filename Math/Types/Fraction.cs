@@ -270,7 +270,7 @@ namespace Zion.MathExpressions
         }
 
 
-        public override bool Equals([NotNullWhen(true)] object Object)
+        public override bool Equals([NotNullWhen(true)] object? Object)
         {
             return Object is Fraction Fraction && this == Fraction;
         }

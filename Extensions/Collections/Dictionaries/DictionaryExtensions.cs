@@ -38,6 +38,46 @@
             {
                 return Dictionary.TryGetValue(Key, out TValue? Value) ? Converter(Value) : Default;
             }
-        }        
+
+
+            public TValue AddAndReturn(TKey Key, TValue Value)
+            {
+                Dictionary.Add(Key, Value);
+                return Value;
+            }
+
+
+            public TValue GetOrAdd(TKey Key, TValue NewValue)
+            {
+                if (Dictionary.TryGetValue(Key, out var Existing))
+                {
+                    return Existing;
+                }
+                Dictionary.Add(Key, NewValue);
+                return NewValue;
+            }
+
+            public TValue GetOrAdd(TKey Key, Func<TValue> Fabric)
+            {
+                if (Dictionary.TryGetValue(Key, out var Existing))
+                {
+                    return Existing;
+                }
+                var NewValue = Fabric();
+                Dictionary.Add(Key, NewValue);
+                return NewValue;
+            }
+
+            public TValue GetOrAdd(TKey Key, Func<TKey, TValue> Fabric)
+            {
+                if (Dictionary.TryGetValue(Key, out var Existing))
+                {
+                    return Existing;
+                }
+                var NewValue = Fabric(Key);
+                Dictionary.Add(Key, NewValue);
+                return NewValue;
+            }
+        }
     }
 }

@@ -1,9 +1,20 @@
-﻿namespace Zion
+﻿using Zion.Serialization;
+
+namespace Zion
 {
     public static class FloatExtensions
     {
+        public static IBinarySerializer<float> _Serializer = new BinarySerializer<float>
+        (
+            static (Writer, Value) => Writer.Write(Value),
+            static Reader => Reader.ReadSingle()
+        );
+
         extension(float Value)
         {
+            public static IBinarySerializer<float> Serializer => _Serializer;
+
+
             /// <summary>
             /// Rounds the float value to the nearest integer using specified rounding mode.
             /// </summary>

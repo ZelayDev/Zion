@@ -71,6 +71,18 @@
             return Result;
         }
 
+        public static T[] GetSubArray<T>(T[] Array, int Start, int Count)
+        {
+            ArgumentNullException.ThrowIfNull(Array);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start, Array.Length);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, Array.Length);
+
+            T[] Result = new T[Count];
+            System.Array.Copy(Array, Start, Result, 0, Count);
+
+            return Result;
+        }
+
         public static T[] FromCollection<T>(ICollection<T> Collection)
         {
             ArgumentNullException.ThrowIfNull(Collection);

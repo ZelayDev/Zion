@@ -1,9 +1,19 @@
-﻿namespace Zion
+﻿using Zion.Serialization;
+
+namespace Zion
 {
     public static class DecimalExtensions
     {
+        public static IBinarySerializer<decimal> _Serializer = new BinarySerializer<decimal>
+        (
+            static (Writer, Value) => Writer.Write(Value),
+            static Reader => Reader.ReadDecimal()
+        );
+
         extension(decimal Value)
         {
+            public static IBinarySerializer<decimal> Serializer => _Serializer;
+
             /// <summary>
             /// Rounds the decimal value to the nearest integer using specified rounding mode.
             /// </summary>

@@ -1,9 +1,19 @@
-﻿namespace Zion
+﻿using Zion.Serialization;
+
+namespace Zion
 {
     public static class DoubleExtensions
     {
+        public static IBinarySerializer<double> _Serializer = new BinarySerializer<double>
+        (
+            static (Writer, Value) => Writer.Write(Value),
+            static Reader => Reader.ReadDouble()
+        );
+
         extension(double Value)
         {
+            public static IBinarySerializer<double> Serializer => _Serializer;
+
             /// <summary>
             /// Rounds the double value to the nearest integer using specified rounding mode.
             /// </summary>

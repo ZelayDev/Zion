@@ -1,5 +1,6 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
+using System.Numerics;
 
 namespace Zion.Serialization
 {
@@ -11,20 +12,24 @@ namespace Zion.Serialization
 
         static BinarySerializer()
         {
-            AddSerializer(new BinarySerializer<bool>    (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadBoolean() ));
-            AddSerializer(new BinarySerializer<byte>    (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadByte()    ));
-            AddSerializer(new BinarySerializer<sbyte>   (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadSByte()   ));
-            AddSerializer(new BinarySerializer<char>    (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadChar()    ));
-            AddSerializer(new BinarySerializer<decimal> (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadDecimal() ));
-            AddSerializer(new BinarySerializer<double>  (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadDouble()  ));
-            AddSerializer(new BinarySerializer<float>   (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadSingle()  ));
-            AddSerializer(new BinarySerializer<int>     (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadInt32()   ));
-            AddSerializer(new BinarySerializer<uint>    (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadUInt32()  ));
-            AddSerializer(new BinarySerializer<long>    (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadInt64()   ));
-            AddSerializer(new BinarySerializer<ulong>   (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadUInt64()  ));
-            AddSerializer(new BinarySerializer<short>   (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadInt16()   ));
-            AddSerializer(new BinarySerializer<ushort>  (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadUInt16()  ));
-            AddSerializer(new BinarySerializer<string>  (static (Writer, Value) => Writer.Write(Value), static Reader => Reader.ReadString()  ));
+            AddSerializer(bool.Serializer);
+            AddSerializer(byte.Serializer);
+            AddSerializer(sbyte.Serializer);
+            AddSerializer(char.Serializer);
+            AddSerializer(decimal.Serializer);
+            AddSerializer(double.Serializer);
+            AddSerializer(float.Serializer);
+            AddSerializer(int.Serializer);
+            AddSerializer(uint.Serializer);
+            AddSerializer(long.Serializer);
+            AddSerializer(ulong.Serializer);
+            AddSerializer(short.Serializer);
+            AddSerializer(ushort.Serializer);
+            AddSerializer(string.Serializer);
+            AddSerializer(Index.Serializer);
+            AddSerializer(Range.Serializer);
+            AddSerializer(Half.Serializer);
+            AddSerializer(BigInteger.Serializer);
         }
 
 

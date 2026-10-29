@@ -1,11 +1,10 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using Zion.Serialization;
-using Zion.Serialization.NSD;
 
 namespace Zion.Geometry
 {
     [Serializable]
-    public readonly struct Vector2IntRange : INSDSizable<Vector2IntRange>, IRange<Vector2Int>, IEqualityComparer<Vector2IntRange>
+    public readonly struct Vector2IntRange : IBinarySerializable<Vector2IntRange>, IRange<Vector2Int>, IEqualityComparer<Vector2IntRange>
     {
         public int BinarySize => 16;
 
