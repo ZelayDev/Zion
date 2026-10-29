@@ -35,31 +35,31 @@ namespace Zion
         #region PublicMethods
         public ArenaArray<T> GetArray(int Capacity)
         {
-            return GetCollection<ArenaArray<T>>(Capacity);
+            return Allocate<ArenaArray<T>>(Capacity);
         }
 
         public ArenaBuffer<T> GetBuffer(int Capacity)
         {
-            return GetCollection<ArenaBuffer<T>>(Capacity);
+            return Allocate<ArenaBuffer<T>>(Capacity);
         }
 
         public ArenaList<T> GetList(int Capacity)
         {
-            return GetCollection<ArenaList<T>>(Capacity);
+            return Allocate<ArenaList<T>>(Capacity);
         }
 
         public ArenaStack<T> GetStack(int Capacity)
         {
-            return GetCollection<ArenaStack<T>>(Capacity);
+            return Allocate<ArenaStack<T>>(Capacity);
         }
 
         public ArenaQueue<T> GetQueue(int Capacity)
         {
-            return GetCollection<ArenaQueue<T>>(Capacity);
+            return Allocate<ArenaQueue<T>>(Capacity);
         }
 
 
-        public A GetCollection<A>(int Capacity) where A : ArenaCollection<T>, new()
+        public A Allocate<A>(int Capacity) where A : ArenaCollection<T>, new()
         {
             var Bridge = GetNewBridge(Capacity);
             var Collection = new A();

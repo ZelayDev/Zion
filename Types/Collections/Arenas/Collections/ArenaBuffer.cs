@@ -2,8 +2,17 @@ namespace Zion
 {
     public sealed class ArenaBuffer<T> : ArenaCollection<T>
     {
-        //DO: Resize logic
-        public int Length => GetLength();
+        public int Count
+        {
+            get;
+            private set
+            {
+                field = value;
+                UpdateLimit(value);
+            }
+        }
+
+        public int Capacity => GetLength();
 
 
         public T this[int Index]
@@ -21,51 +30,52 @@ namespace Zion
 
         public void Add(T Item)
         {
-            int Index = Length;
-            EnsureCapacity(++Length);
+            int Index = Count;
+            EnsureCapacity(Count + 1);
             this[Index] = Item;
+            Count++;
         }
 
         public void AddRange(IEnumerable<T> Items)
         {
             ArgumentNullException.ThrowIfNull(Items);
 
-            int Count = this.Length;
+            int Count = this.Count;
 
             if (Items.TryGetNonEnumeratedCount(out int ItemsCount))
             {
                 int TotalCount = Count + ItemsCount;
-                Extend(TotalCount);
+                EnsureCapacity(TotalCount);
                 UseSpan
                 (
-                    Count, ItemsCount, static (Span, Items) =>
+                    Count, ItemsCount, Items, static (Span, Other) =>
                     {
                         int Index = 0;
 
-                        foreach (T Item in Items)
+                        foreach (T Item in Other)
                         {
                             Span[Index++] = Item;
                         }
-                    }, Items
+                    }
                 );
-                this.Length = TotalCount;
+                this.Count = TotalCount;
             }
             else
             {
                 InsertItems(Count, Items, out int NewCount);
-                this.Length = NewCount;
+                this.Count = NewCount;
             }
         }
 
         public void AddRange(ReadOnlySpan<T> Items)
         {
             int ItemsCount = Items.Length;
-            int TotalCount = Length + Items.Length;
+            int TotalCount = Count + ItemsCount;
 
-            Expand(TotalCount);
+            EnsureCapacity(TotalCount);
             UseSpan
             (
-                Length, ItemsCount, Items,
+                Count, ItemsCount, Items,
                 static (Span, Other) =>
                 {
                     for (int i = 0; i < Other.Length; i++)
@@ -74,7 +84,7 @@ namespace Zion
                     }
                 }
             );
-            Length = TotalCount;
+            Count = TotalCount;
         }
 
 
@@ -95,8 +105,8 @@ namespace Zion
         {
             ThrowIfWithout(Index);
 
-            Move(Index + 1, Index, Length - Index - 1);
-            Length--;
+            Move(Index + 1, Index, Count - Index - 1);
+            Count--;
         }
 
         public void RemoveRange(int Index, int Count)
@@ -104,13 +114,14 @@ namespace Zion
             ThrowIfWithout(Index);
             ThrowIfWithout(Index + Count - 1);
 
-            Move(Index + Count, Index, this.Length - Count - Index);
-            this.Length -= Count;
+            Move(Index + Count, Index, this.Count - Count - Index);
+            this.Count -= Count;
         }
 
         public void Clear()
         {
             ClearAll();
+            Count = 0;
         }
 
 
@@ -121,34 +132,35 @@ namespace Zion
 
         public T Last()
         {
-            return this[Length - 1];
+            return this[Count - 1];
         }
 
 
         public int IndexOf(T Item, IEqualityComparer<T>? Comparer = null)
         {
-            return UseSpan(Length, static (Span, State) => Span.IndexOf(State.Item, State.Comparer), (Item, Comparer));
+            return AsSpan().IndexOf(Item, Comparer);
         }
 
         public bool Contains(T Item, IEqualityComparer<T>? Comparer = null)
         {
-            return UseSpan(Length, static (Span, State) => Span.Contains(State.Item, State.Comparer), (Item, Comparer));
+            return AsSpan().Contains(Item, Comparer);
         }
 
 
         public void Insert(int Index, T Item)
         {
-            ArgumentOutOfRangeException.ThrowIfBeyond(Index, Length);
+            ArgumentOutOfRangeException.ThrowIfBeyond(Index, Count);
 
-            Move(Index, Index + 1, Length - Index);
+            EnsureCapacity(Count + 1);
+            Move(Index, Index + 1, Count - Index);
             this[Index] = Item;
-            Length++;
+            Count++;
         }
 
         public void InsertRange(int Index, IEnumerable<T> Items)
         {
             ArgumentNullException.ThrowIfNull(Items);
-            ArgumentOutOfRangeException.ThrowIfBeyond(Index, Length);
+            ArgumentOutOfRangeException.ThrowIfBeyond(Index, Count);
 
             if (Items.TryGetNonEnumeratedCount(out int ItemsCount))
             {
@@ -157,12 +169,12 @@ namespace Zion
                     return;
                 }
 
-                int TotalCount = Length + ItemsCount;
-                Extend(TotalCount);
+                int TotalCount = Count + ItemsCount;
+                EnsureCapacity(TotalCount);
 
-                if (Index < Length)
+                if (Index < Count)
                 {
-                    Move(Index, Index + ItemsCount, Length - Index);
+                    Move(Index, Index + ItemsCount, Count - Index);
                 }
 
                 UseSpan
@@ -177,30 +189,38 @@ namespace Zion
                     }
                 );
 
-                Length = TotalCount;
+                Count = TotalCount;
             }
             else
             {
-                int TailLength = Length - Index;
-                using var Tail = Source.GetBuffer(TailLength);
+                int TailLength = Count - Index;
+                using var Tail = Allocate<ArenaBuffer<T>>(TailLength);
 
                 if (TailLength > 0)
                 {
-                    Tail.UseSpan(Span => CopyTo(Index, Length - Index, Span));
+                    Tail.UseSpan
+                    (
+                        AsSpan(Index, TailLength),
+                        static (TailSpan, Source) => Source.CopyTo(TailSpan)
+                    );
                 }
 
                 InsertItems(Index, Items, out int TotalCount);
+                EnsureCapacity(TotalCount + TailLength);
 
-                Extend(TotalCount + TailLength);
-                UseSpan(TotalCount, TailLength, Tail.CopyTo);
+                Tail.UseSpan
+                (
+                    (Self: this, Offset: TotalCount),
+                    static (TailSpan, State) => TailSpan.CopyTo(State.Self.AsSpan(State.Offset, TailSpan.Length))
+                );
 
-                Length = TotalCount + TailLength;
+                Count = TotalCount + TailLength;
             }
         }
 
         public void Reverse()
         {
-            AsSpan().Sort();
+            AsSpan().Reverse();
         }
 
         public void Sort()
@@ -215,14 +235,82 @@ namespace Zion
         }
 
 
+        public new void UseSpan(Action<ArenaSpan<T>> Action)
+        {
+            base.UseSpan(Action);
+        }
+
+        public new void UseSpan(int Start, Action<ArenaSpan<T>> Action)
+        {
+            base.UseSpan(Start, Action);
+        }
+
+        public new void UseSpan(int Start, int Count, Action<ArenaSpan<T>> Action)
+        {
+            base.UseSpan(Start, Count, Action);
+        }
+
+
+        public new void UseSpan<I>(I Other, Action<ArenaSpan<T>, I> Action) where I : allows ref struct
+        {
+            base.UseSpan(Other, Action);
+        }
+
+        public new void UseSpan<I>(int Start, I Other, Action<ArenaSpan<T>, I> Action) where I : allows ref struct
+        {
+            base.UseSpan(Start, Other, Action);
+        }
+
+        public new void UseSpan<I>(int Start, int Count, I Other, Action<ArenaSpan<T>, I> Action)
+            where I : allows ref struct
+        {
+            base.UseSpan(Start, Count, Other, Action);
+        }
+
+
+        public new R UseSpan<R>(Func<ArenaSpan<T>, R> Function)
+        {
+            return base.UseSpan(Function);
+        }
+
+        public new R UseSpan<R>(int Start, Func<ArenaSpan<T>, R> Function)
+        {
+            return base.UseSpan(Start, Function);
+        }
+
+        public new R UseSpan<R>(int Start, int Count, Func<ArenaSpan<T>, R> Function)
+        {
+            return base.UseSpan(Start, Count, Function);
+        }
+
+
+        public new R UseSpan<I, R>(I Other, Func<ArenaSpan<T>, I, R> Function)
+            where I : allows ref struct where R : allows ref struct
+        {
+            return base.UseSpan(Other, Function);
+        }
+
+        public new R UseSpan<I, R>(int Start, I Other, Func<ArenaSpan<T>, I, R> Function)
+            where I : allows ref struct where R : allows ref struct
+        {
+            return base.UseSpan(Start, Other, Function);
+        }
+
+        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<ArenaSpan<T>, I, R> Function)
+            where I : allows ref struct where R : allows ref struct
+        {
+            return base.UseSpan(Start, Count, Other, Function);
+        }
+
+        
+        public void Expand(int Additional)
+        {
+            Extend(Count + Additional);
+        }
+
         public void EnsureCapacity(int Capacity)
         {
             Extend(Capacity);
-        }
-
-        public void Resize(int NewSize)
-        {
-            Length = Math.Max(0, NewSize);
         }
 
 
@@ -236,12 +324,12 @@ namespace Zion
             AsSpan().CopyTo(Destination);
         }
 
-        
+
         public ArenaItemEnumerator<T> GetEnumerator()
         {
-            return GetEnumerator(0, Length);
+            return GetEnumerator(0, Count);
         }
-        
+
 
         private void InsertItems(int Index, IEnumerable<T> Items, out int Count)
         {
@@ -258,10 +346,10 @@ namespace Zion
                     return;
                 }
 
-                Expand(TotalIndex + LocalIndex);
+                Expand(LocalIndex);
                 UseSpan
                 (
-                    TotalIndex, LocalIndex, Buffer,
+                    TotalIndex, LocalIndex, Buffer.AsSpan(0, LocalIndex),
                     static (Span, Other) =>
                     {
                         for (int i = 0; i < Other.Length; i++)

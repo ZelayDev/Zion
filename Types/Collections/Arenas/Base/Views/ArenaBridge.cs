@@ -55,7 +55,12 @@ namespace Zion
         {
             return Region.AsSpan();
         }
-
+        
+        public A Allocate<A>(int Capacity) where A : ArenaCollection<T>, new()
+        {
+            return Source.Allocate<A>(Capacity);
+        }
+        
 
         internal void Clear()
         {

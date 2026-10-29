@@ -6,7 +6,7 @@ namespace Zion
         {
             public ArenaStream GetStream(int Capacity)
             {
-                return Arena.GetCollection<ArenaStream>(Capacity);
+                return Arena.Allocate<ArenaStream>(Capacity);
             }
         }
     }

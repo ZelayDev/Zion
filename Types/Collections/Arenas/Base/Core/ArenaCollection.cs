@@ -63,7 +63,7 @@
             ThrowIfDisposed();
             SetValueAt(Index.GetOffset(Limit), Value);
         }
-
+        
 
         protected void UpdateLimit(int Limit)
         {
@@ -144,6 +144,13 @@
                     }
                 }
             }
+        }
+
+
+        protected A Allocate<A>(int Capacity) where A : ArenaCollection<T>, new()
+        {
+            ThrowIfDisposed();
+            return Bridge.Allocate<A>(Capacity);
         }
 
         

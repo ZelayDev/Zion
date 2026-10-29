@@ -81,7 +81,12 @@ namespace Zion
         
         public void CopyTo(T[] Array, int ArrayIndex)
         {
-            throw new NotImplementedException(); //TODO
+            AsSpan().CopyTo(Array.AsSpan(ArrayIndex));
+        }
+
+        public void CopyTo(Span<T> Destination)
+        {
+            AsSpan().CopyTo(Destination);
         }
         
         

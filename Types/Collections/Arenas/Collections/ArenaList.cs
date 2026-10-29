@@ -1,3 +1,5 @@
+using System.Runtime.InteropServices;
+
 namespace Zion
 {
     public sealed class ArenaList<T> : ArenaCollection<T>
@@ -30,7 +32,7 @@ namespace Zion
 
         public void Add(T Item)
         {
-            int Index = Count++;
+            var Index = Count++;
             Expand(Count);
             this[Index] = Item;
         }
@@ -39,19 +41,19 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Items);
 
-            int Count = this.Count;
+            var Count = this.Count;
 
-            if (Items.TryGetNonEnumeratedCount(out int ItemsCount))
+            if (Items.TryGetNonEnumeratedCount(out var ItemsCount))
             {
-                int TotalCount = Count + ItemsCount;
+                var TotalCount = Count + ItemsCount;
                 Expand(TotalCount);
                 UseSpan
                 (
                     Count, ItemsCount, Items, static (Span, Other) =>
                     {
-                        int Index = 0;
+                        var Index = 0;
 
-                        foreach (T Item in Other)
+                        foreach (var Item in Other)
                         {
                             Span[Index++] = Item;
                         }
@@ -61,15 +63,15 @@ namespace Zion
             }
             else
             {
-                InsertItems(Count, Items, out int NewCount);
+                InsertItems(Count, Items, out var NewCount);
                 this.Count = NewCount;
             }
         }
 
         public void AddRange(ReadOnlySpan<T> Items)
         {
-            int ItemsCount = Items.Length;
-            int TotalCount = Count + Items.Length;
+            var ItemsCount = Items.Length;
+            var TotalCount = Count + Items.Length;
 
             Expand(TotalCount);
             UseSpan
@@ -77,7 +79,7 @@ namespace Zion
                 Count, ItemsCount, Items,
                 static (Span, Other) =>
                 {
-                    for (int i = 0; i < Other.Length; i++)
+                    for (var i = 0; i < Other.Length; i++)
                     {
                         Span[i] = Other[i];
                     }
@@ -107,7 +109,7 @@ namespace Zion
                 }
 
                 int TotalCount = Count + ItemsCount;
-                Expand(TotalCount);
+                EnsureCapacity(TotalCount);
 
                 if (Index < Count)
                 {
@@ -131,17 +133,25 @@ namespace Zion
             else
             {
                 int TailLength = Count - Index;
-                using var Tail = Source.GetBuffer(TailLength);
+                using var Tail = Allocate<ArenaBuffer<T>>(TailLength);
 
                 if (TailLength > 0)
                 {
-                    Tail.UseSpan(static (Span, State) => State.Self.CopyTo(State.Index, State.Count, Span), (this, Index, Count - Index));
+                    Tail.UseSpan
+                    (
+                        AsSpan(Index, TailLength),
+                        static (TailSpan, Source) => Source.CopyTo(TailSpan)
+                    );
                 }
 
                 InsertItems(Index, Items, out int TotalCount);
+                EnsureCapacity(TotalCount + TailLength);
 
-                Expand(TotalCount + TailLength);
-                UseSpan(TotalCount, TailLength, static (Span, Tail) => Tail.CopyTo(Span), Tail);
+                Tail.UseSpan
+                (
+                    AsSpan(TotalCount, Tail.Length),
+                    static (TailSpan, Destination) => TailSpan.CopyTo(Destination)
+                );
 
                 Count = TotalCount + TailLength;
             }
@@ -246,7 +256,7 @@ namespace Zion
 
         public void CopyTo(T[] Array, int ArrayIndex)
         {
-            CopyTo(Array.AsSpan(ArrayIndex));
+            AsSpan().CopyTo(Array.AsSpan(ArrayIndex));
         }
 
         public void CopyTo(int Index, T[] Array, int ArrayIndex, int Count)
@@ -271,7 +281,7 @@ namespace Zion
 
         public bool Remove(T Item)
         {
-            int Index = IndexOf(Item);
+            var Index = IndexOf(Item);
 
             if (Index == -1)
             {
@@ -286,10 +296,10 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Match);
 
-            int WriteIndex = 0;
-            int RemoveCount = 0;
+            var WriteIndex = 0;
+            var RemoveCount = 0;
 
-            for (int readIndex = 0; readIndex < Count; readIndex++)
+            for (var readIndex = 0; readIndex < Count; readIndex++)
             {
                 if (!Match(this[readIndex]))
                 {
@@ -319,7 +329,7 @@ namespace Zion
             ClearAll();
             Count = 0;
         }
-        
+
 
         public void Reverse()
         {
@@ -371,7 +381,19 @@ namespace Zion
 
         public List<TOut> ConvertAll<TOut>(Converter<T, TOut> Converter)
         {
+            var Length = Count;
+            var Result = new List<TOut>(Length);
+            var Source = AsSpan();
             
+            CollectionsMarshal.SetCount(Result, Length);
+            var Destination = CollectionsMarshal.AsSpan(Result);
+
+            for (int i = 0; i < Length; i++)
+            {
+                Destination[i] = Converter(Source[i]);
+            }
+            
+            return Result;
         }
 
 
@@ -412,7 +434,8 @@ namespace Zion
             base.UseSpan(Start, Other, Action);
         }
 
-        public new void UseSpan<I>(int Start, int Count, I Other, Action<ArenaSpan<T>, I> Action) where I : allows ref struct
+        public new void UseSpan<I>(int Start, int Count, I Other, Action<ArenaSpan<T>, I> Action)
+            where I : allows ref struct
         {
             base.UseSpan(Start, Count, Other, Action);
         }
@@ -434,17 +457,20 @@ namespace Zion
         }
 
 
-        public new R UseSpan<I, R>(I Other, Func<ArenaSpan<T>, I, R> Function) where I : allows ref struct where R : allows ref struct
+        public new R UseSpan<I, R>(I Other, Func<ArenaSpan<T>, I, R> Function)
+            where I : allows ref struct where R : allows ref struct
         {
             return base.UseSpan(Other, Function);
         }
 
-        public new R UseSpan<I, R>(int Start, I Other, Func<ArenaSpan<T>, I, R> Function) where I : allows ref struct where R : allows ref struct
+        public new R UseSpan<I, R>(int Start, I Other, Func<ArenaSpan<T>, I, R> Function)
+            where I : allows ref struct where R : allows ref struct
         {
             return base.UseSpan(Start, Other, Function);
         }
 
-        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<ArenaSpan<T>, I, R> Function) where I : allows ref struct where R : allows ref struct
+        public new R UseSpan<I, R>(int Start, int Count, I Other, Func<ArenaSpan<T>, I, R> Function)
+            where I : allows ref struct where R : allows ref struct
         {
             return base.UseSpan(Start, Count, Other, Function);
         }
@@ -460,20 +486,20 @@ namespace Zion
             Extend(Capacity);
         }
 
-        
+
         public ArenaItemEnumerator<T> GetEnumerator()
         {
             return GetEnumerator(0, Count);
         }
-        
+
 
         private void InsertItems(int Index, IEnumerable<T> Items, out int Count)
         {
             const int BufferSize = 0x20;
 
-            T[] Buffer = new T[BufferSize];
-            int LocalIndex = 0;
-            int TotalIndex = Index;
+            var Buffer = new T[BufferSize];
+            var LocalIndex = 0;
+            var TotalIndex = Index;
 
             void Flush()
             {
@@ -488,7 +514,7 @@ namespace Zion
                     TotalIndex, LocalIndex, Buffer.AsSpan(0, LocalIndex),
                     static (Span, Other) =>
                     {
-                        for (int i = 0; i < Other.Length; i++)
+                        for (var i = 0; i < Other.Length; i++)
                         {
                             Span[i] = Other[i];
                         }
@@ -499,7 +525,7 @@ namespace Zion
                 LocalIndex = 0;
             }
 
-            foreach (T Item in Items)
+            foreach (var Item in Items)
             {
                 Buffer[LocalIndex++] = Item;
 

@@ -1,29 +1,10 @@
 ﻿namespace Zion
 {
-    public sealed class ArenaQueue<T> : ArenaCollection<T>, ICollection<T>
+    public sealed class ArenaQueue<T> : ArenaCollection<T>
     {
-        private new int Start;
-        private int End;
-
-        public int Count
-        {
-            get;
-            private set
-            {
-                Modify();
-                field = value;
-            }
-        }
+        public int Count => GetLength();
 
         public bool IsReadOnly => false;
-
-
-        protected override int GetSpanLimit() => -1;
-
-        protected override IEnumerator<int> GetIndexEnumerator()
-        {
-            throw new NotImplementedException(); //Do
-        }
 
 
         public void Enqueue(T Item)
@@ -48,12 +29,6 @@
 
         public bool TryPeek(out T Item)
         {
-            int Index = Count - 1;
-            if (Count == -1)
-            {
-                Item = default!;
-                return false;
-            }
             throw new NotImplementedException(); //Do
         }
 
@@ -85,14 +60,18 @@
 
         public void Clear()
         {
-            Start = 0;
-            End = 0;
+            ClearAll();
         }
 
 
         public T[] ToArray()
         {
+            var Length = Count;
+            var Array = new T[Length];
+
             throw new NotImplementedException(); //Do
+            
+            return Array;
         }
 
         public Queue<T> ToQueue()
