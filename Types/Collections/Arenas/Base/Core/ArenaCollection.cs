@@ -100,50 +100,11 @@
             Bridge.Clear(Limit);
         }
 
-        protected void Move(int SourceIndex, int DestinationIndex, int Count)
+        protected void Copy(int SourceIndex, int DestinationIndex, int Count)
         {
-            if (Count <= 0 || SourceIndex == DestinationIndex)
-            {
-                return;
-            }
-
-            ArgumentOutOfRangeException.ThrowIfWithout(SourceIndex, Bridge.Length);
-            ArgumentOutOfRangeException.ThrowIfWithout(SourceIndex + Count - 1, Bridge.Length);
-            ArgumentOutOfRangeException.ThrowIfWithout(DestinationIndex, Bridge.Length);
-            ArgumentOutOfRangeException.ThrowIfWithout(DestinationIndex + Count - 1, Bridge.Length);
-
-            var TotalSpan = Bridge.AsSpan();
-
-            if (DestinationIndex > SourceIndex)
-            {
-                if (SourceIndex + Count <= DestinationIndex)
-                {
-                    TotalSpan.Slice(SourceIndex, Count)
-                             .CopyTo(TotalSpan.Slice(DestinationIndex, Count));
-                }
-                else
-                {
-                    for (var i = Count - 1; i >= 0; i--)
-                    {
-                        TotalSpan[DestinationIndex + i] = TotalSpan[SourceIndex + i];
-                    }
-                }
-            }
-            else
-            {
-                if (DestinationIndex + Count <= SourceIndex)
-                {
-                    TotalSpan.Slice(SourceIndex, Count)
-                             .CopyTo(TotalSpan.Slice(DestinationIndex, Count));
-                }
-                else
-                {
-                    for (var i = 0; i < Count; i++)
-                    {
-                        TotalSpan[DestinationIndex + i] = TotalSpan[SourceIndex + i];
-                    }
-                }
-            }
+            var Source = AsSpan(SourceIndex, Count);
+            var Destination = AsSpan(DestinationIndex, Count);
+            Source.CopyTo(Destination);
         }
 
 

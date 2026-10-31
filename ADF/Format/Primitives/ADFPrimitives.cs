@@ -1,4 +1,4 @@
-﻿using Zion.Vectors;
+﻿using Zion.Geometry;
 using BigInteger = System.Numerics.BigInteger;
 
 namespace Zion.ADF

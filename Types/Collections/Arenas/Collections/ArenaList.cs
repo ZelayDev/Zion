@@ -91,7 +91,7 @@ namespace Zion
         public void Insert(int Index, T Item)
         {
             ThrowIfWithout(Index);
-            Move(Index, Index + 1, Count - Index);
+            Copy(Index, Index + 1, Count - Index);
             this[Index] = Item;
             Count++;
         }
@@ -113,7 +113,7 @@ namespace Zion
 
                 if (Index < Count)
                 {
-                    Move(Index, Index + ItemsCount, Count - Index);
+                    Copy(Index, Index + ItemsCount, Count - Index);
                 }
 
                 UseSpan
@@ -268,14 +268,14 @@ namespace Zion
         public void RemoveAt(int Index)
         {
             ThrowIfWithout(Index);
-            Move(Index + 1, Index, Count - Index - 1);
+            Copy(Index + 1, Index, Count - Index - 1);
             Count--;
         }
 
         public void RemoveRange(int Index, int Count)
         {
             ThrowIfWithout(Index, Count);
-            Move(Index + Count, Index, this.Count - Index - Count);
+            Copy(Index + Count, Index, this.Count - Index - Count);
             this.Count -= Count;
         }
 

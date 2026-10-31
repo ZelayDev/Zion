@@ -115,6 +115,13 @@ namespace Zion
             return GetNewBridge(Capacity);
         }
 
+        internal ArenaBridge<T> Trim(ArenaCollection<T> Collection, int Capacity)
+        {
+            CheckCollection(Collection);
+            
+            throw new NotImplementedException();
+        }
+        
         internal void Release(ArenaCollection<T> Collection)
         {
             CheckCollection(Collection);

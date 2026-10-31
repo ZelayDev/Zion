@@ -1,5 +1,5 @@
 ﻿using System.Numerics;
-using Zion.Vectors;
+using Zion.Geometry;
 
 namespace Zion.ADF
 {

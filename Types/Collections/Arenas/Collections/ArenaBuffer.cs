@@ -105,7 +105,7 @@ namespace Zion
         {
             ThrowIfWithout(Index);
 
-            Move(Index + 1, Index, Count - Index - 1);
+            Copy(Index + 1, Index, Count - Index - 1);
             Count--;
         }
 
@@ -114,7 +114,7 @@ namespace Zion
             ThrowIfWithout(Index);
             ThrowIfWithout(Index + Count - 1);
 
-            Move(Index + Count, Index, this.Count - Count - Index);
+            Copy(Index + Count, Index, this.Count - Count - Index);
             this.Count -= Count;
         }
 
@@ -152,7 +152,7 @@ namespace Zion
             ArgumentOutOfRangeException.ThrowIfBeyond(Index, Count);
 
             EnsureCapacity(Count + 1);
-            Move(Index, Index + 1, Count - Index);
+            Copy(Index, Index + 1, Count - Index);
             this[Index] = Item;
             Count++;
         }
@@ -174,7 +174,7 @@ namespace Zion
 
                 if (Index < Count)
                 {
-                    Move(Index, Index + ItemsCount, Count - Index);
+                    Copy(Index, Index + ItemsCount, Count - Index);
                 }
 
                 UseSpan

@@ -2,9 +2,9 @@
 using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using Zion.Vectors;
-using Vector2 = Zion.Vectors.Vector2;
-using Vector3 = Zion.Vectors.Vector3;
+using Zion.Geometry;
+using Vector2 = Zion.Geometry.Vector2;
+using Vector3 = Zion.Geometry.Vector3;
 
 namespace Zion.ADF
 {

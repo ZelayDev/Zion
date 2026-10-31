@@ -2,10 +2,16 @@
 {
     public sealed class ArenaQueue<T> : ArenaCollection<T>
     {
-        public int Count => GetLength();
-
         public bool IsReadOnly => false;
 
+        public int Count => GetLength();
+
+
+        public ArenaQueue()
+        {
+            throw new NotImplementedException();
+        }
+        
 
         public void Enqueue(T Item)
         {
@@ -23,18 +29,18 @@
 
         public T Dequeue()
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
 
 
         public bool TryPeek(out T Item)
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
 
         public bool TryDequeue(out T Item)
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
 
 
@@ -45,17 +51,17 @@
 
         public bool Contains(T Item)
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
 
         public void CopyTo(T[] Array, int ArrayIndex)
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
 
         public bool Remove(T Item)
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
 
         public void Clear()
@@ -66,17 +72,12 @@
 
         public T[] ToArray()
         {
-            var Length = Count;
-            var Array = new T[Length];
-
-            throw new NotImplementedException(); //Do
-            
-            return Array;
+            throw new NotImplementedException();
         }
 
         public Queue<T> ToQueue()
         {
-            throw new NotImplementedException(); //Do
+            throw new NotImplementedException();
         }
     }
 }

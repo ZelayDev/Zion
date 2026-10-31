@@ -69,7 +69,18 @@ namespace Zion
 
         public bool Remove(T Item, IEqualityComparer<T>? Comparer = null)
         {
-            return AsSpan().Remove(Item, Comparer);
+            var Span = AsSpan(0, Count);
+            var Index = Span.IndexOf(Item, Comparer);
+
+            if (Index < 0)
+            {
+                return false;
+            }
+
+            Copy(Index + 1, Index, Count - Index - 1);
+            SetValueAt(Count - 1, default!);
+            Count--;
+            return true;
         }
 
         public void Clear()
@@ -78,7 +89,7 @@ namespace Zion
             Count = 0;
         }
 
-        
+
         public void CopyTo(T[] Array, int ArrayIndex)
         {
             AsSpan().CopyTo(Array.AsSpan(ArrayIndex));
@@ -88,58 +99,51 @@ namespace Zion
         {
             AsSpan().CopyTo(Destination);
         }
-        
-        
+
+
         public T[] ToArray()
         {
-            T[] Result = new T[Count];
-            CopyTo(Result, 0);
+            var Source = AsSpan();
+            var Result = new T[Source.Length];
+            
+            for (var i = 0; i < Source.Length; i++)
+            {
+                Result[i] = Source[Source.Length - i - 1];
+            }
+
             return Result;
         }
 
         public Stack<T> ToStack()
         {
-            return UseSpan
-            (
-                Count,
-                static Span =>
-                {
-                    var Stack = new Stack<T>(Span.Length);
+            var Span = AsSpan();
+            var Result = new Stack<T>(Span.Length);
 
-                    for (int i = Span.Length - 1; i >= 0; i--)
-                    {
-                        Stack.Push(Span[i]);
-                    }
+            for (var i = Span.Length - 1; i >= 0; i--)
+            {
+                Result.Push(Span[i]);
+            }
 
-                    return Stack;
-                }
-            );
+            return Result;
         }
 
         public List<T> ToList()
         {
-            var Count = this.Count;
-            if (Count == 0)
+            var Source = AsSpan();
+            var Result = new List<T>(Source.Length);
+
+            CollectionsMarshal.SetCount(Result, Source.Length);
+            var Destination = CollectionsMarshal.AsSpan(Result);
+
+            for (var i = 0; i < Source.Length; i++)
             {
-                return new List<T>();
+                Destination[i] = Source[Source.Length - i - 1];
             }
 
-            return UseSpan
-            (
-                Count,
-                static Span =>
-                {
-                    var Result = new List<T>(Span.Length);
-
-                    CollectionsMarshal.SetCount(Result, Span.Length);
-                    Span.CopyTo(CollectionsMarshal.AsSpan(Result));
-
-                    return Result;
-                }
-            );
+            return Result;
         }
-        
-        
+
+
         public ArenaItemEnumerator<T> GetEnumerator()
         {
             return GetEnumerator(0, Count);

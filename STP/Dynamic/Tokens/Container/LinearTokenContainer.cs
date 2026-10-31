@@ -3,7 +3,7 @@
 namespace Zion.STP.Dynamic
 {
     //Do: LinearTokenContainer realization
-    public sealed class LinearTokenContainer : ITokenContainer<IntPointer>
+    public sealed class LinearTokenContainer// : ITokenContainer<IntPointer>
     {
         private readonly Dictionary<IntPointer, Group> Groups;
         private readonly Group CurrentGroup;

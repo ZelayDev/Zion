@@ -111,7 +111,10 @@ namespace Zion
 
         internal static void Trim(ArenaCollection<T> Collection, int Length, ref ArenaBridge<T> Bridge)
         {
-            throw new NotImplementedException(); //TODO
+            if (Length < Bridge.Length)
+            {
+                Bridge = Bridge.Source.Trim(Collection, Length);
+            }
         }
     }
 }

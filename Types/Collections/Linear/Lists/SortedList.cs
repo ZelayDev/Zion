@@ -102,7 +102,7 @@ namespace Zion
 
         public void Add(T Item)
         {
-            InsertAt(Item, GetInsertIndex(Item));
+            InsertAt(GetInsertIndex(Item), Item);
         }
 
         public void AddRange(ICollection<T> Items)
@@ -113,7 +113,7 @@ namespace Zion
 
             foreach (var Item in Items)
             {
-                InsertAt(Item, GetInsertIndex(Item));
+                InsertAt(GetInsertIndex(Item), Item);
             }
         }
 
@@ -133,7 +133,7 @@ namespace Zion
 
             if (ValidLeft && ValidRight)
             {
-                InsertAt(Item, TargetIndex);
+                InsertAt(TargetIndex, Item);
             }
             else
             {
@@ -316,9 +316,13 @@ namespace Zion
 
         public List<T> ToList()
         {
-            var Result = new List<T>(Count);
-            Data.AsSpan(0, Count).CopyTo(CollectionsMarshal.AsSpan(Result));
-            return Result;
+            var Count = this.Count;
+            var List = new List<T>(Count);
+            
+            CollectionsMarshal.SetCount(List, Count);
+            Data.AsSpan(0, Count).CopyTo(CollectionsMarshal.AsSpan(List));
+            
+            return List;
         }
 
 
