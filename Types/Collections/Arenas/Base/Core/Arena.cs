@@ -11,10 +11,8 @@ namespace Zion
 
         #region Data
         private readonly HashSet<ArenaCollection<T>> Collections;
-        private readonly SortedList<Segment>         FreeAreas;
+        private readonly IFreeAreaStore              FreeAreaStore;
         private          T[][]                       Chunks;
-
-        private int UsedCount;
         #endregion
 
         #region Properties
@@ -24,10 +22,16 @@ namespace Zion
         #region Constructors
         public Arena() : this(1) { }
 
-        public Arena(int Capacity)
+        public Arena(ArenaFreeMode FreeMode)
+            : this(1, FreeMode) { }
+
+        public Arena(int Capacity, ArenaFreeMode FreeMode = ArenaFreeMode.RarelyReleased)
+            : this(Capacity, GetFreeAreaStore(FreeMode)) { }
+
+        public Arena(int Capacity, IFreeAreaStore Store)
         {
             Collections = new HashSet<ArenaCollection<T>>(ReferenceEqualityComparer.Instance);
-            FreeAreas = new SortedList<Segment>(Segment.ByLengthComparer);
+            FreeAreaStore = Store.NotNull();
             Chunks = GetChunks(Capacity);
         }
         #endregion
@@ -61,8 +65,15 @@ namespace Zion
 
         public A Allocate<A>(int Capacity) where A : ArenaCollection<T>, new()
         {
-            var Bridge = GetNewBridge(Capacity);
+            var FreeArea = FreeAreaStore.Allocate(Capacity);
+
+            EnsureCapacity(FreeArea.End);
+            
             var Collection = new A();
+            var Bridge = new ArenaBridge<T>
+            (
+                this, new ArenaRegion<T>(Chunks, FreeArea.Start, Capacity)
+            );
 
             Collection.Initialize(Bridge);
             Collections.Add(Collection);
@@ -86,9 +97,8 @@ namespace Zion
                 Collection.ResetBridge();
             }
 
+            FreeAreaStore.Clear();
             Collections.Clear();
-            FreeAreas.Clear();
-            UsedCount = 0;
         }
         #endregion
 
@@ -96,32 +106,44 @@ namespace Zion
         internal ArenaBridge<T> Expand(ArenaCollection<T> Collection, int Capacity)
         {
             CheckCollection(Collection);
-
+            
             var Bridge = Collection.GetBridge();
             var Area = Bridge.GetArea();
 
-            if (Area.End == UsedCount)
+            if (Area.Length >= Capacity)
             {
-                var Addition = Capacity - Bridge.Length;
-                UsedCount += Addition;
-                EnsureCapacity(UsedCount);
-                return new ArenaBridge<T>
-                (
-                    this, new ArenaRegion<T>(Chunks, Area.Start, Capacity)
-                );
+                return Bridge;
             }
 
-            AddFreeArea(Area);
-            return GetNewBridge(Capacity);
+            var Expanded = FreeAreaStore.Expand(Area, Capacity);
+
+            EnsureCapacity(Expanded.End);
+
+            return new ArenaBridge<T>(this, new ArenaRegion<T>(Chunks, Expanded));
         }
 
         internal ArenaBridge<T> Trim(ArenaCollection<T> Collection, int Capacity)
         {
             CheckCollection(Collection);
+
+            var Bridge = Collection.GetBridge();
+            var Area = Bridge.GetArea();
+
+            if (Capacity >= Area.Length)
+            {
+                return Bridge;
+            }
+
+            var NewArea = FreeAreaStore.Trim(Area, Capacity);
             
-            throw new NotImplementedException();
+            Clear(Area.Start, Area.Length - NewArea.Length);
+            
+            return new ArenaBridge<T>
+            (
+                this, new ArenaRegion<T>(Chunks, NewArea)
+            );
         }
-        
+
         internal void Release(ArenaCollection<T> Collection)
         {
             CheckCollection(Collection);
@@ -130,15 +152,7 @@ namespace Zion
             var Area = Bridge.GetArea();
 
             Bridge.Clear();
-            
-            if (Area.End == UsedCount)
-            {
-                UsedCount -= Area.Length;
-            }
-            else
-            {
-                AddFreeArea(Area);
-            }
+            FreeAreaStore.Release(Area);
         }
         #endregion
 
@@ -159,38 +173,12 @@ namespace Zion
             }
         }
 
-        private ArenaBridge<T> GetNewBridge(int Capacity)
+
+        private void Clear(int Start, int Length)
         {
-            var FreeArea = GetFreeArea(Capacity);
-            return new ArenaBridge<T>
-            (
-                this, new ArenaRegion<T>(Chunks, FreeArea.Start, Capacity)
-            );
+            new ArenaRegion<T>(Chunks, Start, Length).Clear();
         }
-
-        private Segment GetFreeArea(int Capacity)
-        {
-            if (Capacity == 0)
-            {
-                return Segment.Empty;
-            }
-
-            if (FreeAreas.TryFindFirstAtLeast(new Segment(0, Capacity), out var AreaIndex))
-            {
-                var Start = FreeAreas[AreaIndex].Start;
-                return new Segment(Start, Capacity);
-            }
-
-            var Result = new Segment(UsedCount, Capacity);
-            UsedCount += Capacity;
-            return Result;
-        }
-
-        private void AddFreeArea(Segment Area)
-        {
-            throw new NotImplementedException(); //TODO: Добавить с учётом совмещения 2 рядом стоящих областей
-        }
-
+        
 
         private static T[][] GetChunks(int Capacity)
         {
@@ -221,24 +209,20 @@ namespace Zion
                 Chunks[i] = new T[ChunkSize];
             }
         }
+
+        private static IFreeAreaStore GetFreeAreaStore(ArenaFreeMode Mode)
+        {
+            return Mode switch
+            {
+                // ArenaFreeMode.BumpOnly           =>,
+                // ArenaFreeMode.RarelyReleased     =>,
+                // ArenaFreeMode.FrequentlyReleased =>,
+                _                                => throw new InvalidOperationException("This AreaFreeMode not exists")
+            };
+        }
         #endregion
 
         #region Math
-        public static T[][] Slice(T[][] Chunks, int Start, int Length)
-        {
-            if (Length == 0)
-            {
-                return [];
-            }
-
-            var First = GetChunkIndex(Start);
-            var Last = GetChunkIndex(Start + Length - 1);
-            
-            return First == 0 && Last == Chunks.Length - 1
-                ? Chunks
-                : ZArray.GetSubArray(Chunks, First, Last - First + 1);
-        }
-        
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static int GetChunkCount(int Count)
         {

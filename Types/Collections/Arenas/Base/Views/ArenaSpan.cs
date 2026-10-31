@@ -81,10 +81,14 @@ namespace Zion
                 
                 default:
                     //Optimize
-                    var Buffer = ArrayPool<T>.Shared.Rent(Region.Length).AsSpan(0, Region.Length);
-                    CopyTo(Buffer);
-                    Buffer.Sort(Comparer);
-                    Buffer.CopyTo(this);
+                    var Buffer = ArrayPool<T>.Shared.Rent(Region.Length);
+                    var BufferSpan = Buffer.AsSpan(0, Region.Length);
+                    
+                    CopyTo(BufferSpan);
+                    BufferSpan.Sort(Comparer);
+                    BufferSpan.CopyTo(this);
+                    
+                    ArrayPool<T>.Shared.Return(Buffer, true);
                     break;
             }
         }
@@ -156,6 +160,11 @@ namespace Zion
                 var Middle = Region.Chunks[LeftChunkIndex].AsSpan(LeftChunkOffset, RightChunkEnd - LeftChunkOffset);
                 Middle.Reverse();
             }
+        }
+
+        public void Clear()
+        {
+            Region.Clear();
         }
 
 

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 using System.Runtime.Serialization;
 using Zion.Serialization;
 
@@ -154,6 +155,13 @@ namespace Zion.Geometry
             return Object.GetHashCode();
         }
 
+        #endregion
+
+        #region PublicMethods
+        public static int GetByteCount()
+        {
+            return Unsafe.SizeOf<Vector3<T>>();
+        }
         #endregion
     }
 }

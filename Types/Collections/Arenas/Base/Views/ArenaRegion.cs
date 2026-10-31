@@ -123,6 +123,17 @@ namespace Zion
                 && A.Start < B.Start + B.Length
                 && B.Start < A.Start + A.Length;
         }
+
+        public void Clear()
+        {
+            if (Length > 0)
+            {
+                foreach (var Chunk in EnumerateChunks())
+                {
+                    Chunk.Clear();
+                }
+            }
+        }
         
         
         public int GetChunkCount()

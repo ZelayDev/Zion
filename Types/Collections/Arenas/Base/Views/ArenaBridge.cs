@@ -64,30 +64,13 @@ namespace Zion
 
         internal void Clear()
         {
-            Clear(Length);
+            Region.Clear();
         }
         
         internal void Clear(int Length)
         {
-            if (Length == 0)
-            {
-                return;
-            }
-
-            var Chunks = Region.Chunks;
-            var Remaining = Length;
-
-            var FirstChunk = Arena<T>.GetChunkIndex(Region.Start);
-            var LocalStart = Arena<T>.GetLocalIndex(Region.Start);
-
-            for (var i = FirstChunk; i < Chunks.Length && Remaining > 0; i++)
-            {
-                var StartInChunk = i == FirstChunk ? LocalStart : 0;
-                var Count = Math.Min(Arena<T>.ChunkSize - StartInChunk, Remaining);
-
-                Array.Clear(Chunks[i], StartInChunk, Count);
-                Remaining -= Count;
-            }
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Length, Region.Length);
+            new ArenaSpan<T>(new ArenaRegion<T>(Region.Chunks, Region.Start, Length)).Clear();
         }
 
         internal ArenaRegion<T> GetRegion()

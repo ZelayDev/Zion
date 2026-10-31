@@ -39,7 +39,7 @@
     <Folder Include="STP\Source\Text\Document\" />
     <Folder Include="STP\Source\Text\Source\Base\" />
     <Folder Include="STP\Source\Text\Source\Source\" />
-    <Folder Include="Types\Collections\Arenas\Base\Core\" />
+    <Folder Include="Types\Collections\Arenas\Base\FreeAreaStore\Stores\" />
   </ItemGroup>
 
 </Project>

@@ -3,14 +3,17 @@ using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using Zion.Geometry;
 using static System.Buffers.Binary.BinaryPrimitives;
+using Vector2 = System.Numerics.Vector2;
+using Vector3 = Zion.Geometry.Vector3;
 
 namespace Zion
 {
     public sealed class ArenaStream : ArenaCollection<byte>
     {
         private const int BufferThreshold = 256;
-        
+
         private int Position;
 
         public int Length
@@ -257,24 +260,24 @@ namespace Zion
             Reserve(Length);
 
             var Span = AsSpan(Position, Length);
-            
+
             if (Length <= BufferThreshold)
             {
                 Span<byte> Buffer = stackalloc byte[Length];
-                
+
                 Value.TryWriteBytes(Buffer, out _);
                 Buffer.CopyTo(Span);
             }
             else
             {
                 var Buffer = ArrayPool<byte>.Shared.Rent(Length);
-                
+
                 Value.TryWriteBytes(Buffer, out _);
                 Buffer.CopyTo(Span);
-                
+
                 ArrayPool<byte>.Shared.Return(Buffer);
             }
-            
+
             Advance(Length);
         }
 
@@ -304,163 +307,163 @@ namespace Zion
         }
 
 
-        public void Write(Vectors.Vector2 Value)
+        public void Write(Vector2 Value)
         {
-            var Size = Unsafe.SizeOf<Vectors.Vector2>();
+            var Size = Unsafe.SizeOf<Geometry.Vector2>();
             Reserve(Size);
 
             Span<byte> Buffer = stackalloc byte[Size];
             MemoryMarshal.Write(Buffer, Value);
             Buffer.CopyTo(AsSpan(Position, Size));
-            
+
             Advance(Size);
         }
 
-        public void Write(Vectors.Vector2Int Value)
+        public void Write(Vector2Int Value)
         {
-            var Size = Unsafe.SizeOf<Vectors.Vector2Int>();
+            var Size = Unsafe.SizeOf<Vector2Int>();
             Reserve(Size);
 
             Span<byte> Buffer = stackalloc byte[Size];
             MemoryMarshal.Write(Buffer, Value);
             Buffer.CopyTo(AsSpan(Position, Size));
-            
+
             Advance(Size);
         }
-        
-        public void Write(Vectors.Vector2<byte> Value)
+
+        public void Write(Vector2<byte> Value)
         {
-            WriteVector<byte>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<sbyte> Value)
+        public void Write(Vector2<sbyte> Value)
         {
-            WriteVector<sbyte>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<int> Value)
+        public void Write(Vector2<int> Value)
         {
-            WriteVector<int>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<uint> Value)
+        public void Write(Vector2<uint> Value)
         {
-            WriteVector<uint>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<long> Value)
+        public void Write(Vector2<long> Value)
         {
-            WriteVector<long>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<ulong> Value)
+        public void Write(Vector2<ulong> Value)
         {
-            WriteVector<ulong>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<short> Value)
+        public void Write(Vector2<short> Value)
         {
-            WriteVector<short>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<ushort> Value)
+        public void Write(Vector2<ushort> Value)
         {
-            WriteVector<ushort>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<float> Value)
+        public void Write(Vector2<float> Value)
         {
-            WriteVector<float>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<double> Value)
+        public void Write(Vector2<double> Value)
         {
-            WriteVector<double>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector2<decimal> Value)
+        public void Write(Vector2<decimal> Value)
         {
-            WriteVector<decimal>(Value);
+            WriteVector(Value);
         }
-        
-        
-        public void Write(Vectors.Vector3 Value)
+
+
+        public void Write(Vector3 Value)
         {
-            var Size = Unsafe.SizeOf<Vectors.Vector3>();
+            var Size = Unsafe.SizeOf<Vector3>();
             Reserve(Size);
 
             Span<byte> Buffer = stackalloc byte[Size];
             MemoryMarshal.Write(Buffer, Value);
             Buffer.CopyTo(AsSpan(Position, Size));
-            
+
             Advance(Size);
         }
-        
-        public void Write(Vectors.Vector3Int Value)
+
+        public void Write(Vector3Int Value)
         {
-            var Size = Unsafe.SizeOf<Vectors.Vector3Int>();
+            var Size = Unsafe.SizeOf<Vector3Int>();
             Reserve(Size);
 
             Span<byte> Buffer = stackalloc byte[Size];
             MemoryMarshal.Write(Buffer, Value);
             Buffer.CopyTo(AsSpan(Position, Size));
-            
+
             Advance(Size);
         }
 
-        public void Write(Vectors.Vector3<byte> Value)
+        public void Write(Vector3<byte> Value)
         {
-            WriteVector<byte>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<sbyte> Value)
+        public void Write(Vector3<sbyte> Value)
         {
-            WriteVector<sbyte>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<int> Value)
+        public void Write(Vector3<int> Value)
         {
-            WriteVector<int>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<uint> Value)
+        public void Write(Vector3<uint> Value)
         {
-            WriteVector<uint>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<long> Value)
+        public void Write(Vector3<long> Value)
         {
-            WriteVector<long>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<ulong> Value)
+        public void Write(Vector3<ulong> Value)
         {
-            WriteVector<ulong>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<short> Value)
+        public void Write(Vector3<short> Value)
         {
-            WriteVector<short>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<ushort> Value)
+        public void Write(Vector3<ushort> Value)
         {
-            WriteVector<ushort>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<float> Value)
+        public void Write(Vector3<float> Value)
         {
-            WriteVector<float>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<double> Value)
+        public void Write(Vector3<double> Value)
         {
-            WriteVector<double>(Value);
+            WriteVector(Value);
         }
 
-        public void Write(Vectors.Vector3<decimal> Value)
+        public void Write(Vector3<decimal> Value)
         {
-            WriteVector<decimal>(Value);
+            WriteVector(Value);
         }
 
 
@@ -623,10 +626,10 @@ namespace Zion
         public void CopyTo(ArenaStream Destination)
         {
             Destination.EnsureCapacity(Length);
-            
+
             var SourceSpan = AsSpan();
             var DestinationSpan = Destination.AsSpan(0, SourceSpan.Length);
-            
+
             SourceSpan.CopyTo(DestinationSpan);
         }
 
@@ -661,27 +664,27 @@ namespace Zion
             }
         }
 
-        private void WriteVector<T>(Vectors.Vector2<T> Value) where T : INumber<T>s
+        private void WriteVector<T>(Vector2<T> Value) where T : unmanaged, INumber<T>
         {
-            var Size = Unsafe.SizeOf<Vectors.Vector2<T>>();
+            var Size = Vector2<T>.GetByteCount();
             Reserve(Size);
 
             Span<byte> Buffer = stackalloc byte[Size];
             MemoryMarshal.Write(Buffer, Value);
             Buffer.CopyTo(AsSpan(Position, Size));
-            
+
             Advance(Size);
         }
-        
-        private void WriteVector<T>(Vectors.Vector3<T> Value) where T : INumber<T>
+
+        private void WriteVector<T>(Vector3<T> Value) where T : unmanaged, INumber<T>
         {
-            var Size = Unsafe.SizeOf<Vectors.Vector3<T>>();
+            var Size = Vector3<T>.GetByteCount();
             Reserve(Size);
 
             Span<byte> Buffer = stackalloc byte[Size];
             MemoryMarshal.Write(Buffer, Value);
             Buffer.CopyTo(AsSpan(Position, Size));
-            
+
             Advance(Size);
         }
     }

@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using System.Numerics;
+using System.Runtime.CompilerServices;
 
 namespace Zion.Geometry
 {
@@ -8,7 +9,6 @@ namespace Zion.Geometry
     {
         #region Data
         public T X, Y;
-
         #endregion
 
         #region Constructors
@@ -23,7 +23,6 @@ namespace Zion.Geometry
             this.X = X;
             this.Y = Y;
         }
-
         #endregion
 
         #region Operators
@@ -63,6 +62,7 @@ namespace Zion.Geometry
             Value.Y++;
             return Value;
         }
+
         public static Vector2<T> operator --(Vector2<T> Value)
         {
             Value.X--;
@@ -74,7 +74,6 @@ namespace Zion.Geometry
         {
             return new Vector2<T>(-Value.X, -Value.Y);
         }
-
         #endregion
 
         #region ComparisonOperators
@@ -90,7 +89,7 @@ namespace Zion.Geometry
 
         public static bool operator <(Vector2<T> A, Vector2<T> B)
         {
-            return A.X <  B.X && A.Y < B.Y;
+            return A.X < B.X && A.Y < B.Y;
         }
 
         public static bool operator >(Vector2<T> A, Vector2<T> B)
@@ -107,27 +106,24 @@ namespace Zion.Geometry
         {
             return A.X >= B.X && A.Y >= B.Y;
         }
-
         #endregion
-
         #endregion
 
         #region OverrideMethods
-        public override readonly string ToString()
+        public readonly override string ToString()
         {
             return $"[{X}; {Y}]";
         }
 
-        public override readonly bool Equals([NotNullWhen(true)] object? Object)
+        public readonly override bool Equals([NotNullWhen(true)] object? Object)
         {
             return Object is Vector2<T> Value && this == Value;
         }
 
-        public override readonly int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return HashCode.Combine(X, Y);
         }
-
         #endregion
 
         #region IEquatable & IEqualityComparer
@@ -145,7 +141,13 @@ namespace Zion.Geometry
         {
             return Object.GetHashCode();
         }
+        #endregion
 
+        #region PublicMethods
+        public static int GetByteCount()
+        {
+            return Unsafe.SizeOf<Vector2<T>>();
+        }
         #endregion
     }
 }
