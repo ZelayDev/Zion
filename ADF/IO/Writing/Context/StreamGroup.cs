@@ -29,7 +29,7 @@ namespace Zion.ADF
 
         #region Constructors
         public StreamGroup(Arena<byte> Arena)
-            : this(Arena.NotNull().GetStream(1)) { }
+            : this(Arena.NotNull().GetStream(64)) { }
 
         public StreamGroup(ArenaStream Stream)
         {

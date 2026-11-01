@@ -33,7 +33,7 @@
 
         internal BaseADFWriter(BaseADFWriter Base, StreamGroup Target) : this(Base.Context, Target) { }
 
-        internal BaseADFWriter(ADFWritingContext Context) : this(Context, new(Context.Arena.GetStream(1))) { }
+        internal BaseADFWriter(ADFWritingContext Context) : this(Context, new(Context.Arena.GetStream(64))) { }
 
         internal BaseADFWriter(ADFWritingContext Context, StreamGroup Target)
         {
@@ -66,7 +66,7 @@
         #region ProtectedMethods
         protected ArenaStream GetNewStream()
         {
-            return Context.Arena.GetStream(1);
+            return Context.Arena.GetStream(64);
         }
 
         protected ArenaStream GetBaseStream()

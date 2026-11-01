@@ -184,7 +184,7 @@ namespace Zion
         private static T[][] GetChunks(int Capacity)
         {
             var ChunkCount = GetChunkCount(Capacity);
-            var Chunks = new T[][ChunkCount];
+            var Chunks = new T[ChunkCount][];
 
             for (var i = 0; i < ChunkCount; i++)
             {

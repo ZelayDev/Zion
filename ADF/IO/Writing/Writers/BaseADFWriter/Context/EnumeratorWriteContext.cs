@@ -32,7 +32,7 @@
             var Index = 0;
             var BufferIndex = 0;
 
-            Span<T> Buffer = stackalloc T[32];
+            Span<T> Buffer = stackalloc T[128];
 
             Target.BaseStream.WriteCompressed(Context, Link);
             Stream.SetPosition(4);
@@ -54,8 +54,11 @@
                 WriteSpan(Stream, Buffer.Slice(BufferIndex), Compression);
             }
 
+            var Position = Stream.Position;
+            
             Stream.SetPosition(0);
             Stream.Write(Index);
+            Stream.SetPosition(Position);
 
             Target.Add(Stream);
         }

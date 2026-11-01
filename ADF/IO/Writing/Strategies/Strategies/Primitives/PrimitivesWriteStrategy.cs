@@ -171,7 +171,7 @@ namespace Zion.ADF
 
         public void WriteData(ADFWritingContext Context, StreamGroup Target, BigInteger Value)
         {
-            var Stream = Context.Arena.GetStream(1);
+            var Stream = Context.Arena.GetStream(64);
             var Link = Reference.CreateNewReference(Target.ChildsLength);
 
             Stream.Write(Value);

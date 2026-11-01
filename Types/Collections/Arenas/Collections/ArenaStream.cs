@@ -1052,7 +1052,7 @@ namespace Zion
         public void TrimExcess(int Size)
         {
             ArgumentOutOfRangeException.ThrowIfNegative(Size);
-            
+
             if (Size < Length)
             {
                 Length = Size;
@@ -1127,18 +1127,43 @@ namespace Zion
             if (BitConverter.IsLittleEndian)
             {
                 Write(AsBytes(Span));
+                return;
+            }
+
+            var ItemSize = Unsafe.SizeOf<T>();
+            var Size = Span.Length * ItemSize;
+            var ItemLimit = BufferThreshold / ItemSize;
+
+            Reserve(Size);
+
+            if (TryGetSpan(Position, Size, out var Destination))
+            {
+                ReverseEndianness(Span, Cast<byte, T>(Destination));
             }
             else
             {
-                var Size = Span.Length * Unsafe.SizeOf<T>();
-                Reserve(Size);
-                if (TryGetSpan(Position, Size, out var Destination))
+                Span<T> Buffer = stackalloc T[ItemLimit];
+
+                var StartPosition = Position;
+                var Index = 0;
+
+                while (Index < Span.Length)
                 {
-                    ReverseEndianness(Span, Cast<byte, T>(Destination));
+                    var Count = Math.Min(ItemLimit, Span.Length - Index);
+                    var BufferSlice = Buffer.Slice(0, Count);
+
+                    ReverseEndianness(Span.Slice(Index, Count), BufferSlice);
+
+                    var ByteCount = Count * ItemSize;
+                    var DestSpan = AsSpan(StartPosition + Index * ItemSize, ByteCount);
+
+                    AsBytes(BufferSlice).CopyTo(DestSpan);
+
+                    Index += Count;
                 }
-                //TODO
-                Advance(Size);
             }
+
+            Advance(Size);
         }
     }
 }

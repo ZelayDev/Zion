@@ -48,7 +48,7 @@
             var Link = Reference.CreateNewReference(Base.ChildsLength);
             Base.BaseStream.WriteCompressed(Context, Link);
 
-            var Target = new StreamGroup(Context.Arena.GetStream(1));
+            var Target = new StreamGroup(Context.Arena.GetStream(164));
             Base.Add(Target);
             Base = Target;
 

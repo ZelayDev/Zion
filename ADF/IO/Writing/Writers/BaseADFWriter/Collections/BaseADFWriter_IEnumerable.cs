@@ -134,298 +134,349 @@ namespace Zion.ADF
         }
 
 
-        private void Write(string Name, IEnumerator<bool> Enumerator)
+        public void Write(string Name, IEnumerator<bool> Enumerator)
         {
-            WriteEnumerator<bool>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<bool>(
+                new EnumeratorWriteContext<bool>
+                (
                     Name, ADFPrimitives.Boolean,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<byte> Enumerator)
+        public void Write(string Name, IEnumerator<byte> Enumerator)
         {
-            WriteEnumerator<byte>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<byte>(
+                new EnumeratorWriteContext<byte>
+                (
                     Name, ADFPrimitives.Byte,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<sbyte> Enumerator)
+        public void Write(string Name, IEnumerator<sbyte> Enumerator)
         {
-            WriteEnumerator<sbyte>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<sbyte>(
+                new EnumeratorWriteContext<sbyte>
+                (
                     Name, ADFPrimitives.SByte,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<short> Enumerator)
+        public void Write(string Name, IEnumerator<short> Enumerator)
         {
-            WriteEnumerator<short>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<short>(
+                new EnumeratorWriteContext<short>
+                (
                     Name, ADFPrimitives.Int16,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<int> Enumerator)
+        public void Write(string Name, IEnumerator<int> Enumerator)
         {
-            WriteEnumerator<int>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<int>(
+                new EnumeratorWriteContext<int>
+                (
                     Name, ADFPrimitives.Int32,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<long> Enumerator)
+        public void Write(string Name, IEnumerator<long> Enumerator)
         {
-            WriteEnumerator<long>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<long>(
+                new EnumeratorWriteContext<long>
+                (
                     Name, ADFPrimitives.Int64,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<ushort> Enumerator)
+        public void Write(string Name, IEnumerator<ushort> Enumerator)
         {
-            WriteEnumerator<ushort>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<ushort>(
+                new EnumeratorWriteContext<ushort>
+                (
                     Name, ADFPrimitives.UInt16,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<uint> Enumerator)
+        public void Write(string Name, IEnumerator<uint> Enumerator)
         {
-            WriteEnumerator<uint>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<uint>(
+                new EnumeratorWriteContext<uint>
+                (
                     Name, ADFPrimitives.UInt32,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<ulong> Enumerator)
+        public void Write(string Name, IEnumerator<ulong> Enumerator)
         {
-            WriteEnumerator<ulong>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<ulong>(
+                new EnumeratorWriteContext<ulong>
+                (
                     Name, ADFPrimitives.UInt64,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<char> Enumerator)
+        public void Write(string Name, IEnumerator<char> Enumerator)
         {
-            WriteEnumerator<char>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<char>(
+                new EnumeratorWriteContext<char>
+                (
                     Name, ADFPrimitives.Char,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<float> Enumerator)
+        public void Write(string Name, IEnumerator<float> Enumerator)
         {
-            WriteEnumerator<float>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<float>(
+                new EnumeratorWriteContext<float>
+                (
                     Name, ADFPrimitives.Single,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<double> Enumerator)
+        public void Write(string Name, IEnumerator<double> Enumerator)
         {
-            WriteEnumerator<double>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<double>(
+                new EnumeratorWriteContext<double>
+                (
                     Name, ADFPrimitives.Double,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<decimal> Enumerator)
+        public void Write(string Name, IEnumerator<decimal> Enumerator)
         {
-            WriteEnumerator<decimal>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<decimal>(
+                new EnumeratorWriteContext<decimal>
+                (
                     Name, ADFPrimitives.Decimal,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        //!!!
-        private void Write(string Name, IEnumerator<string> Enumerator)
+        public void Write(string Name, IEnumerator<string> Enumerator)
         {
-            //TODO: Вынести общую логику
             ThrowIfDisposed();
 
+            var Compression = Context.Compression;
             var Registry = StringRegistry;
 
             var NameId = StringRegistry.GetOrAdd(Name);
             var Target = GetWriteTarget(Name, in NameId, ADFPrimitives.String | ADFPrimitives.Sequence);
-            var Stream = Target.BaseStream;
 
-            if (Context.Compression)
+            var Link = Reference.CreateNewReference(Target.ChildsLength);
+            var Stream = Context.Arena.GetStream(64);
+            var Count = 0;
+
+            Target.BaseStream.WriteCompressed(Context, Link);
+            Stream.SetPosition(4);
+
+            while (Enumerator.MoveNext())
             {
-                while (Enumerator.MoveNext())
+                var Id = Registry.GetOrAdd(Enumerator.Current);
+
+                if (Compression)
                 {
-                    var Id = Registry.GetOrAdd(Enumerator.Current);
                     Stream.Write7BitEncoded(Id);
                 }
-            }
-            else
-            {
-                while (Enumerator.MoveNext())
+                else
                 {
-                    var Id = Registry.GetOrAdd(Enumerator.Current);
                     Stream.Write(Id);
                 }
+
+                Count++;
             }
+
+            var Position = Stream.Position;
+
+            Stream.SetPosition(0);
+            Stream.Write(Count);
+            Stream.SetPosition(Position);
+            Target.Add(Stream);
 
             OnWrited(Name, in NameId, ADFPrimitives.String | ADFPrimitives.Sequence);
         }
 
-        private void Write(string Name, IEnumerator<Half> Enumerator)
+        public void Write(string Name, IEnumerator<Half> Enumerator)
         {
-            WriteEnumerator<Half>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Half>(
+                new EnumeratorWriteContext<Half>
+                (
                     Name, ADFPrimitives.Half,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<Index> Enumerator)
+        public void Write(string Name, IEnumerator<Index> Enumerator)
         {
-            WriteEnumerator<Index>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Index>(
+                new EnumeratorWriteContext<Index>
+                (
                     Name, ADFPrimitives.Index,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<Range> Enumerator)
+        public void Write(string Name, IEnumerator<Range> Enumerator)
         {
-            WriteEnumerator<Range>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Range>(
+                new EnumeratorWriteContext<Range>
+                (
                     Name, ADFPrimitives.Range,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        //!!!
-        private void Write(string Name, IEnumerator<BigInteger> Enumerator)
+        public void Write(string Name, IEnumerator<BigInteger> Enumerator)
         {
-            //TODO: Вынести общую логику
             ThrowIfDisposed();
 
+            var Compression = Context.Compression;
             var NameId = StringRegistry.GetOrAdd(Name);
             var Target = GetWriteTarget(Name, in NameId, ADFPrimitives.BigInteger | ADFPrimitives.Sequence);
 
-            var Base = Target.BaseStream;
+            var Link = Reference.CreateNewReference(Target.ChildsLength);
             var Stream = Context.Arena.GetStream(64);
-            var Offset = Target.ChildsLength;
+            var DataStream = Context.Arena.GetStream(64);
+            var Count = 0;
+
+            Target.BaseStream.WriteCompressed(Context, Link);
+            Stream.SetPosition(4);
 
             while (Enumerator.MoveNext())
             {
-                Base.Write(Reference.CreateNewReference(Offset + Stream.Length));
-                Stream.Write(Enumerator.Current);
+                var Offset = Reference.CreateNewReference(DataStream.Length);
+
+                if (Compression)
+                {
+                    Stream.Write7BitEncoded(Offset);
+                }
+                else
+                {
+                    Stream.Write(Offset);
+                }
+                DataStream.Write(Enumerator.Current);
+                Count++;
             }
 
-            Target.Add(Stream);
+            var Position = Stream.Position;
+
+            Stream.SetPosition(0);
+            Stream.Write(Count);
+            Stream.SetPosition(Position);
+            Target.Add(new StreamGroup(Stream) { DataStream });
 
             OnWrited(Name, in NameId, ADFPrimitives.BigInteger | ADFPrimitives.Sequence);
         }
 
-        private void Write(string Name, IEnumerator<RGBColor> Enumerator)
+        public void Write(string Name, IEnumerator<RGBColor> Enumerator)
         {
-            WriteEnumerator<RGBColor>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<RGBColor>(
+                new EnumeratorWriteContext<RGBColor>
+                (
                     Name, ADFPrimitives.RGB,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<RGBAColor> Enumerator)
+        public void Write(string Name, IEnumerator<RGBAColor> Enumerator)
         {
-            WriteEnumerator<RGBAColor>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<RGBAColor>(
+                new EnumeratorWriteContext<RGBAColor>
+                (
                     Name, ADFPrimitives.RGBA,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<Vector2> Enumerator)
+        public void Write(string Name, IEnumerator<Vector2> Enumerator)
         {
-            WriteEnumerator<Vector2>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Vector2>(
+                new EnumeratorWriteContext<Vector2>
+                (
                     Name, ADFPrimitives.Vector2,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<Vector2Int> Enumerator)
+        public void Write(string Name, IEnumerator<Vector2Int> Enumerator)
         {
-            WriteEnumerator<Vector2Int>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Vector2Int>(
+                new EnumeratorWriteContext<Vector2Int>
+                (
                     Name, ADFPrimitives.Vector2Int,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<Vector3> Enumerator)
+        public void Write(string Name, IEnumerator<Vector3> Enumerator)
         {
-            WriteEnumerator<Vector3>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Vector3>(
+                new EnumeratorWriteContext<Vector3>
+                (
                     Name, ADFPrimitives.Vector3,
                     Enumerator, SequenceWriteHelper.Write
                 )
             );
         }
 
-        private void Write(string Name, IEnumerator<Vector3Int> Enumerator)
+        public void Write(string Name, IEnumerator<Vector3Int> Enumerator)
         {
-            WriteEnumerator<Vector3Int>
+            WriteEnumerator
             (
-                new EnumeratorWriteContext<Vector3Int>(
+                new EnumeratorWriteContext<Vector3Int>
+                (
                     Name, ADFPrimitives.Vector3Int,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -438,7 +489,6 @@ namespace Zion.ADF
         }
 
 
-        //TODO: Переделать запись под SequenceWriteHelper.Write(Context, Target...)
         private void WriteEnumerator<T>(EnumeratorWriteContext<T> WriteContext) where T : unmanaged
         {
             ThrowIfDisposed();
