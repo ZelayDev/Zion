@@ -2,8 +2,7 @@ namespace Zion
 {
     public enum ArenaFreeMode
     {
-        BumpOnly,
-        RarelyReleased,
-        FrequentlyReleased
+        BumpOnly = 0,
+        Releasable = 1
     }
 }

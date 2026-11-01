@@ -25,7 +25,7 @@ namespace Zion
         public Arena(ArenaFreeMode FreeMode)
             : this(1, FreeMode) { }
 
-        public Arena(int Capacity, ArenaFreeMode FreeMode = ArenaFreeMode.RarelyReleased)
+        public Arena(int Capacity, ArenaFreeMode FreeMode = ArenaFreeMode.Releasable)
             : this(Capacity, GetFreeAreaStore(FreeMode)) { }
 
         public Arena(int Capacity, IFreeAreaStore Store)
@@ -68,7 +68,7 @@ namespace Zion
             var FreeArea = FreeAreaStore.Allocate(Capacity);
 
             EnsureCapacity(FreeArea.End);
-            
+
             var Collection = new A();
             var Bridge = new ArenaBridge<T>
             (
@@ -86,7 +86,8 @@ namespace Zion
         {
             if (Capacity < NewCapacity)
             {
-                Expand(ref Chunks, GetChunkCount(NewCapacity));
+                var ChunkCount = GetChunkCount(NewCapacity);
+                Expand(ref Chunks, ChunkCount);
             }
         }
 
@@ -106,7 +107,7 @@ namespace Zion
         internal ArenaBridge<T> Expand(ArenaCollection<T> Collection, int Capacity)
         {
             CheckCollection(Collection);
-            
+
             var Bridge = Collection.GetBridge();
             var Area = Bridge.GetArea();
 
@@ -135,9 +136,9 @@ namespace Zion
             }
 
             var NewArea = FreeAreaStore.Trim(Area, Capacity);
-            
+
             Clear(Area.Start, Area.Length - NewArea.Length);
-            
+
             return new ArenaBridge<T>
             (
                 this, new ArenaRegion<T>(Chunks, NewArea)
@@ -178,7 +179,7 @@ namespace Zion
         {
             new ArenaRegion<T>(Chunks, Start, Length).Clear();
         }
-        
+
 
         private static T[][] GetChunks(int Capacity)
         {
@@ -214,10 +215,9 @@ namespace Zion
         {
             return Mode switch
             {
-                // ArenaFreeMode.BumpOnly           =>,
-                // ArenaFreeMode.RarelyReleased     =>,
-                // ArenaFreeMode.FrequentlyReleased =>,
-                _                                => throw new InvalidOperationException("This AreaFreeMode not exists")
+                ArenaFreeMode.BumpOnly   => new BumpOnlyStore(),
+                ArenaFreeMode.Releasable => new BitmapReleasedStore(),
+                _                        => throw new InvalidOperationException("This AreaFreeMode not exists")
             };
         }
         #endregion
