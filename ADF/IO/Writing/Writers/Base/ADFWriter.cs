@@ -3,11 +3,10 @@
     public sealed class ADFWriter : BaseADFWriter
     {
         #region Data
-        public  readonly Stream BaseStream;
+        public readonly  Stream       BaseStream;
         private readonly BinaryWriter Writer;
 
-        private int LastPosition = 0;
-
+        private int LastPosition;
         #endregion
 
         #region Constructors
@@ -18,9 +17,8 @@
                 throw new InvalidOperationException("Stream can not write");
             }
             BaseStream = Stream;
-            Writer = new(Stream);
+            Writer = new BinaryWriter(Stream);
         }
-
         #endregion
 
         #region PublicMethods
@@ -29,7 +27,6 @@
             WriteHeader();
             WritePage();
         }
-
         #endregion
 
         #region OverrideMethods
@@ -63,7 +60,6 @@
             Flush();
             Writer.Write(false);
         }
-
         #endregion
 
         #region PrivateMethods
@@ -76,7 +72,7 @@
                 return;
             }
 
-            var Header = new ADFHeader()
+            var Header = new ADFHeader
             {
                 Compression = Options.Compression
                 //Other parameters
@@ -120,7 +116,6 @@
                 }
             }
         }
-
         #endregion
     }
 }

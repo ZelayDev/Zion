@@ -6,6 +6,7 @@
         {
             return Parse(String, 0, String.Length);
         }
+
         public static IMathTerm Parse(string String, int Start, int End)
         {
             return new MathExpressionParser(String, Start, End).Parse();
@@ -15,6 +16,7 @@
         {
             return TryParse(String, 0, String.Length, out Value);
         }
+
         public static bool TryParse(string String, int Start, int End, out IMathTerm Value)
         {
             return new MathExpressionParser(String, Start, End).TryParse(out Value);
@@ -24,9 +26,10 @@
         {
             return Parse(String).GetValue(Accuracy);
         }
+
         public static bool TrySolve(string String, out Fraction Value, int Accuracy = 10)
         {
-            if (TryParse(String, out IMathTerm Result))
+            if (TryParse(String, out var Result))
             {
                 Value = Result.GetValue(Accuracy);
                 return true;

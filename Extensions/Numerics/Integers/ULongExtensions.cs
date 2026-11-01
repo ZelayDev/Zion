@@ -17,7 +17,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Gets the state of a specific bit in the unsigned long integer.
+            ///     Gets the state of a specific bit in the unsigned long integer.
             /// </summary>
             /// <param name="Value">The unsigned long integer value.</param>
             /// <param name="Index">The bit position (0-63).</param>
@@ -28,7 +28,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Sets or clears a specific bit in the unsigned long integer.
+            ///     Sets or clears a specific bit in the unsigned long integer.
             /// </summary>
             /// <param name="Value">The unsigned long integer value.</param>
             /// <param name="Index">The bit position (0-63).</param>
@@ -36,7 +36,7 @@ namespace Zion
             /// <returns>The modified unsigned long integer value.</returns>
             public ulong SetBit(int Index, bool Bit)
             {
-                return Bit ? Value | 1UL << Index : Value & ~(1UL << Index);
+                return Bit ? Value | (1UL << Index) : Value & ~(1UL << Index);
             }
 
 
@@ -47,8 +47,8 @@ namespace Zion
 
             public IEnumerable<bool> EnumerateBits(int Count)
             {
-                ulong CurrentBit = 1UL;
-                for (int i = 0; i < Count; i++)
+                var CurrentBit = 1UL;
+                for (var i = 0; i < Count; i++)
                 {
                     yield return (Value & CurrentBit) != 0;
                     CurrentBit <<= 1;
@@ -57,7 +57,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Checks if the unsigned long integer value is even.
+            ///     Checks if the unsigned long integer value is even.
             /// </summary>
             /// <param name="Value">The unsigned long integer value.</param>
             /// <returns>True if the value is even, otherwise false.</returns>
@@ -68,11 +68,20 @@ namespace Zion
 
             public bool IsPrime()
             {
-                if (Value <= 1UL) { return false; }
-                if (Value == 2) { return true; }
-                if (IsEven(Value)) { return false; }
+                if (Value <= 1UL)
+                {
+                    return false;
+                }
+                if (Value == 2)
+                {
+                    return true;
+                }
+                if (Value.IsEven())
+                {
+                    return false;
+                }
 
-                ulong MaxValue = (ulong)Math.Sqrt(Value);
+                var MaxValue = (ulong)Math.Sqrt(Value);
 
                 for (ulong i = 3; i <= MaxValue; i += 2)
                 {

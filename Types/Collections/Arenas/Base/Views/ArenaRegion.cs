@@ -69,7 +69,7 @@ namespace Zion
             set => this[Index.GetOffset(Length)] = value;
         }
         #endregion
-        
+
         #region Operators
         public static bool operator ==(ArenaRegion<T> A, ArenaRegion<T> B)
         {
@@ -100,13 +100,13 @@ namespace Zion
         {
             return HashCode.Combine(Chunks, Start, Length);
         }
-        
+
         public bool Equals(ArenaRegion<T> other)
         {
             return Chunks.Equals(other.Chunks) && Start == other.Start && Length == other.Length;
         }
         #endregion
-        
+
 
         #region PublicMethods
         public static bool Overlaps(ArenaRegion<T> A, ArenaRegion<T> B)
@@ -134,8 +134,8 @@ namespace Zion
                 }
             }
         }
-        
-        
+
+
         public int GetChunkCount()
         {
             if (Length == 0)

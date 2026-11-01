@@ -16,7 +16,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Gets the state of a specific bit in the sbyte.
+            ///     Gets the state of a specific bit in the sbyte.
             /// </summary>
             /// <param name="Value">The sbyte value.</param>
             /// <param name="Index">The bit position (0-7).</param>
@@ -27,7 +27,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Sets or clears a specific bit in the sbyte.
+            ///     Sets or clears a specific bit in the sbyte.
             /// </summary>
             /// <param name="Value">The sbyte value.</param>
             /// <param name="Index">The bit position (0-7).</param>
@@ -53,8 +53,8 @@ namespace Zion
 
             public IEnumerable<bool> EnumerateBits(int Count)
             {
-                int CurrentBit = 1;
-                for (int i = 0; i < Count; i++)
+                var CurrentBit = 1;
+                for (var i = 0; i < Count; i++)
                 {
                     yield return (Value & CurrentBit) != 0;
                     CurrentBit <<= 1;
@@ -63,7 +63,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Checks if the sbyte value is even.
+            ///     Checks if the sbyte value is even.
             /// </summary>
             /// <param name="Value">The sbyte value.</param>
             /// <returns>True if the value is even, otherwise false.</returns>
@@ -74,13 +74,22 @@ namespace Zion
 
             public bool IsPrime()
             {
-                if (Value <= 1L) { return false; }
-                if (Value == 2) { return true; }
-                if (IsEven(Value)) { return false; }
+                if (Value <= 1L)
+                {
+                    return false;
+                }
+                if (Value == 2)
+                {
+                    return true;
+                }
+                if (Value.IsEven())
+                {
+                    return false;
+                }
 
-                sbyte MaxValue = (sbyte)Math.Sqrt(Value);
+                var MaxValue = (sbyte)Math.Sqrt(Value);
 
-                for (int i = 3; i <= MaxValue; i += 2)
+                for (var i = 3; i <= MaxValue; i += 2)
                 {
                     if (Value % i == 0)
                     {

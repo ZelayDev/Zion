@@ -16,7 +16,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Gets the state of a specific bit in the long integer.
+            ///     Gets the state of a specific bit in the long integer.
             /// </summary>
             /// <param name="Value">The long integer value.</param>
             /// <param name="Index">The bit position (0-63).</param>
@@ -27,7 +27,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Sets or clears a specific bit in the long integer.
+            ///     Sets or clears a specific bit in the long integer.
             /// </summary>
             /// <param name="Value">The long integer value.</param>
             /// <param name="Index">The bit position (0-63).</param>
@@ -46,8 +46,8 @@ namespace Zion
 
             public IEnumerable<bool> EnumerateBits(int Count)
             {
-                long CurrentBit = 1L;
-                for (int i = 0; i < Count; i++)
+                var CurrentBit = 1L;
+                for (var i = 0; i < Count; i++)
                 {
                     yield return (Value & CurrentBit) != 0;
                     CurrentBit <<= 1;
@@ -56,7 +56,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Checks if the long integer value is even.
+            ///     Checks if the long integer value is even.
             /// </summary>
             /// <param name="Value">The long integer value.</param>
             /// <returns>True if the value is even, otherwise false.</returns>
@@ -67,11 +67,20 @@ namespace Zion
 
             public bool IsPrime()
             {
-                if (Value <= 1L) { return false; }
-                if (Value == 2) { return true; }
-                if (IsEven(Value)) { return false; }
+                if (Value <= 1L)
+                {
+                    return false;
+                }
+                if (Value == 2)
+                {
+                    return true;
+                }
+                if (Value.IsEven())
+                {
+                    return false;
+                }
 
-                long MaxValue = (long)Math.Sqrt(Value);
+                var MaxValue = (long)Math.Sqrt(Value);
 
                 for (long i = 3; i <= MaxValue; i += 2)
                 {

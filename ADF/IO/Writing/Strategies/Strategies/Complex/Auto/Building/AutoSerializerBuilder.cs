@@ -9,9 +9,9 @@ namespace Zion.ADF
         private static readonly Dictionary<Type, MethodInfo> WriteMethodCache = new();
 
         private const BindingFlags Flags = BindingFlags.Public
-                                         | BindingFlags.NonPublic
-                                         | BindingFlags.Instance
-                                         | BindingFlags.DeclaredOnly;
+            | BindingFlags.NonPublic
+            | BindingFlags.Instance
+            | BindingFlags.DeclaredOnly;
 
         public static AutoType<T> Create(ADFWritingContext WritingContext, Type Type)
         {
@@ -28,7 +28,7 @@ namespace Zion.ADF
 
             var Schema = new TypeSchema(Type, Context.GetFields());
 
-            return new(Writer, Schema);
+            return new AutoType<T>(Writer, Schema);
         }
 
 
@@ -39,7 +39,7 @@ namespace Zion.ADF
                 var Info = Pair.Item1;
                 var Name = Pair.Item2;
 
-                Context.Fields[Context.UsedNames.Count] = new(Info.FieldType, Name);
+                Context.Fields[Context.UsedNames.Count] = new Field(Info.FieldType, Name);
 
                 if (!Context.UsedNames.Add(Name))
                 {
@@ -52,7 +52,7 @@ namespace Zion.ADF
 
         private static IEnumerable<(FieldInfo, string)> FilterFields(FieldInfo[] Fields)
         {
-            for (int i = 0; i < Fields.Length; i++)
+            for (var i = 0; i < Fields.Length; i++)
             {
                 var Info = Fields[i];
                 var Name = Info.Name;
@@ -83,7 +83,7 @@ namespace Zion.ADF
 
                 yield return (Info, Name);
 
-                Continue:;
+                Continue: ;
             }
         }
 

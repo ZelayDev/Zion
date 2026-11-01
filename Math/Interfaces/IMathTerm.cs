@@ -2,10 +2,16 @@
 {
     public interface IMathTerm
     {
-        Fraction GetValue() => GetValue(10);
+        Fraction GetValue()
+        {
+            return GetValue(10);
+        }
 
-        abstract Fraction GetValue(int Accuracy);
+        Fraction GetValue(int Accuracy);
 
-        virtual IMathTerm Simplify() => this;
+        virtual IMathTerm Simplify()
+        {
+            return this;
+        }
     }
 }

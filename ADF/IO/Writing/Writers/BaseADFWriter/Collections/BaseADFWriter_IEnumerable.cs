@@ -138,8 +138,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<bool>
             (
-                new
-                (
+                new EnumeratorWriteContext<bool>(
                     Name, ADFPrimitives.Boolean,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -150,8 +149,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<byte>
             (
-                new
-                (
+                new EnumeratorWriteContext<byte>(
                     Name, ADFPrimitives.Byte,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -162,8 +160,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<sbyte>
             (
-                new
-                (
+                new EnumeratorWriteContext<sbyte>(
                     Name, ADFPrimitives.SByte,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -174,8 +171,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<short>
             (
-                new
-                (
+                new EnumeratorWriteContext<short>(
                     Name, ADFPrimitives.Int16,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -186,8 +182,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<int>
             (
-                new
-                (
+                new EnumeratorWriteContext<int>(
                     Name, ADFPrimitives.Int32,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -198,8 +193,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<long>
             (
-                new
-                (
+                new EnumeratorWriteContext<long>(
                     Name, ADFPrimitives.Int64,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -210,8 +204,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<ushort>
             (
-                new
-                (
+                new EnumeratorWriteContext<ushort>(
                     Name, ADFPrimitives.UInt16,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -222,8 +215,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<uint>
             (
-                new
-                (
+                new EnumeratorWriteContext<uint>(
                     Name, ADFPrimitives.UInt32,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -234,8 +226,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<ulong>
             (
-                new
-                (
+                new EnumeratorWriteContext<ulong>(
                     Name, ADFPrimitives.UInt64,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -246,8 +237,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<char>
             (
-                new
-                (
+                new EnumeratorWriteContext<char>(
                     Name, ADFPrimitives.Char,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -258,8 +248,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<float>
             (
-                new
-                (
+                new EnumeratorWriteContext<float>(
                     Name, ADFPrimitives.Single,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -270,8 +259,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<double>
             (
-                new
-                (
+                new EnumeratorWriteContext<double>(
                     Name, ADFPrimitives.Double,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -282,8 +270,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<decimal>
             (
-                new
-                (
+                new EnumeratorWriteContext<decimal>(
                     Name, ADFPrimitives.Decimal,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -326,8 +313,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Half>
             (
-                new
-                (
+                new EnumeratorWriteContext<Half>(
                     Name, ADFPrimitives.Half,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -338,8 +324,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Index>
             (
-                new
-                (
+                new EnumeratorWriteContext<Index>(
                     Name, ADFPrimitives.Index,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -350,8 +335,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Range>
             (
-                new
-                (
+                new EnumeratorWriteContext<Range>(
                     Name, ADFPrimitives.Range,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -367,7 +351,7 @@ namespace Zion.ADF
             var NameId = StringRegistry.GetOrAdd(Name);
             var Target = GetWriteTarget(Name, in NameId, ADFPrimitives.BigInteger | ADFPrimitives.Sequence);
 
-            var Base   = Target.BaseStream;
+            var Base = Target.BaseStream;
             var Stream = Context.Arena.GetStream(64);
             var Offset = Target.ChildsLength;
 
@@ -386,8 +370,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<RGBColor>
             (
-                new
-                (
+                new EnumeratorWriteContext<RGBColor>(
                     Name, ADFPrimitives.RGB,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -398,8 +381,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<RGBAColor>
             (
-                new
-                (
+                new EnumeratorWriteContext<RGBAColor>(
                     Name, ADFPrimitives.RGBA,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -410,8 +392,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Vector2>
             (
-                new
-                (
+                new EnumeratorWriteContext<Vector2>(
                     Name, ADFPrimitives.Vector2,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -422,8 +403,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Vector2Int>
             (
-                new
-                (
+                new EnumeratorWriteContext<Vector2Int>(
                     Name, ADFPrimitives.Vector2Int,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -434,8 +414,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Vector3>
             (
-                new
-                (
+                new EnumeratorWriteContext<Vector3>(
                     Name, ADFPrimitives.Vector3,
                     Enumerator, SequenceWriteHelper.Write
                 )
@@ -446,8 +425,7 @@ namespace Zion.ADF
         {
             WriteEnumerator<Vector3Int>
             (
-                new
-                (
+                new EnumeratorWriteContext<Vector3Int>(
                     Name, ADFPrimitives.Vector3Int,
                     Enumerator, SequenceWriteHelper.Write
                 )

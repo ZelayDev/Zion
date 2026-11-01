@@ -9,9 +9,9 @@
         public bool Read(ref TextSource Source, out Token Token)
         {
             Token = default!;
-            List<char> Chars = new List<char>(20);
+            var Chars = new List<char>(20);
 
-            if (Source.CurrentIs(Char => Char == '_' || KeyboardTranslater.IsEnglish(Char)))
+            if (Source.CurrentIs(Char => Char == '_' || Char.IsEnglish()))
             {
                 Chars.Add(Source.Current);
                 Source.MoveNext();
@@ -23,9 +23,9 @@
 
             while (!Source.IsEnd)
             {
-                char Current = Source.Current;
+                var Current = Source.Current;
 
-                if (Current == '_' || KeyboardTranslater.IsEnglish(Current) || (AllowDigits && Current.IsDigit()))
+                if (Current == '_' || Current.IsEnglish() || (AllowDigits && Current.IsDigit()))
                 {
                     Chars.Add(Current);
                     Source.MoveNext();
@@ -43,7 +43,7 @@
             Token = new WordToken
             {
                 Length = Chars.Count,
-                Value = Text.Create(Chars)
+                Value = Chars.Create()
             };
             return true;
         }

@@ -4,29 +4,22 @@
     {
         #region Data
         private readonly Dictionary<Node, BaseTrie<Node, Leaf>> Childs = new();
-
         #endregion
 
         #region Properties
         public int Count => Childs.Count;
-
         #endregion
 
         #region Constructors
         public Trie(Node Node)
             : base(Node)
         {
-            Childs = new();
+            Childs = new Dictionary<Node, BaseTrie<Node, Leaf>>();
         }
-
         #endregion
 
         #region Indexers
-        public BaseTrie<Node, Leaf> this[Node Node]
-        {
-            get => Childs[Node];
-        }
-
+        public BaseTrie<Node, Leaf> this[Node Node] => Childs[Node];
         #endregion
 
         #region OverrideMethods
@@ -40,7 +33,6 @@
                 }
             }
         }
-
         #endregion
 
         #region PublicMethods
@@ -104,7 +96,6 @@
         {
             Childs.Clear();
         }
-
         #endregion
     }
 }

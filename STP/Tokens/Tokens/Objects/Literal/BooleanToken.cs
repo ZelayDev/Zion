@@ -4,7 +4,7 @@
 
     public readonly struct BooleanTokenReader : ITokenReader
     {
-        public string True { get; init; } = "true";
+        public string True  { get; init; } = "true";
         public string False { get; init; } = "false";
 
         public BooleanTokenReader() { }
@@ -13,7 +13,7 @@
         {
             if (Source.Begins(True, out Source))
             {
-                Token = new BooleanToken()
+                Token = new BooleanToken
                 {
                     Value = true,
                     Length = True.Length
@@ -22,7 +22,7 @@
             }
             if (Source.Begins(False, out Source))
             {
-                Token = new BooleanToken()
+                Token = new BooleanToken
                 {
                     Value = false,
                     Length = False.Length

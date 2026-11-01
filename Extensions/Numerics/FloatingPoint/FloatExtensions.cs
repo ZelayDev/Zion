@@ -16,7 +16,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Rounds the float value to the nearest integer using specified rounding mode.
+            ///     Rounds the float value to the nearest integer using specified rounding mode.
             /// </summary>
             /// <param name="Value">The value to round.</param>
             /// <param name="Mode">The rounding mode to use.</param>
@@ -27,7 +27,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Performs linear interpolation between two float values.
+            ///     Performs linear interpolation between two float values.
             /// </summary>
             /// <param name="A">The starting value.</param>
             /// <param name="B">The ending value.</param>
@@ -35,8 +35,8 @@ namespace Zion
             /// <returns>The interpolated value between A and B.</returns>
             public static float Lerp(float A, float B, float Alpha)
             {
-                return A + ((B - A) * Alpha);
+                return A + (B - A) * Alpha;
             }
-        }        
+        }
     }
 }

@@ -5,15 +5,21 @@ namespace Zion
     public class ConcurrentSortedSet<T> : IEnumerable<T> where T : IComparable<T>
     {
         private readonly ReaderWriterLockSlim Lock = new(LockRecursionPolicy.NoRecursion);
-        private readonly SortedSet<T> Set = new();
+        private readonly SortedSet<T>         Set  = new();
 
         public int Count
         {
             get
             {
                 Lock.EnterReadLock();
-                try { return Set.Count; }
-                finally { Lock.ExitReadLock(); }
+                try
+                {
+                    return Set.Count;
+                }
+                finally
+                {
+                    Lock.ExitReadLock();
+                }
             }
         }
 
@@ -23,7 +29,7 @@ namespace Zion
             Lock.EnterReadLock();
             try
             {
-                foreach (T item in Set)
+                foreach (var item in Set)
                 {
                     Action(item);
                 }
@@ -39,7 +45,7 @@ namespace Zion
             Lock.EnterReadLock();
             try
             {
-                foreach (T item in Set.GetViewBetween(Min, Max))
+                foreach (var item in Set.GetViewBetween(Min, Max))
                 {
                     Action(item);
                 }
@@ -105,9 +111,15 @@ namespace Zion
         }
 
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
-        IEnumerator<T> IEnumerable<T>.GetEnumerator() => GetEnumerator();
+        IEnumerator<T> IEnumerable<T>.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public Enumerator GetEnumerator()
         {
@@ -116,9 +128,9 @@ namespace Zion
 
         public struct Enumerator : IEnumerator<T>, IDisposable
         {
-            private readonly ConcurrentSortedSet<T> Parent;
-            private SortedSet<T>.Enumerator NativeEnumerator;
-            private bool IsLocked;
+            private readonly ConcurrentSortedSet<T>  Parent;
+            private          SortedSet<T>.Enumerator NativeEnumerator;
+            private          bool                    IsLocked;
 
             internal Enumerator(ConcurrentSortedSet<T> Parent)
             {

@@ -7,7 +7,7 @@ namespace Zion
         extension<T>(T Value) where T : IFloatingPointIeee754<T>
         {
             /// <summary>
-            /// Rounds a floating-point value using specified rounding mode.
+            ///     Rounds a floating-point value using specified rounding mode.
             /// </summary>
             /// <typeparam name="T">The floating-point type.</typeparam>
             /// <param name="Value">The value to round.</param>

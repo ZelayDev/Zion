@@ -1,44 +1,44 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
+    <PropertyGroup>
+        <TargetFramework>net10.0</TargetFramework>
+        <ImplicitUsings>enable</ImplicitUsings>
+        <Nullable>enable</Nullable>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="MathExpressions\**" />
-    <Compile Remove="Serialization\BinarySerialization\ADF\**" />
-    <Compile Remove="Serialization\BinarySerialization\NSD\**" />
-    <EmbeddedResource Remove="MathExpressions\**" />
-    <EmbeddedResource Remove="Serialization\BinarySerialization\ADF\**" />
-    <EmbeddedResource Remove="Serialization\BinarySerialization\NSD\**" />
-    <None Remove="MathExpressions\**" />
-    <None Remove="Serialization\BinarySerialization\ADF\**" />
-    <None Remove="Serialization\BinarySerialization\NSD\**" />
-  </ItemGroup>
+    <ItemGroup>
+        <Compile Remove="MathExpressions\**"/>
+        <Compile Remove="Serialization\BinarySerialization\ADF\**"/>
+        <Compile Remove="Serialization\BinarySerialization\NSD\**"/>
+        <EmbeddedResource Remove="MathExpressions\**"/>
+        <EmbeddedResource Remove="Serialization\BinarySerialization\ADF\**"/>
+        <EmbeddedResource Remove="Serialization\BinarySerialization\NSD\**"/>
+        <None Remove="MathExpressions\**"/>
+        <None Remove="Serialization\BinarySerialization\ADF\**"/>
+        <None Remove="Serialization\BinarySerialization\NSD\**"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <None Remove=".gitattributes" />
-    <None Remove=".gitignore" />
-    <None Remove="LICENSE" />
-    <None Remove="README.md" />
-  </ItemGroup>
+    <ItemGroup>
+        <None Remove=".gitattributes"/>
+        <None Remove=".gitignore"/>
+        <None Remove="LICENSE"/>
+        <None Remove="README.md"/>
+    </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="Geometry\Extensions\" />
-    <Folder Include="STP\Dynamic\Tokens\Container\Base\" />
-    <Folder Include="Extensions\Collections\Linear\" />
-    <Folder Include="Extensions\Collections\Dictionaries\" />
-    <Folder Include="Extensions\Collections\Buffers\" />
-    <Folder Include="Serialization\BinarySerialization\Serializers\Object\" />
-    <Folder Include="STP\Parser\Static\" />
-    <Folder Include="STP\Parser\Dynamic\" />
-    <Folder Include="STP\Semantic\Data\" />
-    <Folder Include="STP\Source\Text\Document\" />
-    <Folder Include="STP\Source\Text\Source\Base\" />
-    <Folder Include="STP\Source\Text\Source\Source\" />
-  </ItemGroup>
+    <ItemGroup>
+        <Folder Include="Geometry\Extensions\"/>
+        <Folder Include="STP\Dynamic\Tokens\Container\Base\"/>
+        <Folder Include="Extensions\Collections\Linear\"/>
+        <Folder Include="Extensions\Collections\Dictionaries\"/>
+        <Folder Include="Extensions\Collections\Buffers\"/>
+        <Folder Include="Serialization\BinarySerialization\Serializers\Object\"/>
+        <Folder Include="STP\Parser\Static\"/>
+        <Folder Include="STP\Parser\Dynamic\"/>
+        <Folder Include="STP\Semantic\Data\"/>
+        <Folder Include="STP\Source\Text\Document\"/>
+        <Folder Include="STP\Source\Text\Source\Base\"/>
+        <Folder Include="STP\Source\Text\Source\Source\"/>
+    </ItemGroup>
 
 </Project>

@@ -16,7 +16,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Gets the state of a specific bit in the integer.
+            ///     Gets the state of a specific bit in the integer.
             /// </summary>
             /// <param name="Value">The integer value.</param>
             /// <param name="Index">The bit position (0-31).</param>
@@ -27,7 +27,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Sets or clears a specific bit in the integer.
+            ///     Sets or clears a specific bit in the integer.
             /// </summary>
             /// <param name="Value">The integer value.</param>
             /// <param name="Index">The bit position (0-31).</param>
@@ -41,13 +41,13 @@ namespace Zion
 
             public IEnumerable<bool> EnumerateBits()
             {
-                return EnumerateBits(32);
+                return 32.EnumerateBits();
             }
 
             public IEnumerable<bool> EnumerateBits(int Count)
             {
-                int CurrentBit = 1;
-                for (int i = 0; i < Count; i++)
+                var CurrentBit = 1;
+                for (var i = 0; i < Count; i++)
                 {
                     yield return (Value & CurrentBit) != 0;
                     CurrentBit <<= 1;
@@ -56,7 +56,7 @@ namespace Zion
 
 
             /// <summary>
-            /// Checks if the integer value is even.
+            ///     Checks if the integer value is even.
             /// </summary>
             /// <param name="Value">The integer value.</param>
             /// <returns>True if the value is even, otherwise false.</returns>
@@ -67,13 +67,22 @@ namespace Zion
 
             public bool IsPrime()
             {
-                if (Value <= 1) { return false; }
-                if (Value == 2) { return true; }
-                if (IsEven(Value)) { return false; }
+                if (Value <= 1)
+                {
+                    return false;
+                }
+                if (Value == 2)
+                {
+                    return true;
+                }
+                if (Value.IsEven())
+                {
+                    return false;
+                }
 
-                int MaxValue = (int)Math.Sqrt(Value);
+                var MaxValue = (int)Math.Sqrt(Value);
 
-                for (int i = 3; i <= MaxValue; i += 2)
+                for (var i = 3; i <= MaxValue; i += 2)
                 {
                     if (Value % i == 0)
                     {

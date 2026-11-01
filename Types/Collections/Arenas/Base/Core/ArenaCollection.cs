@@ -63,7 +63,7 @@
             ThrowIfDisposed();
             SetValueAt(Index.GetOffset(Limit), Value);
         }
-        
+
 
         protected void UpdateLimit(int Limit)
         {
@@ -114,7 +114,7 @@
             return Bridge.Allocate<A>(Capacity);
         }
 
-        
+
         protected ArenaItemEnumerator<T> GetEnumerator(int Start)
         {
             return new ArenaItemEnumerator<T>(Bridge.GetRegion().Slice(Start));
@@ -251,7 +251,7 @@
         private protected ArenaSpan<T> AsSpan(int Start)
         {
             ThrowIfDisposed();
-            ArgumentOutOfRangeException.ThrowIfGreaterThan(Start, Limit, nameof(Start));
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Start, Limit);
             return Bridge.AsSpan().Slice(Start, Limit - Start);
         }
 

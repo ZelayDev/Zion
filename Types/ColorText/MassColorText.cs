@@ -6,13 +6,13 @@ namespace Zion
     public sealed class MassColorText
     {
         public readonly ColorText[] Text;
-        public readonly int Length;
+        public readonly int         Length;
 
         public MassColorText(params ColorText[] Blocks)
         {
             Text = Blocks;
 
-            foreach (ColorText Block in Blocks)
+            foreach (var Block in Blocks)
             {
                 Length += Block.Length;
             }
@@ -20,17 +20,18 @@ namespace Zion
 
         public override string ToString()
         {
-            StringBuilder Result = new StringBuilder();
-            foreach (ColorText Item in Text)
+            var Result = new StringBuilder();
+            foreach (var Item in Text)
             {
                 Result.Append(Item.ToString());
             }
             return Result.ToString();
         }
+
         public string ToWhiteString()
         {
-            StringBuilder Result = new StringBuilder();
-            foreach (ColorText Item in Text)
+            var Result = new StringBuilder();
+            foreach (var Item in Text)
             {
                 Result.Append(Item.Text);
             }

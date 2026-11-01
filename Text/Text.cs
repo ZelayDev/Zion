@@ -5,14 +5,14 @@ namespace Zion
     public static class Text
     {
         #region Data
-        private static readonly Dictionary<char, char> Brackets = new Dictionary<char, char>(3)
+        private static readonly Dictionary<char, char> Brackets = new(3)
         {
             { '(', ')' },
             { '[', ']' },
             { '{', '}' }
         };
-        private static readonly HashSet<char> ClosingBrackets = [')', ']', '}'];
 
+        private static readonly HashSet<char> ClosingBrackets = [')', ']', '}'];
         #endregion
 
         #region Edit
@@ -20,9 +20,9 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNullOrEmpty(String);
 
-            List<char> Result = new List<char>(String.Length);
+            var Result = new List<char>(String.Length);
 
-            foreach (char Char in String)
+            foreach (var Char in String)
             {
                 if (Condition(Char))
                 {
@@ -31,32 +31,34 @@ namespace Zion
                 Result.Add(Char);
             }
 
-            return Create(Result);
+            return Result.Create();
         }
+
         public static string RemoveChars(this string String, params IEnumerable<char> RemovingChars)
         {
-            return RemoveChars(String, RemovingChars.Contains);
+            return String.RemoveChars(RemovingChars.Contains);
         }
 
         public static string UnSpace(this string String)
         {
-            return String.RemoveChars(char.IsWhiteSpace);
+            return String.RemoveChars(Char.IsWhiteSpace);
         }
+
         public static string Minimize(this string String)
         {
             ArgumentNullException.ThrowIfNullOrEmpty(String);
 
-            List<char> Result = new List<char>(String.Length);
+            var Result = new List<char>(String.Length);
 
-            foreach (char Char in String)
+            foreach (var Char in String)
             {
-                if (!char.IsWhiteSpace(Char))
+                if (!Char.IsWhiteSpace(Char))
                 {
-                    Result.Add(char.ToLower(Char));
+                    Result.Add(Char.ToLower(Char));
                 }
             }
 
-            return Create(Result);
+            return Result.Create();
         }
 
         public static string Duplicate(this string String, int Count)
@@ -69,15 +71,15 @@ namespace Zion
             }
             if (Count == 0)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            char[] Result = new char[String.Length * Count];
-            int Index = 0;
+            var Result = new char[String.Length * Count];
+            var Index = 0;
 
             while (Index < Result.Length)
             {
-                for (int i = 0; i < String.Length; i++)
+                for (var i = 0; i < String.Length; i++)
                 {
                     Result[Index++] = String[i];
                 }
@@ -89,12 +91,12 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNullOrEmpty(String);
 
-            char[] Result = String.ToCharArray();
+            var Result = String.ToCharArray();
 
-            Result[0] = char.ToUpper(Result[0]);
-            for (int i = 1; i < Result.Length; i++)
+            Result[0] = Char.ToUpper(Result[0]);
+            for (var i = 1; i < Result.Length; i++)
             {
-                Result[i] = char.ToLower(Result[i]);
+                Result[i] = Char.ToLower(Result[i]);
             }
 
             return new string(Result);
@@ -104,7 +106,7 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(String);
 
-            return String.Length == 0 ? Array.Empty<string>() : String.Split(Environment.NewLine, StringSplitOptions.None).TrimEmptyLines();
+            return String.Length == 0 ? Array.Empty<string>() : String.Split(Environment.NewLine).TrimEmptyLines();
         }
 
         public static string[] TrimEmptyLines(this string[] StringArray)
@@ -116,15 +118,15 @@ namespace Zion
                 return StringArray;
             }
 
-            int Start = 0;
-            int End = StringArray.Length - 1;
+            var Start = 0;
+            var End = StringArray.Length - 1;
 
-            while (Start <= End && string.IsNullOrWhiteSpace(StringArray[Start]))
+            while (Start <= End && String.IsNullOrWhiteSpace(StringArray[Start]))
             {
                 Start++;
             }
 
-            while (End >= Start && string.IsNullOrWhiteSpace(StringArray[End]))
+            while (End >= Start && String.IsNullOrWhiteSpace(StringArray[End]))
             {
                 End--;
             }
@@ -147,15 +149,15 @@ namespace Zion
                 return String;
             }
 
-            int TotalPadding = TotalLength - String.Length;
-            int LeftPadding  = TotalPadding / 2;
-            int RightPadding = TotalPadding - LeftPadding;
+            var TotalPadding = TotalLength - String.Length;
+            var LeftPadding = TotalPadding / 2;
+            var RightPadding = TotalPadding - LeftPadding;
 
             return new StringBuilder(TotalLength)
-                .Append(PaddingChar, LeftPadding)
-                .Append(String)
-                .Append(PaddingChar, RightPadding)
-                .ToString();
+                   .Append(PaddingChar, LeftPadding)
+                   .Append(String)
+                   .Append(PaddingChar, RightPadding)
+                   .ToString();
         }
 
         public static string Truncate(this string String, int TotalLength)
@@ -164,26 +166,28 @@ namespace Zion
 
             return TotalLength <= 3
                 ? throw new ArgumentOutOfRangeException(nameof(TotalLength), $"TotalLength(={TotalLength}) <= 0")
-                : String.Length <= TotalLength ? String : String[..(TotalLength - 3)] + "...";
+                : String.Length <= TotalLength
+                    ? String
+                    : String[..(TotalLength - 3)] + "...";
         }
 
 
         public static string[] Chunk(this string String, int ChunkLength)
         {
-            if (string.IsNullOrEmpty(String) || ChunkLength <= 0)
+            if (String.IsNullOrEmpty(String) || ChunkLength <= 0)
             {
                 return Array.Empty<string>();
             }
 
-            string[] Chunks = new string[(String.Length + ChunkLength - 1) / ChunkLength];
+            var Chunks = new string[(String.Length + ChunkLength - 1) / ChunkLength];
 
-            int End = Chunks.Length - 1;
-            int ChunkIndex = 0;
-            int Index = 0;
+            var End = Chunks.Length - 1;
+            var ChunkIndex = 0;
+            var Index = 0;
 
             while (ChunkIndex < End)
             {
-                int EndIndex = Index + ChunkLength;
+                var EndIndex = Index + ChunkLength;
                 Chunks[ChunkIndex] = String.Substring(Index, ChunkLength);
                 Index = EndIndex;
                 ChunkIndex++;
@@ -196,20 +200,20 @@ namespace Zion
 
         public static string[] ChunkFromRight(this string String, int ChunkLength)
         {
-            if (string.IsNullOrEmpty(String) || ChunkLength <= 0)
+            if (String.IsNullOrEmpty(String) || ChunkLength <= 0)
             {
                 return Array.Empty<string>();
             }
 
-            string[] Chunks = new string[(String.Length + ChunkLength - 1) / ChunkLength];
+            var Chunks = new string[(String.Length + ChunkLength - 1) / ChunkLength];
 
-            int End = Chunks.Length - 1;
-            int ChunkIndex = End;
-            int Index = String.Length;
+            var End = Chunks.Length - 1;
+            var ChunkIndex = End;
+            var Index = String.Length;
 
             while (ChunkIndex > 0)
             {
-                int StartIndex = Index - ChunkLength;
+                var StartIndex = Index - ChunkLength;
                 Chunks[ChunkIndex] = String.Substring(StartIndex, ChunkLength);
                 Index = StartIndex;
                 ChunkIndex--;
@@ -227,34 +231,34 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(Converter);
 
             return String.Length == 0
-                ? string.Empty
-                : string.Create
-                  (
-                      String.Length,
-                      String,
-                      (Span, Original) =>
-                      {
-                          for (int i = 0; i < Original.Length; i++)
-                          {
-                              Span[i] = Converter(Original[i]);
-                          }
-                      }
-                  );
+                ? String.Empty
+                : String.Create
+                (
+                    String.Length,
+                    String,
+                    (Span, Original) =>
+                    {
+                        for (var i = 0; i < Original.Length; i++)
+                        {
+                            Span[i] = Converter(Original[i]);
+                        }
+                    }
+                );
         }
 
         public static string RemoveEmptyLines(this string String)
         {
             ArgumentNullException.ThrowIfNull(String);
 
-            StringBuilder Builder = new StringBuilder(String.Length);
+            var Builder = new StringBuilder(String.Length);
 
-            using (StringReader Reader = new StringReader(String))
+            using (var Reader = new StringReader(String))
             {
                 string? Line;
 
                 while ((Line = Reader.ReadLine()) is not null)
                 {
-                    if (!string.IsNullOrWhiteSpace(Line))
+                    if (!String.IsNullOrWhiteSpace(Line))
                     {
                         Builder.AppendLine(Line);
                     }
@@ -268,16 +272,15 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Collection);
 
-            return string.Create(Collection.Count, Collection, (Span, List) =>
+            return String.Create(Collection.Count, Collection, (Span, List) =>
             {
-                int Index = 0;
-                foreach (char Char in List)
+                var Index = 0;
+                foreach (var Char in List)
                 {
                     Span[Index++] = Char;
                 }
             });
         }
-
         #endregion
 
         #region Prefix & Suffix
@@ -286,8 +289,10 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(String);
             ArgumentNullException.ThrowIfNull(Prefix);
 
-            return String.Length == 0 || String.Length < Prefix.Length ? String : String.StartsWith(Prefix) ? String[Prefix.Length..] : String;
+            return String.Length == 0 || String.Length < Prefix.Length ? String :
+                String.StartsWith(Prefix) ? String[Prefix.Length..] : String;
         }
+
         public static string RemoveSuffix(this string String, string Suffix)
         {
             ArgumentNullException.ThrowIfNull(String);
@@ -303,6 +308,7 @@ namespace Zion
 
             return Prefix.Length == 0 ? String : String.StartsWith(Prefix) ? String : Prefix + String;
         }
+
         public static string EnsureSuffix(this string String, string Suffix)
         {
             ArgumentNullException.ThrowIfNull(String);
@@ -315,27 +321,27 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Strings);
 
-            if (Enumerable.Any(Strings, String => String is null))
+            if (Strings.Any(String => String is null))
             {
                 throw new ArgumentNullException("StringArray[`] is null");
             }
             if (Strings.IsNullOrEmpty())
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            int End = Strings.Select(String => String.Length).Min();
+            var End = Strings.Select(String => String.Length).Min();
 
             if (End == 0)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            string First = Strings.First();
+            var First = Strings.First();
 
-            for (int i = 0; i < End; i++)
+            for (var i = 0; i < End; i++)
             {
-                char Char = First[i];
+                var Char = First[i];
 
                 if (Strings.Any(String => String[i] != Char))
                 {
@@ -345,7 +351,6 @@ namespace Zion
 
             return First[..End];
         }
-
         #endregion
 
         #region Predicate
@@ -361,9 +366,9 @@ namespace Zion
 
             if (IgnoreCase)
             {
-                for (int i = 0; i < Target.Length; i++)
+                for (var i = 0; i < Target.Length; i++)
                 {
-                    if (char.ToLower(String[Start + i]) != char.ToLower(Target[i]))
+                    if (Char.ToLower(String[Start + i]) != Char.ToLower(Target[i]))
                     {
                         return false;
                     }
@@ -371,7 +376,7 @@ namespace Zion
             }
             else
             {
-                for (int i = 0; i < Target.Length; i++)
+                for (var i = 0; i < Target.Length; i++)
                 {
                     if (String[Start + i] != Target[i])
                     {
@@ -382,6 +387,7 @@ namespace Zion
 
             return true;
         }
+
         public static bool Exists(this string String, string Target, out int StartIndex)
         {
             ArgumentNullException.ThrowIfNull(String);
@@ -399,13 +405,13 @@ namespace Zion
             }
 
             StartIndex = 0;
-            int End = String.Length - Target.Length;
+            var End = String.Length - Target.Length;
 
             while (StartIndex <= End)
             {
-                bool Founded = true;
+                var Founded = true;
 
-                for (int j = 0; j < Target.Length; j++)
+                for (var j = 0; j < Target.Length; j++)
                 {
                     if (String[StartIndex + j] != Target[j])
                     {
@@ -428,27 +434,30 @@ namespace Zion
 
         public static bool CheckBrackets(this string String)
         {
-            return CheckBrackets(String, Brackets, ClosingBrackets);
+            return String.CheckBrackets(Brackets, ClosingBrackets);
         }
+
         public static bool CheckBrackets(this string String, Dictionary<char, char> Brackets)
         {
-            return CheckBrackets(String, Brackets, Brackets.Values.ToHashSet());
+            return String.CheckBrackets(Brackets, Brackets.Values.ToHashSet());
         }
-        public static bool CheckBrackets(this string String, Dictionary<char, char> Brackets, HashSet<char> ClosedBrackets)
+
+        public static bool CheckBrackets(this string String, Dictionary<char, char> Brackets,
+            HashSet<char>                            ClosedBrackets)
         {
-            if (string.IsNullOrEmpty(String) || Brackets.Count == 0)
+            if (String.IsNullOrEmpty(String) || Brackets.Count == 0)
             {
                 return true;
             }
 
-            Stack<char> Stack = new Stack<char>((String.Length / 2) + 1);
-            char Current = '\0';
+            var Stack = new Stack<char>(String.Length / 2 + 1);
+            var Current = '\0';
 
-            for (int i = 0; i < String.Length; i++)
+            for (var i = 0; i < String.Length; i++)
             {
                 Current = String[i];
 
-                if (Brackets.TryGetValue(Current, out char ClosedBracket))
+                if (Brackets.TryGetValue(Current, out var ClosedBracket))
                 {
                     Stack.Push(ClosedBracket);
                 }
@@ -470,7 +479,7 @@ namespace Zion
                 throw new ArgumentOutOfRangeException($"End(={End}) >= String.Length(={String.Length})");
             }
 
-            for (int i = Start; i < End; i++)
+            for (var i = Start; i < End; i++)
             {
                 if (!Condition(String[i]))
                 {
@@ -485,6 +494,7 @@ namespace Zion
         {
             return Brackets.ContainsKey(Char);
         }
+
         public static bool IsOpenBracket(this char Char, out char ClosingBracket)
         {
             return Brackets.TryGetValue(Char, out ClosingBracket);
@@ -492,7 +502,7 @@ namespace Zion
 
         public static bool Contains(this string String, Predicate<char> Condition)
         {
-            foreach (char Char in String.NotNull())
+            foreach (var Char in String.NotNull())
             {
                 if (Condition(Char))
                 {
@@ -507,7 +517,7 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Chars);
 
-            foreach (char Char in String.NotNull())
+            foreach (var Char in String.NotNull())
             {
                 if (Chars.Contains(Char))
                 {
@@ -522,7 +532,7 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(String);
             ArgumentNullException.ThrowIfNull(Condition);
 
-            for (int i = 0; i < String.Length; i++)
+            for (var i = 0; i < String.Length; i++)
             {
                 if (Condition(String[i]))
                 {
@@ -531,7 +541,6 @@ namespace Zion
             }
             return -1;
         }
-
         #endregion
 
         #region Programming
@@ -540,17 +549,17 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(String);
 
             if (String.Length == 0 ||
-                char.IsNumber(String[0])
+                Char.IsNumber(String[0])
                )
             {
                 return false;
             }
 
-            for (int i = 1; i < String.Length; i++)
+            for (var i = 1; i < String.Length; i++)
             {
-                char Char = String[i];
+                var Char = String[i];
 
-                if (!(Char.IsEnglish() || Char == '_' || char.IsDigit(Char)))
+                if (!(Char.IsEnglish() || Char == '_' || Char.IsDigit(Char)))
                 {
                     return false;
                 }
@@ -561,16 +570,15 @@ namespace Zion
 
         public static string[] SplitIdentifier(this string String)
         {
-            if (string.IsNullOrEmpty(String))
+            if (String.IsNullOrEmpty(String))
             {
                 return Array.Empty<string>();
             }
 
-            List<string> Result = new List<string>();
-            StringBuilder CurrentWord = new StringBuilder();
+            var Result = new List<string>();
+            var CurrentWord = new StringBuilder();
             bool? LastWasUpper = null;
-            bool LastWasDigit = false;
-
+            var LastWasDigit = false;
 
             void AddWord()
             {
@@ -581,10 +589,9 @@ namespace Zion
                 }
             }
 
-
-            for (int i = 0; i < String.Length; i++)
+            for (var i = 0; i < String.Length; i++)
             {
-                char Char = String[i];
+                var Char = String[i];
 
                 if (Char == '_' || Char == ' ' || Char == '-')
                 {
@@ -594,7 +601,7 @@ namespace Zion
                     continue;
                 }
 
-                if (char.IsDigit(Char))
+                if (Char.IsDigit(Char))
                 {
                     if (!LastWasDigit && CurrentWord.Length > 0)
                     {
@@ -606,14 +613,14 @@ namespace Zion
                     continue;
                 }
 
-                if (char.IsUpper(Char))
+                if (Char.IsUpper(Char))
                 {
                     if (CurrentWord.Length > 0 && LastWasUpper == false)
                     {
                         AddWord();
                     }
                     else if (CurrentWord.Length > 0 && LastWasUpper == true &&
-                            i < String.Length - 1 && char.IsLower(String[i + 1]))
+                             i < String.Length - 1 && Char.IsLower(String[i + 1]))
                     {
                         AddWord();
                     }
@@ -624,7 +631,6 @@ namespace Zion
                 }
                 else
                 {
-
                     if (LastWasDigit)
                     {
                         AddWord();
@@ -648,18 +654,18 @@ namespace Zion
 
             if (Strings.Count == 0)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            StringBuilder Builder = new StringBuilder(Strings.Sum(static String => String.Length) + (Underlining ? 1 : 0));
+            var Builder = new StringBuilder(Strings.Sum(static String => String.Length) + (Underlining ? 1 : 0));
 
             Builder.Append(Strings[0].ToLower());
-            for (int i = 1; i < Strings.Count; i++)
+            for (var i = 1; i < Strings.Count; i++)
             {
                 Builder.Append(Strings[i].Capitalize());
             }
 
-            string Result = Builder.ToString();
+            var Result = Builder.ToString();
             return Underlining ? '_' + Result : Result;
         }
 
@@ -669,17 +675,17 @@ namespace Zion
 
             if (Strings.Count == 0)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            StringBuilder Builder = new StringBuilder(Strings.Sum(static String => String.Length) + (Underlining ? 1 : 0));
+            var Builder = new StringBuilder(Strings.Sum(static String => String.Length) + (Underlining ? 1 : 0));
 
-            foreach (string Word in Strings)
+            foreach (var Word in Strings)
             {
                 Builder.Append(Word.Capitalize());
             }
 
-            string Result = Builder.ToString();
+            var Result = Builder.ToString();
             return Underlining ? '_' + Result : Result;
         }
 
@@ -689,10 +695,10 @@ namespace Zion
 
             if (Strings.Count == 0)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            string Result = string.Join('_', Strings.Select(String => String.ToLower()));
+            var Result = String.Join('_', Strings.Select(String => String.ToLower()));
             return Underlining ? '_' + Result : Result;
         }
 
@@ -702,42 +708,41 @@ namespace Zion
 
             if (Strings.Count == 0)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            string Result = string.Join('-', Strings.Select(String => String.ToLower()));
+            var Result = String.Join('-', Strings.Select(String => String.ToLower()));
             return Underlining ? '_' + Result : Result;
         }
 
 
         public static string ToCamelCase(this string String, bool Underlining = false)
         {
-            return ToCamelCase(SplitIdentifier(String.NotNull()), Underlining);
+            return String.NotNull().SplitIdentifier().ToCamelCase(Underlining);
         }
 
         public static string ToPascalCase(this string String, bool Underlining = false)
         {
-            return ToPascalCase(SplitIdentifier(String.NotNull()), Underlining);
+            return String.NotNull().SplitIdentifier().ToPascalCase(Underlining);
         }
 
         public static string ToSnakeCase(this string String, bool Underlining = false)
         {
-            return ToSnakeCase(SplitIdentifier(String.NotNull()), Underlining);
+            return String.NotNull().SplitIdentifier().ToSnakeCase(Underlining);
         }
 
         public static string ToKebabCase(this string String, bool Underlining = false)
         {
-            return ToKebabCase(SplitIdentifier(String.NotNull()), Underlining);
+            return String.NotNull().SplitIdentifier().ToKebabCase(Underlining);
         }
-
         #endregion
 
         #region Indexes
         public static int GetLevel(this string String)
         {
-            int Level = 0;
+            var Level = 0;
 
-            foreach (char Char in String)
+            foreach (var Char in String)
             {
                 if (Char == '\t')
                 {
@@ -754,9 +759,9 @@ namespace Zion
 
         public static int CountOf(this string String, char Target)
         {
-            int Count = 0;
+            var Count = 0;
 
-            foreach (char Char in String)
+            foreach (var Char in String)
             {
                 if (Char == Target)
                 {
@@ -771,16 +776,16 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(Strings);
             ArgumentNullException.ThrowIfNull(Separator);
 
-            int End = Strings.LastIndexOf(static String => !string.IsNullOrWhiteSpace(String));
+            var End = Strings.LastIndexOf(static String => !String.IsNullOrWhiteSpace(String));
             if (End == -1)
             {
-                return string.Empty;
+                return String.Empty;
             }
 
-            StringBuilder Builder = new StringBuilder(Strings.Sum(static String => String.Length) + Separator.Length * End);
+            var Builder = new StringBuilder(Strings.Sum(static String => String.Length) + Separator.Length * End);
 
             Builder.Append(Strings[0]);
-            for (int i = 1; i <= End; i++)
+            for (var i = 1; i <= End; i++)
             {
                 Builder.Append(Separator);
                 Builder.Append(Strings[i]);
@@ -788,18 +793,17 @@ namespace Zion
 
             return Builder.ToString();
         }
-
         #endregion
 
         #region Parsing
         public static void SkipSpaces(this string String, ref int Index)
         {
-            Skip(String, ref Index, char.IsWhiteSpace);
+            String.Skip(ref Index, Char.IsWhiteSpace);
         }
 
         public static int SkipSpaces(this string String, int Start)
         {
-            return Skip(String, Start, char.IsWhiteSpace);
+            return String.Skip(Start, Char.IsWhiteSpace);
         }
 
 
@@ -817,7 +821,7 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(String);
 
-            int Index = Start;
+            var Index = Start;
             while (Index < String.Length && Condition(String[Index]))
             {
                 Index++;
@@ -829,22 +833,21 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(String);
 
-            int Index = Start;
+            var Index = Start;
             while (Index < String.Length && SkipChars.Contains(String[Index]))
             {
                 Index++;
             }
             return Index;
         }
-
         #endregion
 
         public static string GetExpression(this string String, int Start, out int End)
         {
-            int OpenBrackets = 0;
-            int CloseBrackets = 0;
+            var OpenBrackets = 0;
+            var CloseBrackets = 0;
 
-            for (int i = Start; i < String.Length; i++)
+            for (var i = Start; i < String.Length; i++)
             {
                 switch (String[i])
                 {
@@ -873,28 +876,37 @@ namespace Zion
 
             if (Lines.Count == 1)
             {
-                foreach (char Char in Lines.First()) { yield return Char; }
+                foreach (var Char in Lines.First())
+                {
+                    yield return Char;
+                }
                 yield break;
             }
 
-            foreach (char Char in Lines[0])
+            foreach (var Char in Lines[0])
             {
                 yield return Char;
             }
 
-            string NewLine = Environment.NewLine;
+            var NewLine = Environment.NewLine;
 
-            for (int i = 1; i < Lines.Count; i++)
+            for (var i = 1; i < Lines.Count; i++)
             {
-                foreach (char Char in NewLine) { yield return Char; }
-                foreach (char Char in Lines[i]) { yield return Char; }
+                foreach (var Char in NewLine)
+                {
+                    yield return Char;
+                }
+                foreach (var Char in Lines[i])
+                {
+                    yield return Char;
+                }
             }
         }
 
 
         internal static bool IsClosingBracket(this char Char, out char Bracket)
         {
-            foreach (KeyValuePair<char, char> Pair in Brackets)
+            foreach (var Pair in Brackets)
             {
                 if (Char == Pair.Value)
                 {

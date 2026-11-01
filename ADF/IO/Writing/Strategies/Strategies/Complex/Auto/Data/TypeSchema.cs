@@ -2,9 +2,9 @@
 {
     internal readonly struct TypeSchema
     {
-        public readonly Type Type;
-        public readonly Type[] Generics;
-        public readonly Field[] Fields;
+        public readonly Type        Type;
+        public readonly Type[]      Generics;
+        public readonly Field[]     Fields;
         public readonly FormatFlags Flags;
 
         internal TypeSchema(Type Type, Field[] Fields)

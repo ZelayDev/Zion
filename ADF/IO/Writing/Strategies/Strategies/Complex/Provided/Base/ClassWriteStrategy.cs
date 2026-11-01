@@ -5,7 +5,8 @@
         public ClassWriteStrategy(uint FormatId) : base(FormatId) { }
 
 
-        protected sealed override void Write(ADFWritingContext Context, StreamGroup Base, ADFObjectWriter Writer, T Value)
+        protected sealed override void Write(ADFWritingContext Context, StreamGroup Base, ADFObjectWriter Writer,
+            T                                                  Value)
         {
             var Link = Reference.CreateNewReference(Base.ChildsLength);
             Base.BaseStream.WriteCompressed(Context, Link);

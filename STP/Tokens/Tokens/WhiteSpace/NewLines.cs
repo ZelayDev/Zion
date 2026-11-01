@@ -3,14 +3,15 @@
     public sealed class NewLinesToken : WhiteSpaceToken
     {
         public NewLinesToken() { }
+
         public NewLinesToken(int LineBreakCount) : base(LineBreakCount) { }
 
         public readonly struct NewLinesTokenReader : ITokenReader
         {
             public bool Read(ref TextSource Source, out Token Token)
             {
-                int Length = 0;
-                int LineCount = 0;
+                var Length = 0;
+                var LineCount = 0;
 
                 while (true)
                 {

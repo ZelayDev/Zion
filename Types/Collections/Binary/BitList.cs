@@ -5,174 +5,247 @@ namespace Zion
     public sealed class BitList : BitCollection, IList<bool>, IBinarySerializable<BitList>, IParsable<BitList>
     {
         #region Properties
-        private int _Count;
-        public override int Count => _Count;
+        public int Count { get; private set; }
 
-        public int Capacity => Data.Length << 3;
+        public override int Length => Count;
 
         public bool IsReadOnly => false;
-
         #endregion
 
         #region Constructors
-        public BitList(int Count)
-        {
-            ArgumentOutOfRangeException.ThrowIfNegative(Count);
+        public BitList(int Capacity) : base(Capacity) { }
 
-            Data = new ulong[GetGroupCount(Count)];
-            _Count = Count;
-        }
-
-        public BitList(IEnumerable<ulong> Data, int Count)
+        public BitList(IEnumerable<ulong> Data, int Count) : base(0)
         {
+            ArgumentNullException.ThrowIfNull(Data);
             ArgumentOutOfRangeException.ThrowIfNegative(Count);
 
             var GroupCount = GetGroupCount(Count);
-            var Array = Data.ToArray();
+            var Buffer = Data.ToArray();
 
-            if (Array.Length < GroupCount)
+            if (Buffer.Length < GroupCount)
             {
-                System.Array.Resize(ref Array, GroupCount);
+                System.Array.Resize(ref Buffer, GroupCount);
             }
 
-            this.Data = Array;
-            _Count = Count;
+            MaskRemainder(Buffer, Count);
+
+            Bits = Buffer;
+            this.Count = Count;
         }
 
-        private BitList(int Count, ulong[] Data)
+        public BitList(IEnumerable<bool> Source) : base(0)
         {
-            this.Data = Data;
-            _Count = Count;
+            InitializeFrom(Source, out var Length);
+            Count = Length;
         }
 
+        private BitList(int Count, ulong[] Bits, bool TakeOwnership) : base(0)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(Count);
+            ArgumentNullException.ThrowIfNull(Bits);
+
+            var GroupCount = GetGroupCount(Count);
+
+            if (Bits.Length < GroupCount)
+            {
+                throw new ArgumentException
+                (
+                    "Bits length is smaller than the required group count for the given count.",
+                    nameof(Bits)
+                );
+            }
+
+            this.Count = Count;
+
+            if (TakeOwnership && Bits.Length == GroupCount)
+            {
+                this.Bits = Bits;
+                MaskRemainder(this.Bits, Count);
+            }
+            else
+            {
+                var Copy = new ulong[GroupCount];
+                System.Array.Copy(Bits, Copy, GroupCount);
+                MaskRemainder(Copy, Count);
+                this.Bits = Copy;
+            }
+        }
+        #endregion
+
+        #region OverrideMethods
+        protected override void OnCleared()
+        {
+            Count = 0;
+        }
         #endregion
 
         #region IList
         public void Add(bool Item)
         {
-            int Index = Count;
-            EnsureCapacity(++_Count);
-            if (Item)
-            {
-                int ByteIndex = Index >> 3;
-                Data[ByteIndex] = Data[ByteIndex].SetBit(Index & 0b111, Item);
-            }
+            var Index = Count;
+            EnsureCapacity(Count + 1);
+
+            var Group = Index >> BinaryGroupSize;
+            Bits[Group] = Bits[Group].SetBit(Index & RemainderFilter, Item);
+
+            Count++;
         }
 
         public void Insert(int Index, bool Item)
         {
             ArgumentOutOfRangeException.ThrowIfBeyond(Index, Count);
 
-            EnsureCapacity(++_Count);
+            EnsureCapacity(Count + 1);
 
-            int LastByte = (Count - 1) >> 3;
-            int InsertByte = Index >> 3;
-            int InsertBit = Index & 0b111;
-
-            bool Carry = Item;
-
-            for (int ByteIndex = InsertByte; ByteIndex <= LastByte; ByteIndex++)
+            if (Index == Count)
             {
-                int StartBit = (ByteIndex == InsertByte) ? InsertBit : 0;
-                int EndBit = (ByteIndex == LastByte) ? ((Count - 1) & RemainderFilter) : RemainderFilter;
-
-                (Data[ByteIndex], Carry) = InsertBitShift(Data[ByteIndex], StartBit, EndBit, Carry);
+                Add(Item);
+                return;
             }
-        }
 
+            var OldCount = Count;
+            var LastGroup = (OldCount - 1) >> BinaryGroupSize;
+            var InsertGroup = Index >> BinaryGroupSize;
+            var InsertBit = Index & RemainderFilter;
 
-        public void CopyTo(bool[] Array, int ArrayIndex)
-        {
-            ArgumentOutOfRangeException.ThrowIfWithout(ArrayIndex, Array);
-            ArgumentOutOfRangeException.ThrowIfBeyond(Count, Array.Length - ArrayIndex);
+            var CarryIn = Item;
 
-            foreach (bool Item in this)
+            for (var Group = InsertGroup; Group <= LastGroup; Group++)
             {
-                Array[ArrayIndex++] = Item;
+                var StartBit = Group == InsertGroup ? InsertBit : 0;
+                var EndBit = Group == LastGroup ? (OldCount - 1) & RemainderFilter : RemainderFilter;
+
+                var Word = Bits[Group];
+                var Shifted = ShiftLeftInRange(Word, StartBit, EndBit, CarryIn, out var CarryOut);
+                Bits[Group] = Shifted;
+                CarryIn = CarryOut;
             }
-        }
 
-        public BitList Clone()
-        {
-            return new BitList(_Count, ZArray.Clone(Data));
-        }
-
-
-        public bool Remove(bool Item)
-        {
-            int Index = IndexOf(Item);
-            
-            if (Index != -1)
-            {
-                RemoveAt(Index);
-                return true;
-            }
-            return false;
+            Count = OldCount + 1;
         }
 
         public void RemoveAt(int Index)
         {
             if (Index < 0 || Index >= Count)
             {
-                throw new ArgumentOutOfRangeException($"Index(={Index}) out of range [0..{Count})");
+                throw new ArgumentOutOfRangeException(nameof(Index), $"Index(={Index}) out of range [0..{Count})");
             }
 
-            int LastByte = (Count - 1) >> BinaryGroupSize;
-            int RemoveByte = Index >> BinaryGroupSize;
-            int RemoveBit = Index & RemainderFilter;
+            var OldCount = Count;
+            var LastGroup = (OldCount - 1) >> BinaryGroupSize;
+            var RemoveGroup = Index >> BinaryGroupSize;
+            var RemoveBit = Index & RemainderFilter;
 
-            bool Carry = false;
+            var CarryIn = false;
 
-            for (int ByteIndex = LastByte; ByteIndex >= RemoveByte; ByteIndex--)
+            for (var Group = LastGroup; Group >= RemoveGroup; Group--)
             {
-                int StartBit = (ByteIndex == RemoveByte) ? RemoveBit : 0;
-                int EndBit = (ByteIndex == LastByte) ? ((Count - 1) & RemainderFilter) : RemainderFilter;
+                var StartBit = Group == RemoveGroup ? RemoveBit : 0;
+                var EndBit = Group == LastGroup ? (OldCount - 1) & RemainderFilter : RemainderFilter;
 
-                (Data[ByteIndex], Carry) = RemoveBitShift(Data[ByteIndex], StartBit, EndBit, Carry);
+                var Word = Bits[Group];
+                var Shifted = ShiftRightInRange(Word, StartBit, EndBit, CarryIn, out var CarryOut);
+                Bits[Group] = Shifted;
+                CarryIn = CarryOut;
             }
 
-            _Count--;
+            Count = OldCount - 1;
 
-            int ClearByte = Count >> 3;
-            int ClearBit = Count & 0b111;
-            Data[ClearByte] = Data[ClearByte].SetBit(ClearBit, false);
+            var ClearGroup = Count >> BinaryGroupSize;
+            var ClearBit = Count & RemainderFilter;
+            Bits[ClearGroup] = Bits[ClearGroup].SetBit(ClearBit, false);
         }
 
-        public void Clear()
+        public bool Remove(bool Item)
         {
-            _Count = 0;
+            var Index = IndexOf(Item);
+
+            if (Index >= 0)
+            {
+                RemoveAt(Index);
+                return true;
+            }
+
+            return false;
+        }
+        
+        public void CopyTo(bool[] Array, int ArrayIndex)
+        {
+            ArgumentNullException.ThrowIfNull(Array);
+            ArgumentOutOfRangeException.ThrowIfNegative(ArrayIndex);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(ArrayIndex, Array.Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Count, Array.Length - ArrayIndex);
+
+            for (var Index = 0; Index < Count; Index++)
+            {
+                Array[ArrayIndex + Index] = this[Index];
+            }
+        }
+        #endregion
+
+        #region PublicMethods
+        public BitList Clone()
+        {
+            var Copy = new ulong[Bits.Length];
+            System.Array.Copy(Bits, Copy, Bits.Length);
+            return new BitList(Count, Copy, TakeOwnership: true);
         }
 
+        public void EnsureCapacity(int Capacity)
+        {
+            if (Capacity <= this.Capacity)
+            {
+                return;
+            }
+
+            var GroupCount = GetGroupCount(Capacity);
+            var NewData = new ulong[GroupCount];
+            System.Array.Copy(Bits, NewData, Math.Min(Bits.Length, GroupCount));
+            Bits = NewData;
+        }
+
+        public BitArray ToBitArray()
+        {
+            var Copy = new ulong[Bits.Length];
+            System.Array.Copy(Bits, Copy, Bits.Length);
+            return new BitArray(Copy, Count);
+        }
         #endregion
 
         #region IBinarySerializable
         public void Write(BinaryWriter Writer)
         {
+            ArgumentNullException.ThrowIfNull(Writer);
+
             Writer.Write(Count);
-            Writer.BaseStream.Write(AsByteSpan());
+            Writer.BaseStream.Write(AsByteSpan().Slice(0, GetByteCount()));
         }
 
         public static BitList Read(BinaryReader Reader)
         {
-            int Count = Reader.ReadInt32();
-            int GroupCount = GetGroupCount(Count);
-            ulong[] Buffer = new ulong[GroupCount];
+            ArgumentNullException.ThrowIfNull(Reader);
 
-            for (int i = 0; i < GroupCount; i++)
+            var Count = Reader.ReadInt32();
+            ArgumentOutOfRangeException.ThrowIfNegative(Count);
+
+            var GroupCount = GetGroupCount(Count);
+            var Buffer = new ulong[GroupCount];
+
+            for (var Group = 0; Group < GroupCount; Group++)
             {
-                Buffer[i] = Reader.ReadUInt64();
+                Buffer[Group] = Reader.ReadUInt64();
             }
 
-            return new BitList(Count, Buffer);
+            return new BitList(Count, Buffer, TakeOwnership: true);
         }
-
         #endregion
 
         #region IParsable
         public static BitList Parse(string String, IFormatProvider? Provider)
         {
-            var Pair = ParseBitCollection(String);
-            return new BitList(Pair.Item1, Pair.Item2);
+            var (Data, Count) = ParseBitCollection(String);
+            return new BitList(Data, Count);
         }
 
         public static bool TryParse(string? String, IFormatProvider? Provider, out BitList Result)
@@ -182,84 +255,74 @@ namespace Zion
                 Result = new BitList(Data, Count);
                 return true;
             }
+
             Result = null!;
             return false;
         }
-
-        #endregion
-
-        #region PublicMethods
-        public void EnsureCapacity(int Capacity)
-        {
-            if (Capacity <= this.Capacity)
-            {
-                return;
-            }
-
-            ulong[] NewData = new ulong[GetGroupCount(Capacity)];
-            Array.Copy(Data, NewData, GetGroupCount(Count));
-            Data = NewData;
-        }
-
-        public BitArray ToBitArray()
-        {
-            return new BitArray(Data, Count);
-        }
-
         #endregion
 
         #region PrivateMethods
-        private static (ulong, bool) InsertBitShift(ulong Value, int StartBit, int EndBit, bool Carry)
+        private static void MaskRemainder(ulong[] Buffer, int Count)
         {
-            int ShiftedCount = EndBit - StartBit + 1;
+            var RemainderBitCount = Count & RemainderFilter;
 
-            ulong Mask = ((1UL << ShiftedCount) - 1) << StartBit;
-            ulong Shifted = ((Value & Mask) << 1);
-
-            Value = (Value & ~Mask) | (Shifted & Mask);
-
-            if (Carry)
+            if (RemainderBitCount > 0 && Buffer.Length > 0)
             {
-                Value |= (byte)(1 << StartBit);
+                Buffer[^1] &= (1UL << RemainderBitCount) - 1;
             }
-
-            bool NewCarry = (Value & (1UL << (EndBit + 1))) != 0;
-
-            if (EndBit < 7)
-            {
-                Value &= ~(1UL << (EndBit + 1));
-            }
-
-            return (Value, NewCarry);
         }
 
-        private static (ulong, bool) RemoveBitShift(ulong Value, int StartBit, int EndBit, bool Carry)
+        private static ulong ShiftLeftInRange(ulong Value, int StartBit, int EndBit, bool CarryIn, out bool CarryOut)
         {
-            bool Removed = (Value & (1UL << StartBit)) != 0;
+            var Width = EndBit - StartBit + 1;
+            var RangeMask = Width == GroupSize
+                ? ~0UL
+                : ((1UL << Width) - 1) << StartBit;
 
-            int ShiftedCount = EndBit - StartBit;
+            var LowerMask = Width == 1
+                ? 0UL
+                : ((1UL << (Width - 1)) - 1) << StartBit;
 
-            if (ShiftedCount > 0)
+            var Shifted = (Value & LowerMask) << 1;
+            var Preserved = Value & ~RangeMask;
+
+            CarryOut = (Value & (1UL << EndBit)) != 0;
+
+            var Result = Preserved | Shifted;
+
+            if (CarryIn)
             {
-                ulong Mask = ((1UL << ShiftedCount) - 1) << (StartBit + 1);
-                ulong Shifted = (Value & Mask) >> 1;
-
-                Value = (byte)((Value & ~Mask) | (Shifted & Mask));
-                Value &= (byte)~(1 << EndBit);
+                Result |= 1UL << StartBit;
             }
 
-            if (Carry)
-            {
-                Value |= 1UL << EndBit;
-            }
-            else
-            {
-                Value &= ~1UL << EndBit;
-            }
-
-            return (Value, Removed);
+            return Result;
         }
 
+        private static ulong ShiftRightInRange(ulong Value, int StartBit, int EndBit, bool CarryIn, out bool CarryOut)
+        {
+            var Width = EndBit - StartBit + 1;
+            var RangeMask = Width == GroupSize
+                ? ~0UL
+                : ((1UL << Width) - 1) << StartBit;
+
+            var UpperMask = Width == 1
+                ? 0UL
+                : ((1UL << (Width - 1)) - 1) << (StartBit + 1);
+
+            var Shifted = (Value & UpperMask) >> 1;
+            var Preserved = Value & ~RangeMask;
+
+            CarryOut = (Value & (1UL << StartBit)) != 0;
+
+            var Result = Preserved | Shifted;
+
+            if (CarryIn)
+            {
+                Result |= 1UL << EndBit;
+            }
+
+            return Result;
+        }
         #endregion
     }
 }

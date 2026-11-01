@@ -7,18 +7,44 @@ namespace Zion
     public abstract class BitCollection : IEnumerable<bool>, IEqualityComparer<BitCollection>
     {
         #region Constants
-        protected const int GroupSize        = sizeof(ulong);
-        protected const int BinaryGroupSize  = 6;
-        protected const int RemainderFilter  = GroupSize - 1;
-        protected const int GroupCountFilter = ~RemainderFilter;
-
+        protected const int BinaryGroupSize = 6;
+        protected const int GroupSize       = 1 << BinaryGroupSize;
+        protected const int RemainderFilter = GroupSize - 1;
         #endregion
 
         #region Data & Properties
-        protected ulong[] Data;
+        protected ulong[] Bits;
 
-        public abstract int Count { get; }
+        public int Capacity => Bits.Length << BinaryGroupSize;
 
+        public abstract int Length { get; }
+        #endregion
+
+        #region Constructors
+        protected BitCollection(int Capacity)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(Capacity);
+            Bits = new ulong[GetGroupCount(Capacity)];
+        }
+
+        protected internal BitCollection(int Capacity, ulong[] Data)
+        {
+            ArgumentNullException.ThrowIfNull(Data);
+            ArgumentOutOfRangeException.ThrowIfNegative(Capacity);
+
+            var RequiredGroupCount = GetGroupCount(Capacity);
+
+            if (Data.Length < RequiredGroupCount)
+            {
+                throw new ArgumentException
+                (
+                    "Data length is smaller than the required group count for the given capacity.",
+                    nameof(Data)
+                );
+            }
+
+            Bits = Data;
+        }
         #endregion
 
         #region Indexers
@@ -26,102 +52,110 @@ namespace Zion
         {
             get
             {
-                ArgumentOutOfRangeException.ThrowIfWithout(Index, Count);
-                return Data[Index >> BinaryGroupSize].GetBit(Index & RemainderFilter);
+                ArgumentOutOfRangeException.ThrowIfWithout(Index, Length);
+                return Bits[Index >> BinaryGroupSize].GetBit(Index & RemainderFilter);
             }
             set
             {
-                ArgumentOutOfRangeException.ThrowIfWithout(Index, Count);
-                int Group = Index >> BinaryGroupSize;
-                Data[Group] = Data[Group].SetBit(Index & RemainderFilter, value);
+                ArgumentOutOfRangeException.ThrowIfWithout(Index, Length);
+                var Group = Index >> BinaryGroupSize;
+                Bits[Group] = Bits[Group].SetBit(Index & RemainderFilter, value);
             }
         }
 
         public bool this[Index Index]
         {
-            get => this[Index.GetOffset(Count)];
-            set => this[Index.GetOffset(Count)] = value;
+            get => this[Index.GetOffset(Length)];
+            set => this[Index.GetOffset(Length)] = value;
         }
-
         #endregion
 
         #region Operators
-        public static bool operator ==(BitCollection? A, BitCollection? B)
+        public static bool operator ==(BitCollection? Left, BitCollection? Right)
         {
-            if (object.CompareReferences(A, B, out bool ReferenceComprasion))
+            if (Object.CompareReferences(Left, Right, out var ReferenceComparison))
             {
-                return ReferenceComprasion;
+                return ReferenceComparison;
             }
 
-            if (A.Count != B.Count)
+            if (Left!.Length != Right!.Length)
             {
                 return false;
             }
 
-            int TotalBits = A.Count;
+            var TotalBitCount = Left.Length;
+            var FullGroupCount = TotalBitCount >> BinaryGroupSize;
+            var RemainderBitCount = TotalBitCount & RemainderFilter;
 
-            int FullGroups = TotalBits >> BinaryGroupSize;
-            int Remainders = TotalBits & RemainderFilter;
-
-            if (FullGroups > 0)
+            if (FullGroupCount > 0)
             {
-                var ASpan = A.Data.AsSpan(0, FullGroups);
-                var BSpan = B.Data.AsSpan(0, FullGroups);
+                var LeftSpan = Left.Bits.AsSpan(0, FullGroupCount);
+                var RightSpan = Right.Bits.AsSpan(0, FullGroupCount);
 
-                if (!ASpan.SequenceEqual(BSpan))
+                if (!LeftSpan.SequenceEqual(RightSpan))
                 {
                     return false;
                 }
             }
 
-            if (Remainders > 0)
+            if (RemainderBitCount > 0)
             {
-                int Shift = GroupSize - Remainders;
-                return A.Data[FullGroups] >> Shift
-                    == B.Data[FullGroups] >> Shift;
+                var Mask = (1UL << RemainderBitCount) - 1;
+                return (Left.Bits[FullGroupCount] & Mask) == (Right.Bits[FullGroupCount] & Mask);
             }
 
             return true;
         }
 
-        public static bool operator !=(BitCollection? A, BitCollection? B)
+        public static bool operator !=(BitCollection? Left, BitCollection? Right)
         {
-            return !(A == B);
+            return !(Left == Right);
         }
-
         #endregion
 
         #region OverrideMethods
         public override string ToString()
         {
-            int TotalCount = Count + GetByteCount() + 1;
+            var BitCount = Length;
+            var ByteCount = GetByteCount();
 
-            return string.Create
+            var FullByteCount = BitCount >> 3;
+            var RemainderBitCount = BitCount & 0b111;
+
+            var SeparatorCount = RemainderBitCount > 0 ? FullByteCount : FullByteCount - 1;
+
+            if (SeparatorCount < 0)
+            {
+                SeparatorCount = 0;
+            }
+
+            var TotalCharacterCount = BitCount + SeparatorCount + 2;
+
+            return String.Create
             (
-                TotalCount,
-                (this, Count),
-                static (Span, Data) =>
+                TotalCharacterCount,
+                (Collection: this, BitCount, FullByteCount, RemainderBitCount),
+                static (Span, State) =>
                 {
-                    var Source = Data.Item1.AsByteSpan();
-                    var Count  = Data.Count;
+                    var Source = State.Collection.AsByteSpan();
+                    var Index = 1;
 
-                    int ByteCount = Count >> 3;
-                    int Remainders = Count & 0b111;
-
-                    int Index = 1;
-
-                    for (int i = 0; i < ByteCount; i++)
+                    for (var ByteIndex = 0; ByteIndex < State.FullByteCount; ByteIndex++)
                     {
-                        foreach (bool Bit in Source[i].EnumerateBits())
+                        foreach (var Bit in Source[ByteIndex].EnumerateBits())
                         {
                             Span[Index++] = Bit ? '1' : '0';
                         }
-                        Span[Index++] = '_';
+
+                        if (ByteIndex < State.FullByteCount - 1 || State.RemainderBitCount > 0)
+                        {
+                            Span[Index++] = '_';
+                        }
                     }
 
-                    if (Remainders > 0)
+                    if (State.RemainderBitCount > 0)
                     {
-                        foreach (bool Bit in Source[^1].EnumerateBits(Remainders))
+                        foreach (var Bit in Source[State.FullByteCount].EnumerateBits(State.RemainderBitCount))
                         {
                             Span[Index++] = Bit ? '1' : '0';
                         }
@@ -140,9 +174,30 @@ namespace Zion
 
         public override int GetHashCode()
         {
-            return HashCode.Combine(Data, Count);
-        }
+            var Hash = new HashCode();
+            Hash.Add(Length);
 
+            var TotalBitCount = Length;
+            var FullGroupCount = TotalBitCount >> BinaryGroupSize;
+            var RemainderBitCount = TotalBitCount & RemainderFilter;
+
+            for (var Group = 0; Group < FullGroupCount; Group++)
+            {
+                Hash.Add(Bits[Group]);
+            }
+
+            if (RemainderBitCount > 0)
+            {
+                var Mask = (1UL << RemainderBitCount) - 1;
+                Hash.Add(Bits[FullGroupCount] & Mask);
+            }
+
+            return Hash.ToHashCode();
+        }
+        #endregion
+
+        #region AbstractMethods
+        protected virtual void OnCleared() { }
         #endregion
 
         #region StaticMethods
@@ -155,52 +210,65 @@ namespace Zion
         {
             return (Count + RemainderFilter) >> BinaryGroupSize;
         }
-
         #endregion
-
+        
         #region PublicMethods
         public int GetByteCount()
         {
-            return GetByteCount(Count);
+            return GetByteCount(Length);
         }
 
         public int GetGroupCount()
         {
-            return GetGroupCount(Count);
+            return GetGroupCount(Length);
         }
-        
+
 
         public Span<byte> AsByteSpan()
         {
-            return MemoryMarshal.Cast<ulong, byte>(Data.AsSpan());
+            return MemoryMarshal.Cast<ulong, byte>(AsSpan());
+        }
+
+        public Span<short> AsInt16Span()
+        {
+            return MemoryMarshal.Cast<ulong, short>(AsSpan());
         }
 
         public Span<ushort> AsUInt16Span()
         {
-            return MemoryMarshal.Cast<ulong, ushort>(Data.AsSpan());
+            return MemoryMarshal.Cast<ulong, ushort>(AsSpan());
+        }
+
+        public Span<int> AsInt32Span()
+        {
+            return MemoryMarshal.Cast<ulong, int>(AsSpan());
         }
 
         public Span<uint> AsUInt32Span()
         {
-            return MemoryMarshal.Cast<ulong, uint>(Data.AsSpan());
+            return MemoryMarshal.Cast<ulong, uint>(AsSpan());
+        }
+
+        public Span<long> AsInt64Span()
+        {
+            return MemoryMarshal.Cast<ulong, long>(AsSpan());
         }
 
         public Span<ulong> AsSpan()
         {
-            return Data.AsSpan();
+            return Bits.AsSpan();
         }
 
 
         public int IndexOf(bool Item)
         {
-            var Span = AsSpan();
-            int Count = this.Count;
+            var BitCount = Length;
+            var FullGroupCount = BitCount >> BinaryGroupSize;
+            var RemainderBitCount = BitCount & RemainderFilter;
 
-            int GroupCount = Count >> BinaryGroupSize;
-
-            for (int Group = 0; Group < GroupCount; Group++)
+            for (var Group = 0; Group < FullGroupCount; Group++)
             {
-                ulong Current = Span[Group];
+                var Current = Bits[Group];
 
                 if (!Item)
                 {
@@ -209,28 +277,27 @@ namespace Zion
 
                 if (Current != 0UL)
                 {
-                    int BitIndex = BitOperations.TrailingZeroCount(Current);
+                    var BitIndex = BitOperations.TrailingZeroCount(Current);
                     return (Group << BinaryGroupSize) | BitIndex;
                 }
             }
 
-            int RemainderBits = Count & RemainderFilter;
-
-            if (RemainderBits != 0)
+            if (RemainderBitCount > 0)
             {
-                ulong Last = Span[GroupCount];
+                var Current = Bits[FullGroupCount];
 
                 if (!Item)
                 {
-                    Last = ~Last;
+                    Current = ~Current;
                 }
 
-                Last &= (1UL << RemainderBits) - 1;
+                var Mask = (1UL << RemainderBitCount) - 1;
+                Current &= Mask;
 
-                if (Last != 0UL)
+                if (Current != 0UL)
                 {
-                    int BitIndex = BitOperations.TrailingZeroCount(Last);
-                    return (GroupCount << BinaryGroupSize) | BitIndex;
+                    var BitIndex = BitOperations.TrailingZeroCount(Current);
+                    return (FullGroupCount << BinaryGroupSize) | BitIndex;
                 }
             }
 
@@ -244,39 +311,43 @@ namespace Zion
 
         public bool Contains(int Start, int Count, bool Target)
         {
-            int Length = this.Count;
+            var TotalLength = Length;
 
-            ArgumentOutOfRangeException.ThrowIfWithout(Start, Length);
-            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, Length);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start, TotalLength);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, TotalLength);
 
-            int EndBit = Start + Count;
-
-            int FirstWordIndex  = Start >> BinaryGroupSize;
-            int LastWordIndex   = (EndBit - 1) >> BinaryGroupSize;
-            int FirstBitOffset  = Start & RemainderFilter;
-            int LastGroupLength = EndBit & RemainderFilter;
-
-            ulong FirstMask = ~0UL << FirstBitOffset;
-            ulong LastMask = LastGroupLength == 0 ? ~0UL : (1UL << LastGroupLength) - 1;
-
-            if (FirstWordIndex == LastWordIndex)
+            if (Count == 0)
             {
-                ulong Mask = FirstMask & LastMask;
-                ulong Current = Data[FirstWordIndex] & Mask;
+                return false;
+            }
+
+            var EndBit = Start + Count;
+
+            var FirstGroupIndex = Start >> BinaryGroupSize;
+            var LastGroupIndex = (EndBit - 1) >> BinaryGroupSize;
+            var FirstBitOffset = Start & RemainderFilter;
+            var LastBitCount = EndBit & RemainderFilter;
+
+            var FirstMask = ~0UL << FirstBitOffset;
+            var LastMask = LastBitCount == 0 ? ~0UL : (1UL << LastBitCount) - 1;
+
+            if (FirstGroupIndex == LastGroupIndex)
+            {
+                var Mask = FirstMask & LastMask;
+                var Current = Bits[FirstGroupIndex] & Mask;
 
                 return Target ? Current != 0 : Current != Mask;
             }
 
-            ulong FirstWord = Data[FirstWordIndex] & FirstMask;
-            if (Target ? FirstWord != 0 : FirstWord != FirstMask)
+            var FirstGroupValue = Bits[FirstGroupIndex] & FirstMask;
+            if (Target ? FirstGroupValue != 0 : FirstGroupValue != FirstMask)
             {
                 return true;
             }
 
-            Span<ulong> Span = AsSpan();
-            for (int i = FirstWordIndex + 1; i < LastWordIndex; i++)
+            for (var Group = FirstGroupIndex + 1; Group < LastGroupIndex; Group++)
             {
-                ulong Current = Span[i];
+                var Current = Bits[Group];
 
                 if (Target ? Current != 0 : Current != ~0UL)
                 {
@@ -284,83 +355,95 @@ namespace Zion
                 }
             }
 
-            ulong Last = Data[LastWordIndex] & LastMask;
-            return Target ? Last != 0 : Last != LastMask;
+            var LastGroupValue = Bits[LastGroupIndex] & LastMask;
+            return Target ? LastGroupValue != 0 : LastGroupValue != LastMask;
+        }
+
+
+        public void Clear()
+        {
+            Array.Clear(Bits, 0, GetGroupCount(Length));
+            OnCleared();
         }
 
 
         public void Fill(bool Value)
         {
-            Fill(0, Count, Value);
+            Fill(0, Length, Value);
         }
 
         public void Fill(Segment Range, bool Value)
         {
             Fill(Range.Start, Range.Length, Value);
         }
-        
+
         public void Fill(int Start, int Count, bool Value)
         {
-            int Length = this.Count;
+            var TotalLength = Length;
 
-            ArgumentOutOfRangeException.ThrowIfWithout(Start, Length);
-            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, Length);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start, TotalLength);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, TotalLength);
 
-            int EndBit = Start + Count;
-
-            int FirstWordIndex = Start >> BinaryGroupSize;
-            int LastWordIndex  = (EndBit - 1) >> BinaryGroupSize;
-            int FirstBitOffset = Start & RemainderFilter;
-            int LastBitCount   = EndBit & RemainderFilter;
-
-            ulong FirstMask = ~0UL << FirstBitOffset;
-            ulong LastMask = LastBitCount == 0 ? ~0UL : (1UL << LastBitCount) - 1;
-
-            if (FirstWordIndex == LastWordIndex)
+            if (Count == 0)
             {
-                ulong Mask = FirstMask & LastMask;
+                return;
+            }
+
+            var EndBit = Start + Count;
+
+            var FirstGroupIndex = Start >> BinaryGroupSize;
+            var LastGroupIndex = (EndBit - 1) >> BinaryGroupSize;
+            var FirstBitOffset = Start & RemainderFilter;
+            var LastBitCount = EndBit & RemainderFilter;
+
+            var FirstMask = ~0UL << FirstBitOffset;
+            var LastMask = LastBitCount == 0 ? ~0UL : (1UL << LastBitCount) - 1;
+
+            if (FirstGroupIndex == LastGroupIndex)
+            {
+                var Mask = FirstMask & LastMask;
 
                 if (Value)
                 {
-                    Data[FirstWordIndex] |= Mask;
+                    Bits[FirstGroupIndex] |= Mask;
                 }
                 else
                 {
-                    Data[FirstWordIndex] &= ~Mask;
+                    Bits[FirstGroupIndex] &= ~Mask;
                 }
                 return;
             }
 
             if (Value)
             {
-                Data[FirstWordIndex] |= FirstMask;
+                Bits[FirstGroupIndex] |= FirstMask;
             }
             else
             {
-                Data[FirstWordIndex] &= ~FirstMask;
+                Bits[FirstGroupIndex] &= ~FirstMask;
             }
 
-            Span<ulong> Span = AsSpan();
-            ulong FillValue = Value ? ~0UL : 0UL;
+            var FillValue = Value ? ~0UL : 0UL;
 
-            for (int i = FirstWordIndex + 1; i < LastWordIndex; i++)
+            for (var Group = FirstGroupIndex + 1; Group < LastGroupIndex; Group++)
             {
-                Span[i] = FillValue;
+                Bits[Group] = FillValue;
             }
 
             if (Value)
             {
-                Data[LastWordIndex] |= LastMask;
+                Bits[LastGroupIndex] |= LastMask;
             }
             else
             {
-                Data[LastWordIndex] &= ~LastMask;
+                Bits[LastGroupIndex] &= ~LastMask;
             }
         }
 
+
         public bool TryFindShortestSequence(int BitCount, bool TargetBit, out Segment Sequence)
         {
-            return TryFindShortestSequence(BitCount, TargetBit, Count, out Sequence);
+            return TryFindShortestSequence(BitCount, TargetBit, 0, Length, out Sequence);
         }
 
         public bool TryFindShortestSequence(int BitCount, bool TargetBit, int Count, out Segment Sequence)
@@ -370,11 +453,11 @@ namespace Zion
 
         public bool TryFindShortestSequence(int BitCount, bool TargetBit, int Start, int Count, out Segment Sequence)
         {
-            int CollectionLength = this.Count;
+            var TotalLength = Length;
 
             ArgumentOutOfRangeException.ThrowIfNegative(BitCount);
-            ArgumentOutOfRangeException.ThrowIfWithout(Start, CollectionLength);
-            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, CollectionLength);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start, TotalLength);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, TotalLength);
 
             Sequence = Segment.Empty;
 
@@ -383,110 +466,159 @@ namespace Zion
                 return true;
             }
 
-            Span<ulong> Data = AsSpan();
-
-            int EndBit = Start + Count;
-
-            int FirstWordIndex = Start >> BinaryGroupSize;
-            int LastWordIndex = (EndBit - 1) >> BinaryGroupSize;
-            int FirstBitOffset = Start & RemainderFilter;
-            int LastBitCount = EndBit & RemainderFilter;
-
-            if (LastBitCount == 0)
+            if (Count < BitCount)
             {
-                LastBitCount = 64;
-            }
-
-            ulong FirstMask = ~0UL << FirstBitOffset;
-            ulong LastMask = (1UL << LastBitCount) - 1;
-
-            int CurrentStart = -1;
-            int CurrentLength = 0;
-
-            int BestStart = -1;
-            int BestLength = int.MaxValue;
-
-            bool TryUpdateBest()
-            {
-                if (CurrentLength >= BitCount && CurrentLength < BestLength)
-                {
-                    BestLength = CurrentLength;
-                    BestStart = CurrentStart;
-
-                    if (BestLength == BitCount)
-                    {
-                        return true;
-                    }
-                }
                 return false;
             }
 
-            void ResetCurrent()
+            var EndBit = Start + Count;
+
+            var FirstGroupIndex = Start >> BinaryGroupSize;
+            var LastGroupIndex = (EndBit - 1) >> BinaryGroupSize;
+            var FirstBitOffset = Start & RemainderFilter;
+            var LastBitCount = EndBit & RemainderFilter;
+
+            var FirstMask = ~0UL << FirstBitOffset;
+            var LastMask = LastBitCount == 0 ? ~0UL : (1UL << LastBitCount) - 1;
+
+            var BestStart = -1;
+            var BestLength = Int32.MaxValue;
+
+            var CurrentStart = -1;
+            var CurrentLength = 0;
+
+            for (var GroupIndex = FirstGroupIndex; GroupIndex <= LastGroupIndex; GroupIndex++)
             {
-                CurrentLength = 0;
-                CurrentStart = -1;
-            }
+                if (BestLength != Int32.MaxValue)
+                {
+                    var RemainingBitCount = EndBit - (GroupIndex << BinaryGroupSize);
+                    if (RemainingBitCount < BestLength)
+                    {
+                        break;
+                    }
+                }
 
-            for (int WordIndex = FirstWordIndex; WordIndex <= LastWordIndex; WordIndex++)
-            {
-                ulong Word = Data[WordIndex];
+                var Word = Bits[GroupIndex];
 
-                if (WordIndex == FirstWordIndex) Word &= FirstMask;
-                if (WordIndex == LastWordIndex) Word &= LastMask;
+                if (GroupIndex == FirstGroupIndex)
+                {
+                    Word &= FirstMask;
+                }
 
-                if (!TargetBit) Word = ~Word;
+                if (GroupIndex == LastGroupIndex)
+                {
+                    Word &= LastMask;
+                }
 
-                if (Word == 0)
+                if (!TargetBit)
+                {
+                    Word = ~Word;
+                }
+
+                var GroupStartBit = GroupIndex << BinaryGroupSize;
+
+                if (Word == 0UL)
                 {
                     if (CurrentLength > 0)
                     {
-                        if (TryUpdateBest())
+                        if (CurrentLength >= BitCount && CurrentLength < BestLength)
+                        {
+                            BestLength = CurrentLength;
+                            BestStart = CurrentStart;
+
+                            if (BestLength == BitCount)
+                            {
+                                Sequence = new Segment(BestStart, BestLength);
+                                return true;
+                            }
+                        }
+
+                        CurrentLength = 0;
+                        CurrentStart = -1;
+                    }
+
+                    continue;
+                }
+
+                if (Word == ~0UL)
+                {
+                    if (CurrentLength == 0)
+                    {
+                        CurrentStart = GroupStartBit;
+                    }
+
+                    CurrentLength += GroupSize;
+
+                    if (CurrentLength >= BitCount && CurrentLength < BestLength)
+                    {
+                        BestLength = CurrentLength;
+                        BestStart = CurrentStart;
+
+                        if (BestLength == BitCount)
                         {
                             Sequence = new Segment(BestStart, BestLength);
                             return true;
                         }
-                        ResetCurrent();
                     }
+
                     continue;
                 }
 
-                var WordStartBit = WordIndex << BinaryGroupSize;
                 var Remaining = Word;
 
-                while (Remaining != 0)
+                while (Remaining != 0UL)
                 {
-                    int SegmentOffset = BitOperations.TrailingZeroCount(Remaining);
-                    int SegmentLength = BitOperations.LeadingZeroCount(~(Remaining >> SegmentOffset));
+                    var SeriesOffset = BitOperations.TrailingZeroCount(Remaining);
+                    var Shifted = Remaining >> SeriesOffset;
 
-                    if (CurrentLength > 0 && SegmentOffset == 0 &&
-                        (WordIndex > FirstWordIndex || FirstBitOffset == 0 || CurrentLength > 0))
+                    var SeriesLength = BitOperations.LeadingZeroCount(~Shifted);
+                    if (SeriesLength == 0)
                     {
-                        CurrentLength += SegmentLength;
+                        SeriesLength = GroupSize - SeriesOffset;
+                    }
+
+                    if (CurrentLength > 0 && SeriesOffset == 0)
+                    {
+                        CurrentLength += SeriesLength;
                     }
                     else
                     {
-                        CurrentStart = WordStartBit + SegmentOffset;
-                        CurrentLength = SegmentLength;
+                        CurrentStart = GroupStartBit + SeriesOffset;
+                        CurrentLength = SeriesLength;
                     }
 
-                    if (TryUpdateBest())
+                    if (CurrentLength >= BitCount && CurrentLength < BestLength)
                     {
-                        Sequence = new Segment(BestStart, BestLength);
-                        return true;
+                        BestLength = CurrentLength;
+                        BestStart = CurrentStart;
+
+                        if (BestLength == BitCount)
+                        {
+                            Sequence = new Segment(BestStart, BestLength);
+                            return true;
+                        }
                     }
 
-                    int TotalShift = SegmentOffset + SegmentLength;
-                    Remaining = TotalShift >= 64 ? 0 : Remaining >> TotalShift;
+                    var ConsumedBits = SeriesOffset + SeriesLength;
+                    Remaining = ConsumedBits >= GroupSize ? 0UL : Remaining >> ConsumedBits;
                 }
 
-                if ((Word & 1UL) == 0 && CurrentLength > 0)
+                if (Word >> (GroupSize - 1) == 0UL && CurrentLength > 0)
                 {
-                    if (TryUpdateBest())
+                    if (CurrentLength >= BitCount && CurrentLength < BestLength)
                     {
-                        Sequence = new Segment(BestStart, BestLength);
-                        return true;
+                        BestLength = CurrentLength;
+                        BestStart = CurrentStart;
+
+                        if (BestLength == BitCount)
+                        {
+                            Sequence = new Segment(BestStart, BestLength);
+                            return true;
+                        }
                     }
-                    ResetCurrent();
+
+                    CurrentLength = 0;
+                    CurrentStart = -1;
                 }
             }
 
@@ -506,37 +638,179 @@ namespace Zion
         }
 
 
+        public bool TryFindFirstFit(int BitCount, bool TargetBit, out Segment Sequence)
+        {
+            return TryFindFirstFit(BitCount, TargetBit, 0, Length, out Sequence);
+        }
+
+        public bool TryFindFirstFit(int BitCount, bool TargetBit, int Count, out Segment Sequence)
+        {
+            return TryFindFirstFit(BitCount, TargetBit, 0, Count, out Sequence);
+        }
+
+        public bool TryFindFirstFit(int BitCount, bool TargetBit, int Start, int Count, out Segment Sequence)
+        {
+            var TotalLength = Length;
+
+            ArgumentOutOfRangeException.ThrowIfNegative(BitCount);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start, TotalLength);
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Count, TotalLength);
+
+            Sequence = Segment.Empty;
+
+            if (BitCount == 0)
+            {
+                return true;
+            }
+
+            if (Count < BitCount)
+            {
+                return false;
+            }
+
+            var EndBit = Start + Count;
+
+            var FirstGroupIndex = Start >> BinaryGroupSize;
+            var LastGroupIndex = (EndBit - 1) >> BinaryGroupSize;
+            var FirstBitOffset = Start & RemainderFilter;
+            var LastBitCount = EndBit & RemainderFilter;
+
+            var FirstMask = ~0UL << FirstBitOffset;
+            var LastMask = LastBitCount == 0 ? ~0UL : (1UL << LastBitCount) - 1;
+
+            var CurrentStart = -1;
+            var CurrentLength = 0;
+
+            for (var GroupIndex = FirstGroupIndex; GroupIndex <= LastGroupIndex; GroupIndex++)
+            {
+                var Word = Bits[GroupIndex];
+
+                if (GroupIndex == FirstGroupIndex)
+                {
+                    Word &= FirstMask;
+                }
+                if (GroupIndex == LastGroupIndex)
+                {
+                    Word &= LastMask;
+                }
+
+                if (!TargetBit)
+                {
+                    Word = ~Word;
+                }
+
+                var GroupStartBit = GroupIndex << BinaryGroupSize;
+
+                if (Word == 0UL)
+                {
+                    CurrentLength = 0;
+                    CurrentStart = -1;
+                    continue;
+                }
+
+                if (Word == ~0UL)
+                {
+                    if (CurrentLength == 0)
+                    {
+                        CurrentStart = GroupStartBit;
+                    }
+                    CurrentLength += GroupSize;
+
+                    if (CurrentLength >= BitCount)
+                    {
+                        Sequence = new Segment(CurrentStart, CurrentLength);
+                        return true;
+                    }
+                    continue;
+                }
+
+                var Remaining = Word;
+
+                while (Remaining != 0UL)
+                {
+                    var SeriesOffset = BitOperations.TrailingZeroCount(Remaining);
+                    var Shifted = Remaining >> SeriesOffset;
+                    var SeriesLength = BitOperations.LeadingZeroCount(~Shifted);
+                    if (SeriesLength == 0)
+                    {
+                        SeriesLength = GroupSize - SeriesOffset;
+                    }
+
+                    if (CurrentLength > 0 && SeriesOffset == 0)
+                    {
+                        CurrentLength += SeriesLength;
+                    }
+                    else
+                    {
+                        CurrentStart = GroupStartBit + SeriesOffset;
+                        CurrentLength = SeriesLength;
+                    }
+
+                    if (CurrentLength >= BitCount)
+                    {
+                        Sequence = new Segment(CurrentStart, CurrentLength);
+                        return true;
+                    }
+
+                    var ConsumedBits = SeriesOffset + SeriesLength;
+                    Remaining = ConsumedBits >= GroupSize ? 0UL : Remaining >> ConsumedBits;
+                }
+
+                if (Word >> (GroupSize - 1) == 0UL)
+                {
+                    CurrentLength = 0;
+                    CurrentStart = -1;
+                }
+            }
+
+            return false;
+        }
+
+
         public byte[] ToByteArray()
         {
-            int Count = this.Count;
-            int ByteCount = GetByteCount(Count);
-
-            byte[] Result = new byte[ByteCount];
-
-            Array.Copy(Data, Result, ByteCount);
-
+            var Result = new byte[GetByteCount()];
+            AsByteSpan().Slice(0, Result.Length).CopyTo(Result);
             return Result;
         }
 
         public bool[] ToBooleanArray()
         {
-            bool[] Result = new bool[Count];
+            var Result = new bool[Length];
 
-            int Index = 0;
-
-            foreach (bool Bit in this)
+            for (var Index = 0; Index < Result.Length; Index++)
             {
-                if (Bit)
-                {
-                    Result[Index] = true;
-                }
-
-                Index++;
+                Result[Index] = this[Index];
             }
 
             return Result;
         }
+        #endregion
 
+        #region ProtectedMethods
+        protected void InitializeFrom(IEnumerable<bool> Source, out int Length)
+        {
+            ArgumentNullException.ThrowIfNull(Source);
+
+            var Buffer = Source as ICollection<bool> ?? Source.ToArray();
+
+            Length = Buffer.Count;
+
+            var GroupCount = GetGroupCount(Length);
+            var Words = new ulong[GroupCount];
+
+            var Index = 0;
+            foreach (var Bit in Buffer)
+            {
+                if (Bit)
+                {
+                    Words[Index >> BinaryGroupSize] |= 1UL << (Index & RemainderFilter);
+                }
+                Index++;
+            }
+
+            Bits = Words;
+        }
         #endregion
 
         #region IParsable
@@ -551,27 +825,29 @@ namespace Zion
         {
             if (String is null)
             {
-                Data  = default!;
+                Data = default!;
                 Count = default!;
                 return false;
             }
 
             Data = new List<ulong>();
             Count = 0;
+
             var Current = 0UL;
 
-            foreach (char Char in String)
+            foreach (var Character in String)
             {
-                if (Char == '1')
+                if (Character == '1')
                 {
-                    Current |= 1UL;
+                    Current |= 1UL << (Count & RemainderFilter);
                 }
-                else if (Char != '0')
+                else if (Character != '0')
                 {
+                    Data = default!;
+                    Count = default!;
                     return false;
                 }
 
-                Current <<= 1;
                 Count++;
 
                 if ((Count & RemainderFilter) == 0)
@@ -581,57 +857,42 @@ namespace Zion
                 }
             }
 
-            if ((Count & RemainderFilter) == 0)
+            if ((Count & RemainderFilter) != 0)
             {
                 Data.Add(Current);
             }
 
             return true;
         }
-
         #endregion
 
         #region IEqualityComparer
-        public bool Equals(BitCollection? X, BitCollection? Y)
+        public bool Equals(BitCollection? Left, BitCollection? Right)
         {
-            return X == Y;
+            return Left == Right;
         }
 
-        public int GetHashCode(BitCollection Object)
+        public int GetHashCode(BitCollection Collection)
         {
-            return Object.GetHashCode();
+            return Collection.GetHashCode();
         }
-
         #endregion
 
         #region IEnumerable
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public IEnumerator<bool> GetEnumerator()
         {
-            var Source = Data;
-            var Count = this.Count;
+            var BitCount = Length;
 
-            int ByteCount = Count >> 3;
-            int Remainders = Count & 0b111;
-
-            for (int i = 0; i < ByteCount; i++)
+            for (var Index = 0; Index < BitCount; Index++)
             {
-                foreach (bool Bit in Source[i].EnumerateBits())
-                {
-                    yield return Bit;
-                }
-            }
-
-            if (Remainders > 0)
-            {
-                foreach (bool Bit in Source[^1].EnumerateBits(Remainders))
-                {
-                    yield return Bit;
-                }
+                yield return Bits[Index >> BinaryGroupSize].GetBit(Index & RemainderFilter);
             }
         }
-
         #endregion
     }
 }

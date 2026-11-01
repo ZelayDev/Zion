@@ -16,7 +16,7 @@ namespace Zion
             get => GetValueAt(Index);
             set => SetValueAt(Index, value);
         }
-        
+
 
         public T First()
         {
@@ -44,7 +44,7 @@ namespace Zion
         {
             ClearAll();
         }
-        
+
         public void Reverse()
         {
             AsSpan().Reverse();
@@ -54,13 +54,13 @@ namespace Zion
         {
             AsSpan().Sort();
         }
-        
+
 
         public T[] ToArray()
         {
             return AsSpan().ToArray();
         }
-        
+
 
         public void CopyTo(T[] Array, int ArrayIndex)
         {

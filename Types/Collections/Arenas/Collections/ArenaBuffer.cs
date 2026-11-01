@@ -30,7 +30,7 @@ namespace Zion
 
         public void Add(T Item)
         {
-            int Index = Count;
+            var Index = Count;
             EnsureCapacity(Count + 1);
             this[Index] = Item;
             Count++;
@@ -40,19 +40,19 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Items);
 
-            int Count = this.Count;
+            var Count = this.Count;
 
-            if (Items.TryGetNonEnumeratedCount(out int ItemsCount))
+            if (Items.TryGetNonEnumeratedCount(out var ItemsCount))
             {
-                int TotalCount = Count + ItemsCount;
+                var TotalCount = Count + ItemsCount;
                 EnsureCapacity(TotalCount);
                 UseSpan
                 (
                     Count, ItemsCount, Items, static (Span, Other) =>
                     {
-                        int Index = 0;
+                        var Index = 0;
 
-                        foreach (T Item in Other)
+                        foreach (var Item in Other)
                         {
                             Span[Index++] = Item;
                         }
@@ -62,15 +62,15 @@ namespace Zion
             }
             else
             {
-                InsertItems(Count, Items, out int NewCount);
+                InsertItems(Count, Items, out var NewCount);
                 this.Count = NewCount;
             }
         }
 
         public void AddRange(ReadOnlySpan<T> Items)
         {
-            int ItemsCount = Items.Length;
-            int TotalCount = Count + ItemsCount;
+            var ItemsCount = Items.Length;
+            var TotalCount = Count + ItemsCount;
 
             EnsureCapacity(TotalCount);
             UseSpan
@@ -78,7 +78,7 @@ namespace Zion
                 Count, ItemsCount, Items,
                 static (Span, Other) =>
                 {
-                    for (int i = 0; i < Other.Length; i++)
+                    for (var i = 0; i < Other.Length; i++)
                     {
                         Span[i] = Other[i];
                     }
@@ -90,7 +90,7 @@ namespace Zion
 
         public bool Remove(T Item)
         {
-            int Index = IndexOf(Item);
+            var Index = IndexOf(Item);
 
             if (Index == -1)
             {
@@ -162,14 +162,14 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(Items);
             ArgumentOutOfRangeException.ThrowIfBeyond(Index, Count);
 
-            if (Items.TryGetNonEnumeratedCount(out int ItemsCount))
+            if (Items.TryGetNonEnumeratedCount(out var ItemsCount))
             {
                 if (ItemsCount == 0)
                 {
                     return;
                 }
 
-                int TotalCount = Count + ItemsCount;
+                var TotalCount = Count + ItemsCount;
                 EnsureCapacity(TotalCount);
 
                 if (Index < Count)
@@ -181,8 +181,8 @@ namespace Zion
                 (
                     Index, ItemsCount, Items, static (Span, Other) =>
                     {
-                        int SpanIndex = 0;
-                        foreach (T Item in Other)
+                        var SpanIndex = 0;
+                        foreach (var Item in Other)
                         {
                             Span[SpanIndex++] = Item;
                         }
@@ -193,7 +193,7 @@ namespace Zion
             }
             else
             {
-                int TailLength = Count - Index;
+                var TailLength = Count - Index;
                 using var Tail = Allocate<ArenaBuffer<T>>(TailLength);
 
                 if (TailLength > 0)
@@ -205,7 +205,7 @@ namespace Zion
                     );
                 }
 
-                InsertItems(Index, Items, out int TotalCount);
+                InsertItems(Index, Items, out var TotalCount);
                 EnsureCapacity(TotalCount + TailLength);
 
                 Tail.UseSpan
@@ -302,7 +302,7 @@ namespace Zion
             return base.UseSpan(Start, Count, Other, Function);
         }
 
-        
+
         public void Expand(int Additional)
         {
             Extend(Count + Additional);
@@ -335,9 +335,9 @@ namespace Zion
         {
             const int BufferSize = 0x20;
 
-            T[] Buffer = new T[BufferSize];
-            int LocalIndex = 0;
-            int TotalIndex = Index;
+            var Buffer = new T[BufferSize];
+            var LocalIndex = 0;
+            var TotalIndex = Index;
 
             void Flush()
             {
@@ -352,7 +352,7 @@ namespace Zion
                     TotalIndex, LocalIndex, Buffer.AsSpan(0, LocalIndex),
                     static (Span, Other) =>
                     {
-                        for (int i = 0; i < Other.Length; i++)
+                        for (var i = 0; i < Other.Length; i++)
                         {
                             Span[i] = Other[i];
                         }
@@ -363,7 +363,7 @@ namespace Zion
                 LocalIndex = 0;
             }
 
-            foreach (T Item in Items)
+            foreach (var Item in Items)
             {
                 Buffer[LocalIndex++] = Item;
 

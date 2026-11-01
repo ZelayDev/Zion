@@ -5,25 +5,26 @@ namespace Zion
     [Serializable]
     public struct ColorText : IColorText
     {
-        public static readonly ColorText Empty = new ColorText(string.Empty, default);
+        public static readonly ColorText Empty = new(String.Empty, default);
 
-        public string Text;
+        public string   Text;
         public RGBColor Color;
 
         public int Length => Text.Length;
 
         public ColorText(object? Text, RGBColor Color)
         {
-            this.Text = (Text ?? string.Empty).ToString() ?? string.Empty;
+            this.Text = (Text ?? String.Empty).ToString() ?? String.Empty;
             this.Color = Color;
         }
 
-        public ColorChar this[int Index] => new ColorChar(Text[Index], Color);
+        public ColorChar this[int Index] => new(Text[Index], Color);
 
         public override string ToString()
         {
             return $"\u001b[38;2;{Color.R};{Color.G};{Color.B}m{Text}\u001b[0m";
         }
+
         public string ToString(out int VisualLength)
         {
             VisualLength = Length;
@@ -34,17 +35,20 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Chars);
 
-            static int GetLength(byte Value) => Value switch
+            static int GetLength(byte Value)
             {
-                >= 100 => 3,
-                >= 10 => 2,
-                _ => 1
-            };
+                return Value switch
+                {
+                    >= 100 => 3,
+                    >= 10  => 2,
+                    _      => 1
+                };
+            }
 
-            return string.Create(Chars.Count + 14 + Color.Sum(GetLength), Chars, (Span, List) =>
+            return String.Create(Chars.Count + 14 + Color.Sum(GetLength), Chars, (Span, List) =>
             {
-                string g = $"\u001b[38;2;{Color.R};{Color.G};{Color.B}m{Chars}\u001b[0m";
-                int Index = 0;
+                var g = $"\u001b[38;2;{Color.R};{Color.G};{Color.B}m{Chars}\u001b[0m";
+                var Index = 0;
 
                 Span[Index++] = '\u001b';
                 Span[Index++] = '[';
@@ -53,10 +57,10 @@ namespace Zion
                 Span[Index++] = ';';
                 Span[Index++] = '2';
 
-                foreach (byte Color in Color)
+                foreach (var Color in Color)
                 {
                     Span[Index++] = ';';
-                    foreach (char Char in Color.ToString())
+                    foreach (var Char in Color.ToString())
                     {
                         Span[Index++] = Char;
                     }
@@ -64,7 +68,7 @@ namespace Zion
 
                 Span[Index++] = 'm';
 
-                foreach (char Char in List)
+                foreach (var Char in List)
                 {
                     Span[Index++] = Char;
                 }
@@ -80,17 +84,22 @@ namespace Zion
         {
             return $"\\u001b[38;2;{Color.R};{Color.G};{Color.B}m{Text}\\u001b[0m";
         }
+
         public static string ToUnicode(string Text, RGBColor Color)
         {
             return $"\\u001b[38;2;{Color.R};{Color.G};{Color.B}m{Text}\\u001b[0m";
         }
 
-        public string ToColorString() => ToString();
+        public string ToColorString()
+        {
+            return ToString();
+        }
 
         public static string GetText(string Text, RGBColor Color)
         {
             return $"\u001b[38;2;{Color.R};{Color.G};{Color.B}m{Text}\u001b[0m";
         }
+
         public static string GetText(string Text, byte R, byte G, byte B)
         {
             return $"\u001b[38;2;{R};{G};{B}m{Text}\u001b[0m";
@@ -98,9 +107,9 @@ namespace Zion
 
         public static string Clear(string String)
         {
-            int Start = 0;
-            int Index = 0;
-            StringBuilder Builder = new StringBuilder(String.Length);
+            var Start = 0;
+            var Index = 0;
+            var Builder = new StringBuilder(String.Length);
 
             while (Index < String.Length)
             {
@@ -142,26 +151,29 @@ namespace Zion
 
         public static string ConcatToString(params ColorText[] Array)
         {
-            return string.Concat(Array);
+            return String.Concat(Array);
         }
+
         public static MassColorText Concat(out int VisualLength, params ColorText[] Array)
         {
-            MassColorText Result = new MassColorText(Array);
+            var Result = new MassColorText(Array);
             VisualLength = Result.Length;
             return Result;
         }
 
         public static string operator +(ColorText A, ColorText B)
         {
-            return A.ToString() + B.ToString();
+            return A + B;
         }
+
         public static string operator +(ColorText A, ColorChar B)
         {
-            return A.ToString() + B.ToString();
+            return A + B;
         }
+
         public static string operator +(ColorChar A, ColorText B)
         {
-            return A.ToString() + B.ToString();
+            return A + B;
         }
     }
 }

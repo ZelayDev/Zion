@@ -4,8 +4,8 @@ namespace Zion.STP
 {
     internal readonly struct OverflowCache<T> where T : IComparable<T>, INumber<T>, new()
     {
-        public readonly T MinDivision;
-        public readonly T MaxDivision;
+        public readonly T   MinDivision;
+        public readonly T   MaxDivision;
         public readonly int MinRemainder;
         public readonly int MaxRemainder;
 

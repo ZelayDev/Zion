@@ -2,9 +2,9 @@ namespace Zion.ADF
 {
     internal sealed class FormatRegistry : IWritableRegistry
     {
-        private readonly List<DataFormat> Formats;
+        private readonly List<DataFormat>       Formats;
         private readonly List<FormatCorrection> Corrections;
-        private int Writed;
+        private          int                    Writed;
 
         public bool IsChanged => Writed < Formats.Count;
 
@@ -13,8 +13,8 @@ namespace Zion.ADF
 
         public FormatRegistry()
         {
-            Formats = new(64);
-            Corrections = new(16);
+            Formats = new List<DataFormat>(64);
+            Corrections = new List<FormatCorrection>(16);
         }
 
 
@@ -56,7 +56,7 @@ namespace Zion.ADF
 
             if (Index < Writed)
             {
-                Corrections.Add(new(Index, Parameters));
+                Corrections.Add(new FormatCorrection(Index, Parameters));
             }
 
             return Updated;
@@ -74,8 +74,8 @@ namespace Zion.ADF
                 return false;
             }
 
-            int BaseFormat = GetIndex(FormatId);
-            int Target = GetIndex(TargetFormatId);
+            var BaseFormat = GetIndex(FormatId);
+            var Target = GetIndex(TargetFormatId);
 
             if (BaseFormat < 0 || BaseFormat >= Count || Target < 0 || Target >= Count)
             {
@@ -99,7 +99,7 @@ namespace Zion.ADF
 
         public bool TryGetFormat(uint FormatId, out DataFormat Format)
         {
-            int Index = (int)FormatId - ADFPrimitives.Count;
+            var Index = (int)FormatId - ADFPrimitives.Count;
 
             if (Index < 0 || Index >= Count)
             {

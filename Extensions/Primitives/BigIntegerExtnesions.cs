@@ -9,16 +9,16 @@ namespace Zion
         (
             static (Writer, Value) =>
             {
-                int Length = Value.GetByteCount();
+                var Length = Value.GetByteCount();
                 Span<byte> Buffer = stackalloc byte[Length];
-                Value.TryWriteBytes(Buffer, out int Writed);
+                Value.TryWriteBytes(Buffer, out var Writed);
 
                 Writer.Write(Length);
                 Writer.Write(Buffer);
             },
             static Reader =>
             {
-                int Length = Reader.ReadInt32();
+                var Length = Reader.ReadInt32();
                 Span<byte> Buffer = stackalloc byte[Length];
                 Reader.BaseStream.ReadExactly(Buffer);
                 return new BigInteger(Buffer);

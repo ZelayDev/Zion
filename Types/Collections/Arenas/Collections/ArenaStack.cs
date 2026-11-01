@@ -105,7 +105,7 @@ namespace Zion
         {
             var Source = AsSpan();
             var Result = new T[Source.Length];
-            
+
             for (var i = 0; i < Source.Length; i++)
             {
                 Result[i] = Source[Source.Length - i - 1];

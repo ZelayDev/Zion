@@ -1,15 +1,17 @@
 ﻿namespace Zion.Serialization
 {
-    public readonly struct CollectionSerializer<TCollection, T> : IBinarySerializer<TCollection> where TCollection : ICollection<T>
+    public readonly struct CollectionSerializer<TCollection, T> : IBinarySerializer<TCollection>
+        where TCollection : ICollection<T>
     {
         private readonly Action<BinaryWriter, T> ItemWriter;
-        private readonly Func<BinaryReader, T> ItemReader;
-        private readonly Func<TCollection> Factory;
+        private readonly Func<BinaryReader, T>   ItemReader;
+        private readonly Func<TCollection>       Factory;
 
-        public CollectionSerializer(Action<BinaryWriter, T> Writer, Func<BinaryReader, T> Reader, Func<TCollection> Factory)
+        public CollectionSerializer(Action<BinaryWriter, T> Writer, Func<BinaryReader, T> Reader,
+            Func<TCollection>                               Factory)
         {
-            this.ItemWriter = Writer.NotNull();
-            this.ItemReader = Reader.NotNull();
+            ItemWriter = Writer.NotNull();
+            ItemReader = Reader.NotNull();
             this.Factory = Factory.NotNull();
         }
 
@@ -18,7 +20,7 @@
             var ItemWriter = this.ItemWriter;
 
             Writer.Write(Collection.Count);
-            foreach (T Item in Collection)
+            foreach (var Item in Collection)
             {
                 ItemWriter(Writer, Item);
             }
@@ -27,10 +29,10 @@
         public TCollection Read(BinaryReader Reader)
         {
             var ItemReader = this.ItemReader;
-            TCollection Result = Factory();
+            var Result = Factory();
 
-            int Count = Reader.ReadInt32();
-            for (int i = 0; i < Count; i++)
+            var Count = Reader.ReadInt32();
+            for (var i = 0; i < Count; i++)
             {
                 Result.Add(ItemReader(Reader));
             }

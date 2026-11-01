@@ -3,16 +3,17 @@
     internal sealed class ADFManualLayersWriter<T> : ADFCheckingObjectWriter
     {
         private readonly IADFSerializer<T>[] Serializers;
-        private readonly uint FormatId;
-        private bool IsFirstWriting;
+        private readonly uint                FormatId;
+        private          bool                IsFirstWriting;
 
 
-        internal ADFManualLayersWriter(ADFWritingContext Context, StreamGroup Target, IADFSerializer<T>[] Serializers, uint FormatId)
+        internal ADFManualLayersWriter(ADFWritingContext Context, StreamGroup Target, IADFSerializer<T>[] Serializers,
+            uint                                         FormatId)
             : base(Context, Target, default)
         {
             var FirstFormat = FormatRegistry[FormatId];
 
-            this.IsFirstWriting = FirstFormat.IsDeferred;
+            IsFirstWriting = FirstFormat.IsDeferred;
             this.Serializers = Serializers;
             this.FormatId = FormatId;
         }
@@ -46,10 +47,10 @@
             using var Writer = new ADFRecordObjectWriter(Context, Data);
 
             var FormatRegistry = this.FormatRegistry;
-            var Serializers    = this.Serializers;
-            var FormatId       = this.FormatId;
+            var Serializers = this.Serializers;
+            var FormatId = this.FormatId;
 
-            for (int i = 0; i < Serializers.Length; i++)
+            for (var i = 0; i < Serializers.Length; i++)
             {
                 var Format = FormatRegistry[FormatId];
 
@@ -72,7 +73,7 @@
             var FormatRegistry = this.FormatRegistry;
             var Serializers = this.Serializers;
 
-            for (int i = Index; i < Serializers.Length; i++)
+            for (var i = Index; i < Serializers.Length; i++)
             {
                 var Format = FormatRegistry[FormatId];
                 FormatId = Format.BaseFormat;

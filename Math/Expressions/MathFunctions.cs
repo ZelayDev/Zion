@@ -4,10 +4,10 @@
     {
         public static IMathTerm Sqrt(FunctionHandler Handler)
         {
-            IMathTerm Value = Handler.ReadMathTerm();
+            var Value = Handler.ReadMathTerm();
 
-            int Degree = 2;
-            if (Handler.ReadInt32(out int NewDegree))
+            var Degree = 2;
+            if (Handler.ReadInt32(out var NewDegree))
             {
                 Degree = NewDegree;
             }
@@ -48,7 +48,7 @@
         {
             return Handler =>
             {
-                IMathTerm Value = Handler.ReadMathTerm();
+                var Value = Handler.ReadMathTerm();
                 return new SimpleFunction
                 (
                     Value,
@@ -61,7 +61,7 @@
         {
             return Handler =>
             {
-                IMathTerm Value = Handler.ReadMathTerm();
+                var Value = Handler.ReadMathTerm();
                 return new SimpleFunction
                 (
                     Value,
@@ -74,7 +74,7 @@
         {
             return Handler =>
             {
-                IMathTerm Value = Handler.ReadMathTerm();
+                var Value = Handler.ReadMathTerm();
                 return new SimpleFunction
                 (
                     Value,
@@ -88,7 +88,7 @@
         {
             return Handler =>
             {
-                List<IMathTerm> Values = new List<IMathTerm>();
+                var Values = new List<IMathTerm>();
 
                 while (!Handler.Finished)
                 {
@@ -103,7 +103,7 @@
         {
             return Handler =>
             {
-                List<IMathTerm> Values = new List<IMathTerm>();
+                var Values = new List<IMathTerm>();
 
                 while (!Handler.Finished)
                 {
@@ -119,14 +119,15 @@
         {
             return Handler =>
             {
-                List<IMathTerm> Values = new List<IMathTerm>();
+                var Values = new List<IMathTerm>();
 
                 while (!Handler.Finished)
                 {
                     Values.Add((Fraction)Handler.ReadInt32());
                 }
 
-                return new GroupFunction(Values, (Values, Accuracy) => Function(List.Convert(Values, Value => Value.GetValue(Accuracy)), Accuracy));
+                return new GroupFunction(Values,
+                    (Values, Accuracy) => Function(List.Convert(Values, Value => Value.GetValue(Accuracy)), Accuracy));
             };
         }
 
@@ -134,14 +135,15 @@
         {
             return Handler =>
             {
-                List<IMathTerm> Values = new List<IMathTerm>();
+                var Values = new List<IMathTerm>();
 
                 while (!Handler.Finished)
                 {
                     Values.Add(Handler.ReadMathTerm());
                 }
 
-                return new GroupFunction(Values, (Values, Accuracy) => Function(List.Convert(Values, Value => Value.GetValue(Accuracy))));
+                return new GroupFunction(Values,
+                    (Values, Accuracy) => Function(List.Convert(Values, Value => Value.GetValue(Accuracy))));
             };
         }
     }

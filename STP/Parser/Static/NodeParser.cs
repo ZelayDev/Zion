@@ -2,9 +2,9 @@
 {
     public sealed class NodeParser<Node> where Node : STP.Node
     {
-        private readonly INodeReader<Node>[] Readers;
+        private readonly INodeReader<Node>[]     Readers;
         private readonly INodeErrorHandler<Node> ErrorHandler;
-        private readonly int Capacity;
+        private readonly int                     Capacity;
 
 
         public NodeParser(Syntax<Node> Context)
@@ -24,23 +24,23 @@
 
         public NodeParsingResult<Node> Parse(ListView<Token> Tokens)
         {
-            List<Node> Nodes = new List<Node>(Capacity);
-            List<Symbol> SemanticTree = new List<Symbol>(10);
+            var Nodes = new List<Node>(Capacity);
+            var SemanticTree = new List<Symbol>(10);
 
-            int ErrorCount = 0;
+            var ErrorCount = 0;
 
-            bool NodeReaded = false;
-            int Start = 0;
+            var NodeReaded = false;
+            var Start = 0;
 
             while (Start < Tokens.Count)
             {
                 NodeReaded = false;
 
-                foreach (INodeReader<Node> Reader in Readers)
+                foreach (var Reader in Readers)
                 {
-                    TokenSlice Slice = new TokenSlice(Tokens, Start);
+                    var Slice = new TokenSlice(Tokens, Start);
 
-                    if (Reader.Read(Slice, out Node Node) && Node is not null)
+                    if (Reader.Read(Slice, out var Node) && Node is not null)
                     {
                         SemanticTree.AddIfNotNull(Node.GetSymbol());
 
@@ -55,9 +55,9 @@
 
                 if (!NodeReaded)
                 {
-                    TokenSlice Slice = new TokenSlice(Tokens, Start);
+                    var Slice = new TokenSlice(Tokens, Start);
 
-                    Node ErrorNode = ErrorHandler.Handle(Slice);
+                    var ErrorNode = ErrorHandler.Handle(Slice);
 
                     ErrorNode.ApplyFormat(new TokenSlice(Slice, 0, ErrorNode.TokensCount));
 

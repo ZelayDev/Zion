@@ -5,8 +5,8 @@ namespace Zion.ADF
 {
     internal static class WritableLayerWriterCache<T>
     {
-        private static readonly Dictionary<Type, bool> InterfaceCache = new();
-        private static readonly Dictionary<Type, WritableLayerWriter<T>> Cache = new();
+        private static readonly Dictionary<Type, bool>                   InterfaceCache = new();
+        private static readonly Dictionary<Type, WritableLayerWriter<T>> Cache          = new();
 
 
         public static bool TryGetSerializer(Type LayerType, out IADFSerializer<T> Serializer)
@@ -29,19 +29,19 @@ namespace Zion.ADF
 
         private static WritableLayerWriter<T> BuildWriter(Type LayerType)
         {
-            var Map    = LayerType.GetInterfaceMap(typeof(IADFWritable));
+            var Map = LayerType.GetInterfaceMap(typeof(IADFWritable));
             var Method = Map.TargetMethods.First(static Method => Method.Name == nameof(IADFWritable.Write));
             var Action = BuildWriteDelegate(LayerType, Method);
 
-            return new(Action);
+            return new WritableLayerWriter<T>(Action);
         }
 
         private static Action<ADFObjectWriter, T> BuildWriteDelegate(Type LayerType, MethodInfo Method)
         {
             var WriterParameter = Expression.Parameter(typeof(ADFObjectWriter), "Writer");
-            var ValueParameter  = Expression.Parameter(typeof(T), "Value");
-            var CastValue       = Expression.Convert(ValueParameter, LayerType);
-            var Call            = Expression.Call(CastValue, Method, WriterParameter);
+            var ValueParameter = Expression.Parameter(typeof(T), "Value");
+            var CastValue = Expression.Convert(ValueParameter, LayerType);
+            var Call = Expression.Call(CastValue, Method, WriterParameter);
 
             return Expression.Lambda<Action<ADFObjectWriter, T>>(Call, WriterParameter, ValueParameter).Compile();
         }

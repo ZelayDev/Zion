@@ -2,11 +2,11 @@
 {
     public sealed class FilteredTextSource : TextSource
     {
-        private readonly TextSource Source;
+        private readonly TextSource       Source;
         private readonly Func<char, bool> Filter;
 
         public override char Current => Source.Current;
-        public override bool IsEnd => Source.IsEnd;
+        public override bool IsEnd   => Source.IsEnd;
 
 
         public FilteredTextSource(TextSource Source, Func<char, bool> Filter)

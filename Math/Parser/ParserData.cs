@@ -2,12 +2,12 @@
 {
     public sealed partial class MathExpressionParser
     {
-        private readonly Amount Result = new Amount();
+        private readonly Amount Result = new();
 
         private readonly string String;
-        private char Current => String[Index];
-        private int Index;
-        private bool Finished => Index >= String.Length || Current is '|' or '\\' or ')';
+        private          char   Current => String[Index];
+        private          int    Index;
+        private          bool   Finished => Index >= String.Length || Current is '|' or '\\' or ')';
 
         public int Accuracy
         {
@@ -21,13 +21,15 @@
             { '}', ')' },
             { '[', '(' },
             { ']', ')' },
-            { '.', ','}
+            { '.', ',' }
         };
 
-        private static readonly ParameterInfo[] Value = [new ParameterInfo(typeof(Fraction), "Value")];
-        private static readonly ParameterInfo[][] Group = [[new ParameterInfo(typeof(Fraction), "Values") { IsEnumerable = true }]];
+        private static readonly ParameterInfo[] Value = [new(typeof(Fraction), "Value")];
 
-        public Dictionary<string, MathFunction> Functions { get; init; } = new Dictionary<string, MathFunction>(StringComparer.OrdinalIgnoreCase)
+        private static readonly ParameterInfo[][] Group =
+            [[new ParameterInfo(typeof(Fraction), "Values") { IsEnumerable = true }]];
+
+        public Dictionary<string, MathFunction> Functions { get; init; } = new(StringComparer.OrdinalIgnoreCase)
         {
             //... sin, cos, tan, cot, log  {  ln (_e), log (_10), log(A|B)  }
 
@@ -153,10 +155,11 @@
                 )
             }
         };
-        public Dictionary<string, Fraction> Variables { internal get; init; } = new Dictionary<string, Fraction>(StringComparer.OrdinalIgnoreCase)
+
+        public Dictionary<string, Fraction> Variables { internal get; init; } = new(StringComparer.OrdinalIgnoreCase)
         {
             { "pi", Fraction.Pi },
-            { "e", Fraction.E },
+            { "e", Fraction.E }
         };
     }
 }

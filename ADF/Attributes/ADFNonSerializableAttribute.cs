@@ -1,8 +1,7 @@
 ﻿namespace Zion.ADF
 {
-    [AttributeUsage(AttributeTargets.Class, Inherited = true, AllowMultiple = false)]
+    [AttributeUsage(AttributeTargets.Class)]
     public sealed class ADFNonSerializableAttribute : ADFAttribute
     {
-
     }
 }

@@ -4,7 +4,7 @@
     {
         public static string ToString<T>(IEnumerable<T> Enumerable)
         {
-            return $"[{string.Join(", ", Enumerable.Select(static Item => Item?.ToString() ?? "null"))}]";
+            return $"[{String.Join(", ", Enumerable.Select(static Item => Item?.ToString() ?? "null"))}]";
         }
 
         public static string ToString(IEnumerable<string> Enumerable)
@@ -14,7 +14,7 @@
                 return String is null ? "null" : $"\"{String}\"";
             }
 
-            return $"[{string.Join(", ", Enumerable.Select(FormatString))}]";
+            return $"[{String.Join(", ", Enumerable.Select(FormatString))}]";
         }
     }
 }

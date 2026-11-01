@@ -3,7 +3,7 @@
     internal sealed class AutoType<T> : IAutoType<T>
     {
         public AutoWriter<T> Writer { get; }
-        public TypeSchema Schema { get; }
+        public TypeSchema    Schema { get; }
 
         public AutoType(AutoWriter<T> Writer, TypeSchema Schema)
         {

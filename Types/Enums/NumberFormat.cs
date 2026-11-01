@@ -2,6 +2,8 @@
 {
     public enum NumberFormat
     {
-        Decimal, Hexadecimal, Binary
+        Decimal,
+        Hexadecimal,
+        Binary
     }
 }

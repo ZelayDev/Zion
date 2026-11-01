@@ -11,7 +11,7 @@ namespace Zion
 
         public Span<T> Current { get; private set; }
 
-        
+
         public ArenaChunkEnumerator(ArenaRegion<T> Region)
         {
             Chunks = Region.Chunks;
@@ -27,7 +27,7 @@ namespace Zion
             return this;
         }
 
-        
+
         public bool MoveNext()
         {
             if (Remaining == 0)

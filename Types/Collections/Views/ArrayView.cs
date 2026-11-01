@@ -11,14 +11,17 @@ namespace Zion
         public ArrayView(T[] Source)
         {
             this.Source = Source.NotNull();
-            this.Length = Source.Length;
+            Length = Source.Length;
         }
 
         public T this[int   Index] => Source[Index];
         public T this[Index Index] => Source[Index];
 
 
-        IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return GetEnumerator();
+        }
 
         public IEnumerator<T> GetEnumerator()
         {

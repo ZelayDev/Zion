@@ -2,9 +2,9 @@
 {
     internal abstract class ProvidedWriteStrategy<T> : IWriteStrategy<T>
     {
-        private readonly uint FormatId;
-        private bool HasFormat;
-        private DataFormat Format;
+        private readonly uint       FormatId;
+        private          bool       HasFormat;
+        private          DataFormat Format;
 
 
         public ProvidedWriteStrategy(uint FormatId)

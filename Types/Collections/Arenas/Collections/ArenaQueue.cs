@@ -11,7 +11,7 @@
         {
             throw new NotImplementedException();
         }
-        
+
 
         public void Enqueue(T Item)
         {
@@ -20,7 +20,7 @@
 
         public T Peek()
         {
-            if (TryPeek(out T Item))
+            if (TryPeek(out var Item))
             {
                 return Item;
             }

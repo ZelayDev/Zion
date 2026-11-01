@@ -3,10 +3,10 @@
 namespace Zion.STP.Dynamic
 {
     //Do: LinearTokenContainer realization
-    public sealed class LinearTokenContainer// : ITokenContainer<IntPointer>
+    public sealed class LinearTokenContainer // : ITokenContainer<IntPointer>
     {
         private readonly Dictionary<IntPointer, Group> Groups;
-        private readonly Group CurrentGroup;
+        private readonly Group                         CurrentGroup;
 
         public int Count { get; private set; }
 
@@ -19,7 +19,7 @@ namespace Zion.STP.Dynamic
 
         public LinearTokenContainer(int GroupCapacity = 16)
         {
-            Groups = new(Math.Max(GroupCapacity, 8));
+            Groups = new Dictionary<IntPointer, Group>(Math.Max(GroupCapacity, 8));
         }
 
 
@@ -29,16 +29,12 @@ namespace Zion.STP.Dynamic
         }
 
 
-        
-
         public void Add(Token Token)
         {
-
         }
 
         public void Overwrite(IntPointer Start, int RemovedTokens, IEnumerable<Token> Tokens)
         {
-
         }
 
         public IntPointer GetTokenStart(IntPointer Position)

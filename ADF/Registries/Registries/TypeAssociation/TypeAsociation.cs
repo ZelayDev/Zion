@@ -11,8 +11,8 @@
 
         public TypeAssociation(StringIdRegistry StringRegistry)
         {
-            Data = new();
-            NewItems = new(StringRegistry);
+            Data = new Dictionary<Type, uint>();
+            NewItems = new TypeTree(StringRegistry);
         }
 
 
@@ -64,7 +64,7 @@
                 return Existing;
             }
 
-            var Base = DataFormat.HasBase(Type) 
+            var Base = DataFormat.HasBase(Type)
                 ? GetOrAddDeferred(Type.BaseType, FormatRegistry)
                 : ADFPrimitives.Object;
 

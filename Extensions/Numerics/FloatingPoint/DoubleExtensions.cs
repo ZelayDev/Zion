@@ -15,7 +15,7 @@ namespace Zion
             public static IBinarySerializer<double> Serializer => _Serializer;
 
             /// <summary>
-            /// Rounds the double value to the nearest integer using specified rounding mode.
+            ///     Rounds the double value to the nearest integer using specified rounding mode.
             /// </summary>
             /// <param name="Value">The value to round.</param>
             /// <param name="Mode">The rounding mode to use.</param>
@@ -26,7 +26,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Rounds the double value to the nearest integer64 using specified rounding mode.
+            ///     Rounds the double value to the nearest integer64 using specified rounding mode.
             /// </summary>
             /// <param name="Value">The value to round.</param>
             /// <param name="Mode">The rounding mode to use.</param>
@@ -37,7 +37,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Performs linear interpolation between two double values.
+            ///     Performs linear interpolation between two double values.
             /// </summary>
             /// <param name="A">The starting value.</param>
             /// <param name="B">The ending value.</param>
@@ -45,7 +45,7 @@ namespace Zion
             /// <returns>The interpolated value between A and B.</returns>
             public static double Lerp(double A, double B, double Alpha)
             {
-                return A + ((B - A) * Alpha);
+                return A + (B - A) * Alpha;
             }
         }
     }

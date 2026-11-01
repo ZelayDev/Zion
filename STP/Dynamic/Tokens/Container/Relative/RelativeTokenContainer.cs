@@ -2,21 +2,24 @@
 
 namespace Zion.STP.Dynamic
 {
-    public sealed partial class RelativeTokenContainer<TPointer> : ITokenContainer<TPointer> where TPointer : TextPointer<TPointer>
+    public sealed partial class RelativeTokenContainer<TPointer> : ITokenContainer<TPointer>
+        where TPointer : TextPointer<TPointer>
     {
         #region Data
         private BaseNode  Main;
         private FinalNode Last;
 
         private int GroupCount;
-
         #endregion
 
         #region Properties
         public int Count { get; private set; }
 
-        public int TokenGroupLength { get; init => field = Math.Max(4, value); }
-
+        public int TokenGroupLength
+        {
+            get;
+            init => field = Math.Max(4, value);
+        }
         #endregion
 
         #region IContainer
@@ -49,8 +52,8 @@ namespace Zion.STP.Dynamic
             }
             else
             {
-                FinalNode New = new FinalNode(Position, Token);
-                Node Parent = FindRightmostEmptySlot((Node)Main);
+                var New = new FinalNode(Position, Token);
+                var Parent = FindRightmostEmptySlot((Node)Main);
 
                 if (Parent.Right is null)
                 {
@@ -59,10 +62,10 @@ namespace Zion.STP.Dynamic
                 }
                 else
                 {
-                    TPointer NewParentPosition = Parent.Position;
+                    var NewParentPosition = Parent.Position;
                     New.Position = Position.Subtract(NewParentPosition);
 
-                    Node NewParent = new Node(NewParentPosition, Parent.Right, New);
+                    var NewParent = new Node(NewParentPosition, Parent.Right, New);
                     Parent.Right = NewParent;
                 }
 
@@ -92,20 +95,20 @@ namespace Zion.STP.Dynamic
         public IEnumerable<Token> EnumeratorFrom(TPointer Start, out TPointer FirstTokenStart)
         {
             ArgumentException.ThrowIf(!Start.IsValid, $"Start(={Start.ToNotNullString()}) is invalid");
-            FinalNode? Group = GetTokenGroup(Start);
+            var Group = GetTokenGroup(Start);
 
             if (Group is not null)
             {
-                int TokenIndex = Group.GetTokenIndex(Start, out FirstTokenStart);
+                var TokenIndex = Group.GetTokenIndex(Start, out FirstTokenStart);
 
-                ArgumentOutOfRangeException.ThrowIf(TokenIndex == -1, $"Start(={Start.ToNotNullString()}) out of range");
+                ArgumentOutOfRangeException.ThrowIf(TokenIndex == -1,
+                    $"Start(={Start.ToNotNullString()}) out of range");
 
                 return Group.Range(TokenIndex);
             }
 
             throw new ArgumentOutOfRangeException($"Start(={Start.ToNotNullString()}) out of range");
         }
-
         #endregion
 
         #region PrivateMethods
@@ -120,11 +123,11 @@ namespace Zion.STP.Dynamic
 
         private FinalNode? GetTokenGroup(TPointer Position)
         {
-            BaseNode? Current = Main;
+            var Current = Main;
 
             while (Current is Node Branch)
             {
-                TPointer RightStart = Branch.Right is not null
+                var RightStart = Branch.Right is not null
                     ? Branch.Position.Sum(Branch.Right.Position)
                     : Branch.Position;
 
@@ -140,7 +143,6 @@ namespace Zion.STP.Dynamic
 
             return Current as FinalNode;
         }
-        
         #endregion
     }
 }

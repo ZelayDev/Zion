@@ -10,12 +10,12 @@
 
         public ReadableRegistries()
         {
-            StringRegistry = new();
-            FormatRegistry = new();
-            Registries     = new()
+            StringRegistry = new StringRegistry();
+            FormatRegistry = new FormatIdRegistry();
+            Registries = new Dictionary<string, ReadableRegistryInfo>
             {
-                { "StringRegistry", new(1, StringRegistry) },
-                { "FormatRegistry", new(2, FormatRegistry) }
+                { "StringRegistry", new ReadableRegistryInfo(1, StringRegistry) },
+                { "FormatRegistry", new ReadableRegistryInfo(2, FormatRegistry) }
             };
         }
 

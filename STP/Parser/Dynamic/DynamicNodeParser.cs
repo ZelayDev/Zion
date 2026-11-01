@@ -2,9 +2,9 @@
 {
     public sealed class DynamicNodeParser<Node> where Node : STP.Node
     {
-        private readonly INodeReader<Node>[] Readers;
+        private readonly INodeReader<Node>[]     Readers;
         private readonly INodeErrorHandler<Node> ErrorHandler;
-        private readonly int Capacity;
+        private readonly int                     Capacity;
 
         public DynamicNodeParser(Syntax<Node> Context)
         {

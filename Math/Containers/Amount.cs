@@ -8,6 +8,7 @@
         {
             Members = new List<IMathTerm>(3);
         }
+
         public Amount(params List<IMathTerm> Members)
         {
             this.Members = Members;

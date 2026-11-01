@@ -101,14 +101,14 @@ namespace Zion
             ArgumentNullException.ThrowIfNull(Items);
             ArgumentOutOfRangeException.ThrowIfBeyond(Index, Count);
 
-            if (Items.TryGetNonEnumeratedCount(out int ItemsCount))
+            if (Items.TryGetNonEnumeratedCount(out var ItemsCount))
             {
                 if (ItemsCount == 0)
                 {
                     return;
                 }
 
-                int TotalCount = Count + ItemsCount;
+                var TotalCount = Count + ItemsCount;
                 EnsureCapacity(TotalCount);
 
                 if (Index < Count)
@@ -120,8 +120,8 @@ namespace Zion
                 (
                     Index, ItemsCount, Items, static (Span, Other) =>
                     {
-                        int SpanIndex = 0;
-                        foreach (T Item in Other)
+                        var SpanIndex = 0;
+                        foreach (var Item in Other)
                         {
                             Span[SpanIndex++] = Item;
                         }
@@ -132,7 +132,7 @@ namespace Zion
             }
             else
             {
-                int TailLength = Count - Index;
+                var TailLength = Count - Index;
                 using var Tail = Allocate<ArenaBuffer<T>>(TailLength);
 
                 if (TailLength > 0)
@@ -144,7 +144,7 @@ namespace Zion
                     );
                 }
 
-                InsertItems(Index, Items, out int TotalCount);
+                InsertItems(Index, Items, out var TotalCount);
                 EnsureCapacity(TotalCount + TailLength);
 
                 Tail.UseSpan
@@ -384,15 +384,15 @@ namespace Zion
             var Length = Count;
             var Result = new List<TOut>(Length);
             var Source = AsSpan();
-            
+
             CollectionsMarshal.SetCount(Result, Length);
             var Destination = CollectionsMarshal.AsSpan(Result);
 
-            for (int i = 0; i < Length; i++)
+            for (var i = 0; i < Length; i++)
             {
                 Destination[i] = Converter(Source[i]);
             }
-            
+
             return Result;
         }
 

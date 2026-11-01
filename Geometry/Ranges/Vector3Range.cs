@@ -4,14 +4,16 @@ using Zion.Serialization;
 namespace Zion.Geometry
 {
     [Serializable]
-    public readonly struct Vector3Range : IBinarySerializable<Vector3Range>, IRange<Vector3>, IEqualityComparer<Vector3Range>
+    public readonly struct Vector3Range : IBinarySerializable<Vector3Range>, IRange<Vector3>,
+        IEqualityComparer<Vector3Range>
     {
         public Vector3 Start { get; }
-        public Vector3 End { get; }
+        public Vector3 End   { get; }
 
         public Vector3Range(Vector3 Start, Vector3 End)
         {
-            ArgumentOutOfRangeException.ThrowIf(!(Start < End), nameof(Start), $"(Start={Start}) can not >= End(={End})");
+            ArgumentOutOfRangeException.ThrowIf(!(Start < End), nameof(Start),
+                $"(Start={Start}) can not >= End(={End})");
 
             this.Start = Start;
             this.End = End;

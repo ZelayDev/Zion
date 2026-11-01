@@ -2,7 +2,7 @@
 {
     public sealed class DigitParser : IDigitParser
     {
-        public static readonly DigitParser Instance = new DigitParser();
+        public static readonly DigitParser Instance = new();
 
 
         public char BinaryPrefix => 'b';

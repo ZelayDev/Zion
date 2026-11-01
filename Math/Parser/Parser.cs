@@ -4,7 +4,7 @@
     {
         public IMathTerm Parse()
         {
-            IMathTerm Expression = ParseAdditive();
+            var Expression = ParseAdditive();
 
             if (!Finished)
             {
@@ -16,7 +16,7 @@
 
         internal IMathTerm ParseBeforeSeparator(out int End)
         {
-            IMathTerm Result = Parse();
+            var Result = Parse();
             End = Index;
             return Result;
         }
@@ -24,14 +24,14 @@
 
         private IMathTerm ParseAdditive()
         {
-            IMathTerm Left = ParseMultiplicative();
+            var Left = ParseMultiplicative();
 
             while (!Finished && Current is '+' or '-')
             {
-                char Operator = Current;
+                var Operator = Current;
                 Index++;
 
-                IMathTerm Right = ParseMultiplicative();
+                var Right = ParseMultiplicative();
 
                 Left = new Amount(Left, Operator == '+' ? Right : new Negative(Right));
             }
@@ -41,23 +41,20 @@
 
         private IMathTerm ParseMultiplicative()
         {
-            IMathTerm Left = ParseExponential();
+            var Left = ParseExponential();
 
             while (!Finished && Current is '*' or '/' or '%' or '(')
             {
-                char Operator = Current;
+                var Operator = Current;
 
                 if (Operator == '(')
                 {
                     Left = new Product(Left, ParseBrackets());
                     continue;
                 }
-                else
-                {
-                    Index++;
-                }
+                Index++;
 
-                bool FloorDivision = false;
+                var FloorDivision = false;
 
                 if (Operator == '/' && Current == '/')
                 {
@@ -65,16 +62,14 @@
                     Index++;
                 }
 
-                IMathTerm Right = ParseExponential();
+                var Right = ParseExponential();
 
                 if (FloorDivision)
                 {
                     return new FloorDivision(Left, Right);
                 }
-                else
-                {
-                    Left = Operator == '*' ? new Product(Left, Right) : Operator == '/' ? new Division(Left, Right) : new Remainder(Left, Right);
-                }
+                Left = Operator == '*' ? new Product(Left, Right) :
+                    Operator == '/' ? new Division(Left, Right) : new Remainder(Left, Right);
             }
 
             return Left;
@@ -82,12 +77,12 @@
 
         private IMathTerm ParseExponential()
         {
-            IMathTerm Left = ParseFactorial();
+            var Left = ParseFactorial();
 
             while (!Finished && Current == '^')
             {
                 Index++;
-                IMathTerm Right = ParseExponential();
+                var Right = ParseExponential();
                 Left = new Exponent(Left, Right);
             }
 
@@ -96,7 +91,7 @@
 
         private IMathTerm ParseFactorial()
         {
-            IMathTerm Term = ParsePrimary();
+            var Term = ParsePrimary();
 
             while (!Finished && Current == '!')
             {
@@ -122,7 +117,7 @@
                 return Unfinished();
             }
 
-            bool IsNegative = false;
+            var IsNegative = false;
             if (Current == '-')
             {
                 IsNegative = true;
@@ -162,7 +157,7 @@
 
         private IMathTerm ParseNumber()
         {
-            int Start = Index;
+            var Start = Index;
             Index = String.Skip(Index, IsDigit);
 
             if (Index == Start)
@@ -170,7 +165,7 @@
                 InvalidChar();
             }
 
-            string NumberString = String[Start..Index];
+            var NumberString = String[Start..Index];
             return Fraction.ParseDecimal(NumberString);
         }
 
@@ -183,7 +178,7 @@
 
             Index++;
 
-            IMathTerm Value = ParseAdditive();
+            var Value = ParseAdditive();
 
             if (Index >= String.Length || Current != ')')
             {
@@ -196,21 +191,25 @@
 
         private IMathTerm ParseIdentifier()
         {
-            int Start = Index;
+            var Start = Index;
             Index = String.Skip(Index, IsLetter);
-            string Identifier = String[Start..Index];
+            var Identifier = String[Start..Index];
 
             return !Finished && Current == '('
                 ? ExistsFunction(Identifier)
                     ? ParseFunctionCall(Identifier)
-                    : ExistsVariable(Identifier) ? new Product(Variables[Identifier], ParseBrackets()) : Throw($"Unknown identifier '{Identifier}'")
-                : Variables.TryGetValue(Identifier, out Fraction value) ? value : Throw($"Unknown identifier '{Identifier}'");
+                    : ExistsVariable(Identifier)
+                        ? new Product(Variables[Identifier], ParseBrackets())
+                        : Throw($"Unknown identifier '{Identifier}'")
+                : Variables.TryGetValue(Identifier, out var value)
+                    ? value
+                    : Throw($"Unknown identifier '{Identifier}'");
         }
 
         private IMathTerm ParseFunctionCall(string Identifier)
         {
-            FunctionHandler Handler = GetHandler(Index + 1);
-            IMathTerm Result = Functions[Identifier].Handler(Handler);
+            var Handler = GetHandler(Index + 1);
+            var Result = Functions[Identifier].Handler(Handler);
             Index = Handler.Index - 1;
 
             if (Index >= String.Length || Current != ')')

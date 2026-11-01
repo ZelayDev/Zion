@@ -4,7 +4,7 @@
     {
         public Leaf Value;
 
-        public TrieLeaf(Node Node, Leaf Value) 
+        public TrieLeaf(Node Node, Leaf Value)
             : base(Node)
         {
             this.Value = Value;

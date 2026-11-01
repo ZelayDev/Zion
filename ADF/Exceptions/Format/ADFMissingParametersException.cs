@@ -11,7 +11,7 @@
             : base($"Missing parameters: {Writed} written, {Count - Writed} expected")
         {
             this.Writed = Writed;
-            this.Count  = Count;
+            this.Count = Count;
         }
     }
 }

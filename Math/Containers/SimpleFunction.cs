@@ -2,7 +2,7 @@
 {
     public sealed class SimpleFunction : IMathTerm
     {
-        public readonly IMathTerm Value;
+        public readonly IMathTerm                      Value;
         public readonly Func<IMathTerm, int, Fraction> Function;
 
         public SimpleFunction(IMathTerm Value, Func<IMathTerm, int, Fraction> Function)

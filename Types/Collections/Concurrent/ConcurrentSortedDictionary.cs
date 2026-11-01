@@ -3,9 +3,8 @@
     public class ConcurrentSortedDictionary<TKey, TValue> : IDisposable where TKey : IComparable<TKey>
     {
         #region Data
-        private readonly ReaderWriterLockSlim Lock = new();
+        private readonly ReaderWriterLockSlim           Lock       = new();
         private readonly SortedDictionary<TKey, TValue> Dictionary = new();
-
         #endregion
 
         #region Properties
@@ -73,7 +72,6 @@
                 }
             }
         }
-
         #endregion
 
         #region Public Methods
@@ -122,7 +120,7 @@
             Lock.EnterReadLock();
             try
             {
-                if (Dictionary.TryGetValue(Key, out TValue? ExistingValue))
+                if (Dictionary.TryGetValue(Key, out var ExistingValue))
                 {
                     return ExistingValue;
                 }
@@ -135,12 +133,12 @@
             Lock.EnterWriteLock();
             try
             {
-                if (Dictionary.TryGetValue(Key, out TValue? ExistingValue))
+                if (Dictionary.TryGetValue(Key, out var ExistingValue))
                 {
                     return ExistingValue;
                 }
 
-                TValue NewValue = ValueFactory(Key);
+                var NewValue = ValueFactory(Key);
                 Dictionary[Key] = NewValue;
                 return NewValue;
             }
@@ -155,7 +153,7 @@
             Lock.EnterWriteLock();
             try
             {
-                if (Dictionary.TryGetValue(Key, out TValue? existingValue))
+                if (Dictionary.TryGetValue(Key, out var existingValue))
                 {
                     Dictionary[Key] = UpdateFactory(Key, existingValue);
                 }
@@ -238,12 +236,11 @@
                 Lock.ExitReadLock();
             }
 
-            foreach (KeyValuePair<TKey, TValue> kvp in Snapshot)
+            foreach (var kvp in Snapshot)
             {
                 yield return kvp;
             }
         }
-
         #endregion
 
         #region IDisposable
@@ -251,7 +248,6 @@
         {
             Lock.Dispose();
         }
-
         #endregion
     }
 }

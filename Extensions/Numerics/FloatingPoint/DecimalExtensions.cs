@@ -15,18 +15,18 @@ namespace Zion
             public static IBinarySerializer<decimal> Serializer => _Serializer;
 
             /// <summary>
-            /// Rounds the decimal value to the nearest integer using specified rounding mode.
+            ///     Rounds the decimal value to the nearest integer using specified rounding mode.
             /// </summary>
             /// <param name="Value">The value to round.</param>
             /// <param name="Mode">The rounding mode to use.</param>
             /// <returns>The rounded integer value.</returns>
             public int RoundToInt(RoundMode Mode = RoundMode.Round)
             {
-                return (int)Round(Value, Mode);
+                return (int)Value.Round(Mode);
             }
 
             /// <summary>
-            /// Rounds the double value to the nearest integer64 using specified rounding mode.
+            ///     Rounds the double value to the nearest integer64 using specified rounding mode.
             /// </summary>
             /// <param name="Value">The value to round.</param>
             /// <param name="Mode">The rounding mode to use.</param>
@@ -37,7 +37,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Rounds the decimal value using specified rounding mode.
+            ///     Rounds the decimal value using specified rounding mode.
             /// </summary>
             /// <param name="Value">The value to round.</param>
             /// <param name="Mode">The rounding mode to use.</param>
@@ -56,7 +56,7 @@ namespace Zion
             }
 
             /// <summary>
-            /// Performs linear interpolation between two decimal values.
+            ///     Performs linear interpolation between two decimal values.
             /// </summary>
             /// <param name="A">The starting value.</param>
             /// <param name="B">The ending value.</param>
@@ -64,7 +64,7 @@ namespace Zion
             /// <returns>The interpolated value between A and B.</returns>
             public static decimal Lerp(decimal A, decimal B, decimal Alpha)
             {
-                return A + ((B - A) * Alpha);
+                return A + (B - A) * Alpha;
             }
         }
     }

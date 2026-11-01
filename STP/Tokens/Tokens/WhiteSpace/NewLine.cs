@@ -11,12 +11,12 @@
         {
             if (Source.Begins("\n", out Source))
             {
-                Token = new NewLineToken() { Length = 1 };
+                Token = new NewLineToken { Length = 1 };
                 return true;
             }
-            else if (Source.Begins("\r\n", out Source))
+            if (Source.Begins("\r\n", out Source))
             {
-                Token = new NewLineToken() { Length = 2 };
+                Token = new NewLineToken { Length = 2 };
                 return true;
             }
 

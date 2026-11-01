@@ -2,7 +2,10 @@
 {
     public sealed class CharToken : ValueToken<char>
     {
-        public override string ToString() => $"[Char:'{Value}']";
+        public override string ToString()
+        {
+            return $"[Char:'{Value}']";
+        }
     }
 
     public readonly struct CharTokenReader : ITokenReader
@@ -39,7 +42,7 @@
         {
             if (Source.IsEnd)
             {
-                return new CharToken() { Length = 1, ErrorCodes = [6010] };
+                return new CharToken { Length = 1, ErrorCodes = [6010] };
             }
 
             if (Source.Current == '\\')
@@ -47,28 +50,25 @@
                 Source.MoveNext();
                 return ReadEscapeChar(ref Source);
             }
-            else
-            {
-                return ReadSimpleChar(ref Source);
-            }
+            return ReadSimpleChar(ref Source);
         }
 
 
         private Token ReadSimpleChar(ref TextSource Source)
         {
-            char Char = Source.Current;
+            var Char = Source.Current;
             Source.MoveNext();
 
             return Source.CurrentIs('\'')
-                ? new CharToken() { Length = 3, Value = Char }
-                : new CharToken() { Length = 2, ErrorCodes = [6013] };
+                ? new CharToken { Length = 3, Value = Char }
+                : new CharToken { Length = 2, ErrorCodes = [6013] };
         }
 
         private Token ReadEscapeChar(ref TextSource Source)
         {
             if (Source.IsEnd)
             {
-                return new CharToken() { Length = 2, ErrorCodes = [6013] };
+                return new CharToken { Length = 2, ErrorCodes = [6013] };
             }
 
             switch (Source.Current)
@@ -76,7 +76,7 @@
                 case 'u': return ReadHexFormat(ref Source, 4);
                 case 'U': return ReadHexFormat(ref Source, 8);
                 case 'x': return ReadHexFormat(ref Source);
-                default: return ReadNamedEscape(ref Source);
+                default:  return ReadNamedEscape(ref Source);
             }
         }
 
@@ -85,11 +85,11 @@
         {
             Source.MoveNext();
 
-            int Length = 3;
-            int HexReaded = 0;
-            int HexCode = 0;
+            var Length = 3;
+            var HexReaded = 0;
+            var HexCode = 0;
 
-            while (!Source.IsEnd && HexReaded < HexLength && Source.Current.IsHexadecimalDigit(out int Digit))
+            while (!Source.IsEnd && HexReaded < HexLength && Source.Current.IsHexadecimalDigit(out var Digit))
             {
                 HexCode = (HexCode << 4) | Digit;
                 Source.MoveNext();
@@ -110,7 +110,7 @@
                     Source.MoveNext();
                 }
 
-                return new CharToken() { Length = Length + 1, ErrorCodes = [6011] };
+                return new CharToken { Length = Length + 1, ErrorCodes = [6011] };
             }
 
             if (Source.IsEnd || Source.Current != '\'')
@@ -125,25 +125,25 @@
                     Source.MoveNext();
                 }
 
-                return new CharToken() { Length = Length + 1, ErrorCodes = [6013] };
+                return new CharToken { Length = Length + 1, ErrorCodes = [6013] };
             }
 
             Source.MoveNext();
-            return new CharToken() { Length = Length + 1, Value = (char)HexCode };
+            return new CharToken { Length = Length + 1, Value = (char)HexCode };
         }
 
         private static Token ReadHexFormat(ref TextSource Source)
         {
             Source.MoveNext();
 
-            int Length = 3;
-            int HexValue = 0;
-            int HexReaded = 0;
-            bool HasInvalidHex = false;
+            var Length = 3;
+            var HexValue = 0;
+            var HexReaded = 0;
+            var HasInvalidHex = false;
 
             while (!Source.IsEnd && HexReaded < 4 && Source.Current != '\'')
             {
-                if (Source.Current.IsHexadecimalDigit(out int digit))
+                if (Source.Current.IsHexadecimalDigit(out var digit))
                 {
                     HexValue = (HexValue << 4) | digit;
                     HexReaded++;
@@ -162,15 +162,15 @@
                 {
                     Source.MoveNext();
                 }
-                return new CharToken() { Length = Length + 1, ErrorCodes = [6011] };
+                return new CharToken { Length = Length + 1, ErrorCodes = [6011] };
             }
 
             if (!Source.CurrentIs('\''))
             {
                 Source.MoveNext();
                 return HasInvalidHex
-                    ? new CharToken() { Length = Length + 1, Value = (char)HexValue, ErrorCodes = [6011] }
-                    : new CharToken() { Length = Length + 1, Value = (char)HexValue };
+                    ? new CharToken { Length = Length + 1, Value = (char)HexValue, ErrorCodes = [6011] }
+                    : new CharToken { Length = Length + 1, Value = (char)HexValue };
             }
 
             while (!Source.IsEnd && Source.Current != '\'')
@@ -183,7 +183,7 @@
                 Source.MoveNext();
             }
 
-            return new CharToken() { Length = Length + 1, ErrorCodes = [6013] };
+            return new CharToken { Length = Length + 1, ErrorCodes = [6013] };
         }
 
         private static Token ReadNamedEscape(ref TextSource Source)
@@ -193,34 +193,34 @@
                 Source.MoveNext();
 
                 return Source.CurrentIs('\'')
-                    ? new CharToken() { Length = 4, Value = '\'' }
-                    : new CharToken() { Length = 3, Value = '\\' };
+                    ? new CharToken { Length = 4, Value = '\'' }
+                    : new CharToken { Length = 3, Value = '\\' };
             }
 
-            if (EscapeChars.TryGetValue(Source.Current, out char EscapeChar))
+            if (EscapeChars.TryGetValue(Source.Current, out var EscapeChar))
             {
                 Source.MoveNext();
 
                 if (Source.CurrentIs('\''))
                 {
                     Source.MoveNext();
-                    return new CharToken() { Length = 4, Value = EscapeChar };
+                    return new CharToken { Length = 4, Value = EscapeChar };
                 }
 
                 Source.MoveNext();
-                return new CharToken() { Length = 3, ErrorCodes = [6013] };
+                return new CharToken { Length = 3, ErrorCodes = [6013] };
             }
 
-            TextSource QuoteChecker = Source.BeginNew();
+            var QuoteChecker = Source.BeginNew();
 
             QuoteChecker.MoveNext();
 
             if (Source.CurrentIs('\''))
             {
                 Source = QuoteChecker;
-                return new CharToken() { Length = 3, ErrorCodes = [6012] };
+                return new CharToken { Length = 3, ErrorCodes = [6012] };
             }
-            return new CharToken() { Length = 2, ErrorCodes = [6013] };
+            return new CharToken { Length = 2, ErrorCodes = [6013] };
         }
     }
 }

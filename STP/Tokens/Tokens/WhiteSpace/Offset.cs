@@ -18,12 +18,12 @@
 
         public bool Read(ref TextSource Source, out Token Token)
         {
-            int Length = 0;
-            int SingleIndent = this.SingleIndent;
+            var Length = 0;
+            var SingleIndent = this.SingleIndent;
 
             bool BeginsIndent(TextSource Source)
             {
-                for (int i = 0; i < SingleIndent && !Source.IsEnd; i++)
+                for (var i = 0; i < SingleIndent && !Source.IsEnd; i++)
                 {
                     if (Source.Current != ' ')
                     {

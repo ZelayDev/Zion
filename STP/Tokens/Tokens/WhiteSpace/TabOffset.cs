@@ -6,11 +6,11 @@
     {
         public bool Read(ref TextSource Source, out Token Token)
         {
-            int TabCount = Source.CountOf('\t', out Source);
+            var TabCount = Source.CountOf('\t', out Source);
 
             if (TabCount != 0)
             {
-                Token = new TabOffsetToken() { Length = TabCount };
+                Token = new TabOffsetToken { Length = TabCount };
                 return true;
             }
 

@@ -29,9 +29,9 @@ namespace Zion.STP
         private bool _IsEnd;
 
         public override char Current => _Current;
-        public override bool IsEnd => _IsEnd;
+        public override bool IsEnd   => _IsEnd;
 
-        public override IntPointer CurrentPosition => new IntPointer(Index);
+        public override IntPointer CurrentPosition => new(Index);
 
 
         public StringTextSource(string Source) : this(Source, 0) { }

@@ -15,13 +15,13 @@
 
         public bool Read(ref TextSource Source, out Token Token)
         {
-            if (Reader.Read(ref Source, out Token WordToken))
+            if (Reader.Read(ref Source, out var WordToken))
             {
-                string Identifier = ((WordToken)WordToken).Value;
+                var Identifier = ((WordToken)WordToken).Value;
 
-                if (Values.TryGetValue(Identifier, out T Value))
+                if (Values.TryGetValue(Identifier, out var Value))
                 {
-                    Token = new EnumToken<T>()
+                    Token = new EnumToken<T>
                     {
                         Length = Identifier.Length,
                         Value = Value

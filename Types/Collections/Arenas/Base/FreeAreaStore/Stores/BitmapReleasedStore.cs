@@ -17,7 +17,7 @@ namespace Zion
         {
             var GroupCount = GetGroupCount(Capacity);
 
-            if (Bitmap.TryFindShortestSequence(GroupCount, false, out var Sequence))
+            if (Bitmap.TryFindFirstFit(GroupCount, false, out var Sequence))
             {
                 Bitmap.Fill(Sequence.Start, GroupCount, true);
                 UsedGroups += GroupCount;

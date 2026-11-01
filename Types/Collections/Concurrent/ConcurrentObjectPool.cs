@@ -4,13 +4,21 @@
     {
         #region Data
         private readonly List<T> Pool;
-        private readonly Lock Lock = new();
+        private readonly Lock    Lock = new();
 
-        public required Func<T> New { get; init => field = value.NotNull(); }
+        public required Func<T> New
+        {
+            get;
+            init => field = value.NotNull();
+        }
 
         public Action<T>? Remove { get; init; }
-        public Func<T, T> Getter { get; init => field = value ?? BaseGet; } = BaseGet;
 
+        public Func<T, T> Getter
+        {
+            get;
+            init => field = value ?? BaseGet;
+        } = BaseGet;
         #endregion
 
         #region Properties
@@ -24,7 +32,6 @@
                 }
             }
         }
-
         #endregion
 
         #region Constructors
@@ -38,7 +45,6 @@
             ArgumentOutOfRangeException.ThrowIfNegative(Capacity);
             Pool = new List<T>(Capacity);
         }
-
         #endregion
 
         #region PublicMethods
@@ -67,7 +73,7 @@
             {
                 if (Pool.Count != 0)
                 {
-                    T Item = Getter(Pool[^1]);
+                    var Item = Getter(Pool[^1]);
                     Pool.RemoveAt(Pool.Count - 1);
                     return Item;
                 }
@@ -99,7 +105,7 @@
             {
                 if (Remove is not null)
                 {
-                    foreach (T Item in Pool)
+                    foreach (var Item in Pool)
                     {
                         Remove(Item);
                     }
@@ -117,7 +123,7 @@
             using SemaphoreSlim Semaphore = new(MaxConcurrency, MaxConcurrency);
             List<Task> Tasks = new();
 
-            foreach (Action<T> Action in Actions)
+            foreach (var Action in Actions)
             {
                 Semaphore.Wait();
 
@@ -142,7 +148,6 @@
 
             Task.WaitAll(Tasks);
         }
-
         #endregion
 
         #region PrivateMethods
@@ -150,7 +155,6 @@
         {
             return Value;
         }
-
         #endregion
     }
 }

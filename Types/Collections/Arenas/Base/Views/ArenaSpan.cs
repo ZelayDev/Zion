@@ -78,16 +78,16 @@ namespace Zion
                 case 1:
                     Region.GetChunk(0).Sort(Comparer);
                     break;
-                
+
                 default:
                     //Optimize
                     var Buffer = ArrayPool<T>.Shared.Rent(Region.Length);
                     var BufferSpan = Buffer.AsSpan(0, Region.Length);
-                    
+
                     CopyTo(BufferSpan);
                     BufferSpan.Sort(Comparer);
                     BufferSpan.CopyTo(this);
-                    
+
                     ArrayPool<T>.Shared.Return(Buffer, true);
                     break;
             }
@@ -552,8 +552,8 @@ namespace Zion
                 throw new ArgumentException("Source is too large", nameof(Source));
             }
 
-            int Index = 0;
-            
+            var Index = 0;
+
             foreach (var Chunk in Chunks)
             {
                 Source.Slice(Index, Chunk.Length).CopyTo(Chunk);

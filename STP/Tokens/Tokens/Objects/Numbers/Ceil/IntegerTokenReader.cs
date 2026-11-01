@@ -2,7 +2,8 @@
 
 namespace Zion.STP
 {
-    public sealed class IntegerTokenReader<T, I> : ITokenReader where T : ValueToken<I>, new() where I : IComparable<I>, INumber<I>, new()
+    public sealed class IntegerTokenReader<T, I> : ITokenReader where T : ValueToken<I>, new()
+        where I : IComparable<I>, INumber<I>, new()
     {
         public readonly NumberParsingParameters<I> NumberParameters;
 
@@ -11,7 +12,11 @@ namespace Zion.STP
         private readonly Lazy<OverflowCache<I>> DecimalCache;
         private readonly Lazy<OverflowCache<I>> HexadecimalCache;
 
-        public IDigitParser DigitParser { get; init => field = value.NotNull(); } = STP.DigitParser.Instance;
+        public IDigitParser DigitParser
+        {
+            get;
+            init => field = value.NotNull();
+        } = STP.DigitParser.Instance;
 
         public bool IgnoreSuffixes { get; init; }
 
@@ -37,8 +42,8 @@ namespace Zion.STP
                 return false;
             }
 
-            bool IsNegative = false;
-            int CharCount = 0;
+            var IsNegative = false;
+            var CharCount = 0;
 
             if (Source.Current == '-')
             {
@@ -64,11 +69,11 @@ namespace Zion.STP
 
             bool CheckSuffix(ref TextSource Source, out Token Token)
             {
-                int SuffixLength = 0;
+                var SuffixLength = 0;
 
                 if (BeginsSuffix(ref Source, ref SuffixLength))
                 {
-                    Token = new T() { Length = CharCount + SuffixLength, ErrorCodes = [6000] };
+                    Token = new T { Length = CharCount + SuffixLength, ErrorCodes = [6000] };
                     return true;
                 }
 
@@ -78,56 +83,72 @@ namespace Zion.STP
 
             if (Source.Begins(['0', DigitParser.BinaryPrefix], out Source))
             {
-                if (CheckSuffix(ref Source, out Token)) { return true; }
+                if (CheckSuffix(ref Source, out Token))
+                {
+                    return true;
+                }
                 return ReadBinary(ref Source, out Token, IsNegative, CharCount + 2);
             }
             if (Source.Begins(['0', DigitParser.OctalPrefix], out Source))
             {
-                if (CheckSuffix(ref Source, out Token)) { return true; }
+                if (CheckSuffix(ref Source, out Token))
+                {
+                    return true;
+                }
                 return ReadOctal(ref Source, out Token, IsNegative, CharCount + 2);
             }
             if (Source.Begins(['0', DigitParser.HexadecimalPrefix], out Source))
             {
-                if (CheckSuffix(ref Source, out Token)) { return true; }
+                if (CheckSuffix(ref Source, out Token))
+                {
+                    return true;
+                }
                 return ReadHexadecimal(ref Source, out Token, IsNegative, CharCount + 2);
             }
 
-            if (CheckSuffix(ref Source, out Token)) { return true; }
+            if (CheckSuffix(ref Source, out Token))
+            {
+                return true;
+            }
             return ReadDecimal(ref Source, out Token, IsNegative, CharCount);
         }
 
 
         private bool ReadBinary(ref TextSource Source, out Token Token, bool IsNegative, int CharCount)
         {
-            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsBinary, BinaryCache, Value => NumberParameters.LeftShift(Value, 1), true);
+            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsBinary, BinaryCache,
+                Value => NumberParameters.LeftShift(Value, 1), true);
         }
 
         private bool ReadOctal(ref TextSource Source, out Token Token, bool IsNegative, int CharCount)
         {
-            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsOctal, OctalCache, Value => NumberParameters.LeftShift(Value, 3), true);
+            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsOctal, OctalCache,
+                Value => NumberParameters.LeftShift(Value, 3), true);
         }
 
         private bool ReadHexadecimal(ref TextSource Source, out Token Token, bool IsNegative, int CharCount)
         {
-            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsHexadecimal, HexadecimalCache, Value => NumberParameters.LeftShift(Value, 4));
+            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsHexadecimal, HexadecimalCache,
+                Value => NumberParameters.LeftShift(Value, 4));
         }
 
         private bool ReadDecimal(ref TextSource Source, out Token Token, bool IsNegative, int CharCount)
         {
-            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsDecimal, DecimalCache, Value => NumberParameters.Multiply(Value, 10));
+            return Read(ref Source, out Token, IsNegative, CharCount, DigitParser.IsDecimal, DecimalCache,
+                Value => NumberParameters.Multiply(Value, 10));
         }
 
 
-        private bool Read(ref TextSource Source, out Token Token,
-            bool IsNegative, int CharCount,
-            SafeConverter<char, int> IsDigit, Lazy<OverflowCache<I>> OverflowCache,
-            Func<I, I> Shift,
-            bool ForgivingNumbers = false)
+        private bool Read(ref TextSource Source,     out Token              Token,
+            bool                         IsNegative, int                    CharCount,
+            SafeConverter<char, int>     IsDigit,    Lazy<OverflowCache<I>> OverflowCache,
+            Func<I, I>                   Shift,
+            bool                         ForgivingNumbers = false)
         {
-            int StartCharCount = CharCount;
+            var StartCharCount = CharCount;
 
             SkipZeros(Source, ref CharCount);
-            InitializeVariables(out Token, out I Value, out NumberParsingParameters<I> Parameters);
+            InitializeVariables(out Token, out var Value, out var Parameters);
 
             while (!Source.IsEnd)
             {
@@ -141,7 +162,7 @@ namespace Zion.STP
                     break;
                 }
 
-                if (IsDigit(Source.Current, out int Digit))
+                if (IsDigit(Source.Current, out var Digit))
                 {
                     if (IsNegative)
                     {
@@ -150,7 +171,8 @@ namespace Zion.STP
 
                     if (CheckOverflow(Value, Digit, OverflowCache))
                     {
-                        Token = ReadErrorToken(ref Source, CharCount, ForgivingNumbers ? static Char => Char.IsDigit() : IsDigit.ToFunc(), 6003);
+                        Token = ReadErrorToken(ref Source, CharCount,
+                            ForgivingNumbers ? static Char => Char.IsDigit() : IsDigit.ToFunc(), 6003);
                         return true;
                     }
 
@@ -177,7 +199,7 @@ namespace Zion.STP
 
             if (CharCount == StartCharCount)
             {
-                Token = new T() { Length = CharCount, ErrorCodes = [6001] };
+                Token = new T { Length = CharCount, ErrorCodes = [6001] };
                 return true;
             }
 
@@ -187,13 +209,13 @@ namespace Zion.STP
 
         private Token ReadErrorToken(ref TextSource Source, int CharCount, Func<char, bool> IsDigit, short ErrorCode)
         {
-            NumberParsingParameters<I> Parameters = NumberParameters;
+            var Parameters = NumberParameters;
 
             while (!Source.IsEnd)
             {
-                char Current = Source.Current;
+                var Current = Source.Current;
 
-                Source.Skip(Char => Char == '_' || IsDigit(Char), out int Skipped);
+                Source.Skip(Char => Char == '_' || IsDigit(Char), out var Skipped);
                 CharCount += Skipped;
 
                 BeginsSuffix(ref Source, ref CharCount);
@@ -201,26 +223,26 @@ namespace Zion.STP
                 break;
             }
 
-            return new T() { Value = default!, Length = CharCount, ErrorCodes = [ErrorCode] };
+            return new T { Value = default!, Length = CharCount, ErrorCodes = [ErrorCode] };
         }
 
 
         private bool CheckOverflow(I Value, int Digit, Lazy<OverflowCache<I>> LazyCache)
         {
-            NumberParsingParameters<I> Parameters = NumberParameters;
+            var Parameters = NumberParameters;
 
             if (!Parameters.HasLimits)
             {
                 return false;
             }
 
-            OverflowCache<I> Cache = LazyCache.Value;
+            var Cache = LazyCache.Value;
 
-            I Zero = I.Zero;
+            var Zero = I.Zero;
 
             if (Value.CompareTo(Zero) > 0)
             {
-                I MaxDivision = Cache.MaxDivision;
+                var MaxDivision = Cache.MaxDivision;
 
                 if (Value.CompareTo(MaxDivision) > 0)
                 {
@@ -229,13 +251,13 @@ namespace Zion.STP
 
                 if (Value.CompareTo(MaxDivision) == 0)
                 {
-                    int MaxRemainder = Cache.MaxRemainder;
+                    var MaxRemainder = Cache.MaxRemainder;
                     return Digit > MaxRemainder;
                 }
             }
             else
             {
-                I MinDivision = Cache.MinDivision;
+                var MinDivision = Cache.MinDivision;
 
                 if (Value.CompareTo(MinDivision) < 0)
                 {
@@ -244,7 +266,7 @@ namespace Zion.STP
 
                 if (Value.CompareTo(MinDivision) == 0)
                 {
-                    int MinRemainder = Cache.MinRemainder;
+                    var MinRemainder = Cache.MinRemainder;
                     return Digit < MinRemainder;
                 }
             }
@@ -254,11 +276,11 @@ namespace Zion.STP
 
         private bool BeginsSuffix(ref TextSource Source, ref int CharCount)
         {
-            NumberParsingParameters<I> Parameters = NumberParameters;
+            var Parameters = NumberParameters;
 
-            if (!IgnoreSuffixes && KeyboardTranslater.IsEnglish(Source.Current))
+            if (!IgnoreSuffixes && Source.Current.IsEnglish())
             {
-                foreach (string Suffix in Parameters.Suffixes)
+                foreach (var Suffix in Parameters.Suffixes)
                 {
                     if (Source.Begins(Suffix, out Source))
                     {
@@ -274,13 +296,13 @@ namespace Zion.STP
         private void InitializeVariables(out Token Token, out I Value, out NumberParsingParameters<I> Parameters)
         {
             Token = default!;
-            Value = new();
+            Value = new I();
             Parameters = NumberParameters;
         }
 
         private bool IsZero(ref TextSource Source, out Token Token, int CharCount)
         {
-            int StartCharCount = CharCount;
+            var StartCharCount = CharCount;
 
             SafeConverter<char, int> IsDigit;
 
@@ -296,7 +318,7 @@ namespace Zion.STP
 
                 if (IsEnd(ref Source))
                 {
-                    Token = new T() { Length = CharCount, ErrorCodes = [6001] };
+                    Token = new T { Length = CharCount, ErrorCodes = [6001] };
                     return true;
                 }
             }
@@ -314,12 +336,12 @@ namespace Zion.STP
 
                 if (IsEnd(ref Source))
                 {
-                    Token = new T() { Length = CharCount, ErrorCodes = [6001] };
+                    Token = new T { Length = CharCount, ErrorCodes = [6001] };
                     return true;
                 }
             }
 
-            while (!Source.IsEnd && IsDigit(Source.Current, out int Digit))
+            while (!Source.IsEnd && IsDigit(Source.Current, out var Digit))
             {
                 if (Digit != 0)
                 {
@@ -349,13 +371,13 @@ namespace Zion.STP
 
         private static void SkipZeros(TextSource Source, ref int CharCount)
         {
-            Source.Skip('0', out int ZerosReaded);
+            Source.Skip('0', out var ZerosReaded);
             CharCount += ZerosReaded;
         }
 
         private static T CreateToken(I Value, int Length)
         {
-            return new T() { Value = Value, Length = Length };
+            return new T { Value = Value, Length = Length };
         }
     }
 }

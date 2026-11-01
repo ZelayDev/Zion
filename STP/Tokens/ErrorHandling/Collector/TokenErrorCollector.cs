@@ -10,8 +10,8 @@
         public TokenErrorCollector(ListView<Token> Tokens)
         {
             this.Tokens = Tokens.NotNull();
-            this.Errors = new SortedList<int>();
-            this.ErrorsView = new ListView<int>(Errors);
+            Errors = new SortedList<int>();
+            ErrorsView = new ListView<int>(Errors);
         }
 
 

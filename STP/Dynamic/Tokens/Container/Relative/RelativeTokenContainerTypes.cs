@@ -2,7 +2,8 @@
 
 namespace Zion.STP.Dynamic
 {
-    public sealed partial class RelativeTokenContainer<TPointer> : ITokenContainer<TPointer> where TPointer : TextPointer<TPointer>
+    public sealed partial class RelativeTokenContainer<TPointer> : ITokenContainer<TPointer>
+        where TPointer : TextPointer<TPointer>
     {
         private abstract class BaseNode : IEnumerable<Token>
         {
@@ -13,15 +14,18 @@ namespace Zion.STP.Dynamic
                 this.Position = Position;
             }
 
-            IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+            IEnumerator IEnumerable.GetEnumerator()
+            {
+                return GetEnumerator();
+            }
 
             public abstract IEnumerator<Token> GetEnumerator();
         }
 
         private sealed class Node : BaseNode
         {
-            public BaseNode? Left;
-            public BaseNode? Right;
+            public readonly BaseNode? Left;
+            public          BaseNode? Right;
 
             public Node(TPointer Position, BaseNode? Left) : base(Position)
             {
@@ -37,11 +41,17 @@ namespace Zion.STP.Dynamic
             {
                 if (Left is not null)
                 {
-                    foreach (Token Token in Left) { yield return Token; }
+                    foreach (var Token in Left)
+                    {
+                        yield return Token;
+                    }
                 }
                 if (Right is not null)
                 {
-                    foreach (Token Token in Right) { yield return Token; }
+                    foreach (var Token in Right)
+                    {
+                        yield return Token;
+                    }
                 }
             }
         }
@@ -56,6 +66,7 @@ namespace Zion.STP.Dynamic
             {
                 Tokens = new List<Token>();
             }
+
             public FinalNode(TPointer Position, Token Token) : this(Position)
             {
                 Add(Token);
@@ -69,13 +80,13 @@ namespace Zion.STP.Dynamic
 
             public int GetTokenIndex(TPointer Target, out TPointer Start)
             {
-                TPointer LocalTargetPosition = Target.Subtract(Position);
-                TPointer TokenStart = LocalTargetPosition;
+                var LocalTargetPosition = Target.Subtract(Position);
+                var TokenStart = LocalTargetPosition;
 
-                int Count = Tokens.Count;
+                var Count = Tokens.Count;
 
-                for (int i = 0; i < Tokens.Count; i++)
-                {                    
+                for (var i = 0; i < Tokens.Count; i++)
+                {
                     if (TokenStart.CompareTo(LocalTargetPosition) >= 0)
                     {
                         Start = TokenStart;

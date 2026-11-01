@@ -5,10 +5,9 @@
         public int TokensCount
         {
             get;
-            init
-            {
-                field = value > 0 ? value : throw new ArgumentOutOfRangeException($"Node.TokensCount(={TokensCount}) <= 0");
-            }
+            init => field = value > 0
+                ? value
+                : throw new ArgumentOutOfRangeException($"Node.TokensCount(={TokensCount}) <= 0");
         }
 
         public Validation Status
@@ -26,7 +25,10 @@
 
         public event Action<Validation>? StatusChanged;
 
-        public virtual Symbol? GetSymbol() => null;
+        public virtual Symbol? GetSymbol()
+        {
+            return null;
+        }
 
         public virtual void Verificate(SemanticContext Context) { }
 

@@ -2,10 +2,10 @@
 {
     internal sealed class ReferenceIdsRegistry : IWritableRegistry
     {
-        private static readonly Reference Null = new Reference(0, new(ADFPrimitives.Object, 0u, -1u));
+        private static readonly Reference Null = new(0, new DataDefinition(ADFPrimitives.Object, 0u, -1u));
 
         private readonly Dictionary<object, Reference> References; //Optimize: Заменить на слабую ссылку
-        private readonly List<Reference> NewItems;
+        private readonly List<Reference>               NewItems;
 
         private ulong LastId = 2;
 
@@ -14,8 +14,8 @@
 
         public ReferenceIdsRegistry()
         {
-            References = new(ReferenceEqualityComparer.Instance);
-            NewItems = new();
+            References = new Dictionary<object, Reference>(ReferenceEqualityComparer.Instance);
+            NewItems = new List<Reference>();
         }
 
 

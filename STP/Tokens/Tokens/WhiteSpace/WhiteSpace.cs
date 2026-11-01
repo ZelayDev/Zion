@@ -17,10 +17,10 @@
     {
         public bool Read(ref TextSource Source, out Token Token)
         {
-            int Length = 0;
-            int LineBreakCount = 0;
+            var Length = 0;
+            var LineBreakCount = 0;
 
-            while (!Source.IsEnd && char.IsWhiteSpace(Source.Current))
+            while (!Source.IsEnd && Char.IsWhiteSpace(Source.Current))
             {
                 if (Source.Current == '\n')
                 {

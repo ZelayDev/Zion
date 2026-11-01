@@ -2,6 +2,7 @@
 {
     public enum Comma
     {
-        Dot = '.', Comma = ','
+        Dot   = '.',
+        Comma = ','
     }
 }

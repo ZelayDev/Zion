@@ -22,8 +22,8 @@ namespace Zion
         }
 
         /// <summary>
-        /// Checks if the value is within the specified range (inclusive).
-        /// Value >= Min && Value <= Max
+        ///     Checks if the value is within the specified range (inclusive).
+        ///     Value >= Min && Value <= Max
         /// </summary>
         /// <typeparam name="T">The type of value to compare.</typeparam>
         /// <param name="Value">The value to check.</param>
@@ -36,8 +36,8 @@ namespace Zion
         }
 
         /// <summary>
-        /// Checks if the value is within the specified range (not inclusive).
-        /// Value >= Min && Value < Max
+        ///     Checks if the value is within the specified range (not inclusive).
+        ///     Value >= Min && Value < Max
         /// </summary>
         /// <typeparam name="T">The type of value to compare.</typeparam>
         /// <param name="Value">The value to check.</param>

@@ -27,12 +27,14 @@
             return (T1, T2, T3, T4) => Task.Run(() => Action(T1, T2, T3, T4));
         }
 
-        public static AsyncAction<T1, T2, T3, T4, T5> ToAsync<T1, T2, T3, T4, T5>(this Action<T1, T2, T3, T4, T5> Action)
+        public static AsyncAction<T1, T2, T3, T4, T5> ToAsync<T1, T2, T3, T4, T5>(
+            this Action<T1, T2, T3, T4, T5> Action)
         {
             return (T1, T2, T3, T4, T5) => Task.Run(() => Action(T1, T2, T3, T4, T5));
         }
 
-        public static AsyncAction<T1, T2, T3, T4, T5, T6> ToAsync<T1, T2, T3, T4, T5, T6>(this Action<T1, T2, T3, T4, T5, T6> Action)
+        public static AsyncAction<T1, T2, T3, T4, T5, T6> ToAsync<T1, T2, T3, T4, T5, T6>(
+            this Action<T1, T2, T3, T4, T5, T6> Action)
         {
             return (T1, T2, T3, T4, T5, T6) => Task.Run(() => Action(T1, T2, T3, T4, T5, T6));
         }

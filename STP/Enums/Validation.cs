@@ -2,6 +2,7 @@
 {
     public enum Validation : byte
     {
-        Valid, Invalid
+        Valid,
+        Invalid
     }
 }

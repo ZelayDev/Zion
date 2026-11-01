@@ -40,7 +40,7 @@ namespace Zion
 
         public override string ToString()
         {
-            return $"[Start:{Start}, Count:{Length}]";
+            return $"[Start:{Start}, Length:{Length}]";
         }
 
         public override int GetHashCode()
@@ -62,12 +62,12 @@ namespace Zion
 
         public bool IsWithin(ICollection Collection)
         {
-            return Start + Length < Collection.NotNull().Count;
+            return End < Collection.NotNull().Count;
         }
 
         public bool IsWithout(ICollection Collection)
         {
-            return Start + Length >= Collection.NotNull().Count;
+            return End >= Collection.NotNull().Count;
         }
 
 

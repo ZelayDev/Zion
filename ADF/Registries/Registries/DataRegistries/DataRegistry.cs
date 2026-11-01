@@ -2,9 +2,9 @@
 {
     internal sealed class DataRegistry : IRegistry
     {
-        private readonly StringIdRegistry StringRegistry;
+        private readonly StringIdRegistry                 StringRegistry;
         private readonly Dictionary<uint, DataDefinition> Parameters;
-        private readonly List<(uint, DataDefinition)> NewItems;
+        private readonly List<(uint, DataDefinition)>     NewItems;
 
         public bool IsChanged => NewItems.Count > 0;
 
@@ -12,8 +12,8 @@
         public DataRegistry(StringIdRegistry StringRegistry)
         {
             this.StringRegistry = StringRegistry.NotNull();
-            Parameters = new();
-            NewItems   = new();
+            Parameters = new Dictionary<uint, DataDefinition>();
+            NewItems = new List<(uint, DataDefinition)>();
         }
 
 
@@ -58,7 +58,7 @@
 
         public bool Contains(string Name)
         {
-            return StringRegistry.TryGetId(Name, out uint Id)
+            return StringRegistry.TryGetId(Name, out var Id)
                 && Parameters.ContainsKey(Id);
         }
 
@@ -70,7 +70,7 @@
 
         public bool TryGetDefinition(string Name, out DataDefinition Definition)
         {
-            if (StringRegistry.TryGetId(Name, out uint Id)
+            if (StringRegistry.TryGetId(Name, out var Id)
                 && Parameters.TryGetValue(Id, out Definition))
             {
                 return true;

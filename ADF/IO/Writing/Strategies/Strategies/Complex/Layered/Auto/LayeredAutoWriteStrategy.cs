@@ -12,7 +12,7 @@
 
         public void WriteData(ADFWritingContext Context, StreamGroup Target, T Value)
         {
-            for (int i = 0; i < Layers.Length; i++)
+            for (var i = 0; i < Layers.Length; i++)
             {
                 Layers[i].Invoke(Context, Target, Value);
             }
@@ -34,7 +34,7 @@
 
                 Writers[Writer] = Info.Writer;
 
-                for (int j = 0; j < Fields.Length; j++)
+                for (var j = 0; j < Fields.Length; j++)
                 {
                     var Name = Fields[j].Name;
                     if (!UsedNames.Add(Name))
