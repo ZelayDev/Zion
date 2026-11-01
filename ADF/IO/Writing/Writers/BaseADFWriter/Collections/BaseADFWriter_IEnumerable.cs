@@ -485,7 +485,42 @@ namespace Zion.ADF
 
         public void Write<T>(string Name, IEnumerator<T> Enumerator)
         {
-            //TODO: Write IEnumerator<Node>
+            ThrowIfDisposed();
+
+            var Context = this.Context;
+            var NameId = StringRegistry.GetOrAdd(Name);
+            var FormatId = TypeAssociation.GetOrAddDeferred(typeof(T), FormatRegistry) | ADFPrimitives.Sequence;
+
+            var Target = GetWriteTarget(Name, in NameId, in FormatId);
+            var Link = Reference.CreateNewReference(Target.ChildsLength);
+
+            var BaseStream = Context.Arena.GetStream(64);
+            var StreamGroup = new StreamGroup(BaseStream);
+            
+            var Count = 0;
+            
+            Target.BaseStream.WriteCompressed(Context, Link);
+            
+            BaseStream.SetPosition(4);
+
+            var Entry = WriteStrategies.GetEntry<T>(Context, typeof(T));
+            var Strategy = Entry.Strategy;
+            
+            while (Enumerator.MoveNext())
+            {
+                var Value = Enumerator.Current;
+                Strategy.Write(Context, StreamGroup, Value);
+                Count++;
+            }
+            
+            var Position = BaseStream.Position;
+
+            BaseStream.SetPosition(0);
+            BaseStream.Write(Count);
+            BaseStream.SetPosition(Position);
+            Target.Add(StreamGroup);
+
+            OnWrited(Name, in NameId, in FormatId);
         }
 
 

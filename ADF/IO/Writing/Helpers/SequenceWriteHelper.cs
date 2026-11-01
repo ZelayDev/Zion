@@ -170,12 +170,23 @@ namespace Zion.ADF
             {
                 return;
             }
+            
+            var Link = Reference.CreateNewReference(Target.ChildsLength);
+            var BaseStream = Context.Arena.GetStream(64);
+            var StreamGroup = new StreamGroup(BaseStream);
+            
+            BaseStream.Write(Span.Length);
 
-            var Stream = GetSubStream(Context, Target, Span.Length, Span.Length * 5);
+            var Entry = Context.WriteStrategies.GetEntry<T>(Context, typeof(T));
+            var Strategy = Entry.Strategy;
 
-            //TODO: SequenceWriteHelper.Write<T>
-
-            Target.Add(Stream);
+            foreach (var Value in Span)
+            {
+                Strategy.Write(Context, StreamGroup, Value);   
+            }
+            
+            Target.BaseStream.WriteCompressed(Context, Link);
+            Target.Add(StreamGroup);
         }
 
 
