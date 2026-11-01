@@ -12,5 +12,14 @@ namespace Zion
                 Destination.CopyFrom(Span);
             }
         }
+
+        extension<T>(ReadOnlySpan<T> Span)
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public void CopyTo(ArenaSpan<T> Destination)
+            {
+                Destination.CopyFrom(Span);
+            }
+        }
     }
 }

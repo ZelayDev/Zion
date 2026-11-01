@@ -1,10 +1,11 @@
 ﻿using System.Buffers;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
 namespace Zion
 {
-    public readonly ref struct ArenaSpan<T>
+    public readonly ref struct ArenaSpan<T> : IEquatable<ArenaSpan<T>>
     {
         #region Data
         private readonly ArenaRegion<T> Region;
@@ -36,6 +37,24 @@ namespace Zion
             get => Region[Index];
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
             set => Region[Index] = value;
+        }
+        #endregion
+
+        #region OverrideMethods
+        public override string ToString()
+        {
+            return Region.ToString();
+        }
+
+        public override int GetHashCode()
+        {
+            return Region.GetHashCode();
+        } 
+        
+        
+        public bool Equals(ArenaSpan<T> Other)
+        {
+            return Region.Equals(Other.Region);
         }
         #endregion
 
@@ -546,6 +565,22 @@ namespace Zion
 
         #region InternalMethods
         internal void CopyFrom(Span<T> Source)
+        {
+            if (Source.Length > Length)
+            {
+                throw new ArgumentException("Source is too large", nameof(Source));
+            }
+
+            var Index = 0;
+
+            foreach (var Chunk in Chunks)
+            {
+                Source.Slice(Index, Chunk.Length).CopyTo(Chunk);
+                Index += Chunk.Length;
+            }
+        }
+        
+        internal void CopyFrom(ReadOnlySpan<T> Source)
         {
             if (Source.Length > Length)
             {

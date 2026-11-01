@@ -5,6 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Zion.Geometry;
 using static System.Buffers.Binary.BinaryPrimitives;
+using static System.Runtime.InteropServices.MemoryMarshal;
 using Vector2 = Zion.Geometry.Vector2;
 using Vector3 = Zion.Geometry.Vector3;
 
@@ -224,7 +225,7 @@ namespace Zion
 
             if (TryGetSpan(Position, Size, out var Span))
             {
-                Decimal.GetBits(Value, MemoryMarshal.Cast<byte, int>(Span));
+                Decimal.GetBits(Value, Cast<byte, int>(Span));
             }
             else
             {
@@ -621,12 +622,6 @@ namespace Zion
         }
 
 
-        public void Write(Span<byte> Span)
-        {
-            Reserve(Span.Length);
-            Span.CopyTo(AsSpan(Position, Span.Length));
-        }
-
         public void Write(ArenaSpan<byte> Span)
         {
             Reserve(Span.Length);
@@ -641,6 +636,170 @@ namespace Zion
             var Destination = AsSpan(Position, Source.Length);
 
             Source.CopyTo(Destination);
+        }
+
+
+        public void Write(ReadOnlySpan<bool> Span)
+        {
+            Write(AsBytes(Span));
+        }
+
+        public void Write(ReadOnlySpan<byte> Span)
+        {
+            Reserve(Span.Length + 4);
+            Span.CopyTo(AsSpan(Position, Span.Length));
+        }
+
+        public void Write(ReadOnlySpan<sbyte> Span)
+        {
+            Write(Cast<sbyte, byte>(Span));
+        }
+
+        public void Write(ReadOnlySpan<short> Span)
+        {
+            WriteSpan(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<int> Span)
+        {
+            WriteSpan(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<long> Span)
+        {
+            WriteSpan(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<ushort> Span)
+        {
+            WriteSpan(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<uint> Span)
+        {
+            WriteSpan(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<ulong> Span)
+        {
+            WriteSpan(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<char> Span)
+        {
+            WriteSpan<char, short>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<float> Span)
+        {
+            WriteSpan<float, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<double> Span)
+        {
+            WriteSpan<double, long>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<decimal> Span)
+        {
+            WriteSpan<decimal, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<Half> Span)
+        {
+            WriteSpan<Half, short>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<Index> Span)
+        {
+            WriteSpan<Index, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<Range> Span)
+        {
+            WriteSpan<Range, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<RGBColor> Span)
+        {
+            Write(AsBytes(Span));
+        }
+
+        public void Write(ReadOnlySpan<RGBAColor> Span)
+        {
+            Write(AsBytes(Span));
+        }
+
+        public void Write(ReadOnlySpan<Vector2> Span)
+        {
+            WriteSpan<Vector2, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<Vector2Int> Span)
+        {
+            WriteSpan<Vector2Int, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<Vector3> Span)
+        {
+            WriteSpan<Vector3, int>(Span, ReverseEndianness);
+        }
+
+        public void Write(ReadOnlySpan<Vector3Int> Span)
+        {
+            WriteSpan<Vector3Int, int>(Span, ReverseEndianness);
+        }
+
+
+        public void WriteCompressed(ReadOnlySpan<bool> Span)
+        {
+            var ByteCount = (Span.Length + 7) >> 3;
+            var FullBytes = Span.Length >> 3;
+            var Remainder = Span.Length & 0b111;
+
+            Reserve(ByteCount);
+            var Destination = AsSpan(Position, ByteCount);
+            Advance(ByteCount);
+
+            var SourceIndex = 0;
+            var ByteIndex = 0;
+
+            foreach (var Chunk in Destination.Chunks)
+            {
+                for (var i = 0; i < Chunk.Length; i++)
+                {
+                    if (ByteIndex >= ByteCount)
+                    {
+                        return;
+                    }
+
+                    byte Byte = 0;
+
+                    if (ByteIndex < FullBytes)
+                    {
+                        for (var bit = 0; bit < 8; bit++, SourceIndex++)
+                        {
+                            if (Span[SourceIndex])
+                            {
+                                Byte |= (byte)(1 << bit);
+                            }
+                        }
+                    }
+                    else if (ByteIndex == FullBytes)
+                    {
+                        for (var bit = 0; bit < Remainder; bit++, SourceIndex++)
+                        {
+                            if (Span[SourceIndex])
+                            {
+                                Byte |= (byte)(1 << bit);
+                            }
+                        }
+                    }
+
+                    Chunk[i] = Byte;
+                    ByteIndex++;
+                }
+            }
         }
 
 
@@ -724,7 +883,7 @@ namespace Zion
         }
 
 
-        public void WriteStruct<T>(T Value) where T : struct
+        public void WriteEnum<T>(T Value) where T : struct, Enum
         {
             var Size = Unsafe.SizeOf<T>();
 
@@ -735,9 +894,9 @@ namespace Zion
                 MemoryMarshal.Write(Span, in Value);
                 return;
             }
-            
+
             var Destination = AsSpan(Position, Size);
-            
+
             if (Size <= BufferThreshold)
             {
                 Span<byte> Buffer = stackalloc byte[Size];
@@ -761,7 +920,7 @@ namespace Zion
             ArgumentOutOfRangeException.ThrowIfNegative(Position);
             this.Position = Position;
         }
-        
+
 
         public byte[] ToArray()
         {
@@ -892,7 +1051,14 @@ namespace Zion
 
         public void TrimExcess(int Size)
         {
-            Trim(Math.Min(Length, Size));
+            ArgumentOutOfRangeException.ThrowIfNegative(Size);
+            
+            if (Size < Length)
+            {
+                Length = Size;
+                Position = Size;
+                Trim(Size);
+            }
         }
 
         public void TrimExcess()
@@ -901,7 +1067,7 @@ namespace Zion
         }
 
 
-        private void Advance(int Offset)
+        public void Advance(int Offset)
         {
             var NewPosition = Position += Offset;
             if (NewPosition > Length)
@@ -946,6 +1112,33 @@ namespace Zion
             }
 
             Advance(Size);
+        }
+
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WriteSpan<T, TCast>(ReadOnlySpan<T> Span, Action<ReadOnlySpan<TCast>, Span<TCast>> ReverseEndianness) where T : unmanaged where TCast : unmanaged
+        {
+            WriteSpan<TCast>(Cast<T, TCast>(Span), ReverseEndianness);
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private void WriteSpan<T>(ReadOnlySpan<T> Span, Action<ReadOnlySpan<T>, Span<T>> ReverseEndianness) where T : unmanaged
+        {
+            if (BitConverter.IsLittleEndian)
+            {
+                Write(AsBytes(Span));
+            }
+            else
+            {
+                var Size = Span.Length * Unsafe.SizeOf<T>();
+                Reserve(Size);
+                if (TryGetSpan(Position, Size, out var Destination))
+                {
+                    ReverseEndianness(Span, Cast<byte, T>(Destination));
+                }
+                //TODO
+                Advance(Size);
+            }
         }
     }
 }

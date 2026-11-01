@@ -1,5 +1,4 @@
-﻿using System.Buffers.Binary;
-using System.Numerics;
+﻿using System.Numerics;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using Zion.Geometry;
@@ -165,16 +164,6 @@ namespace Zion.ADF
             Write(Context, Target, Collection, Span, Write);
         }
 
-        public static void Write(ADFWritingContext Context, StreamGroup Target, object? Collection, ReadOnlySpan<System.Numerics.Vector2> Span)
-        {
-            Write(Context, Target, Collection, Span, Write);
-        }
-
-        public static void Write(ADFWritingContext Context, StreamGroup Target, object? Collection, ReadOnlySpan<System.Numerics.Vector3> Span)
-        {
-            Write(Context, Target, Collection, Span, Write);
-        }
-
         public static void Write<T>(ADFWritingContext Context, StreamGroup Target, object? Collection, ReadOnlySpan<T> Span)
         {
             if (TryWriteReference(Context, Target, Collection))
@@ -184,7 +173,7 @@ namespace Zion.ADF
 
             var Stream = GetSubStream(Context, Target, Span.Length, Span.Length * 5);
 
-            //TODO: SequenceWriteHelper.Write<Node>
+            //TODO: SequenceWriteHelper.Write<T>
 
             Target.Add(Stream);
         }
@@ -192,101 +181,22 @@ namespace Zion.ADF
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<bool> Span, bool Compression)
         {
-            var Capacity = (Span.Length + 7) >> 3;
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                (Target, Source) =>
-                {
-                    int Count = Source.Length;
-                    int ByteCount = (Count + 7) >> 3;
-
-                    int ByteIndex = 0;
-                    int BitIndex = 0;
-
-                    byte Current = 0;
-
-                    for (int i = 0; i < Count; i++)
-                    {
-                        if (Source[i])
-                        {
-                            Current |= (byte)(1 << BitIndex);
-                        }
-
-                        BitIndex++;
-
-                        if (BitIndex == 8)
-                        {
-                            Target[ByteIndex++] = Current;
-                            Current = 0;
-                            BitIndex = 0;
-                        }
-                    }
-
-                    if (BitIndex > 0)
-                    {
-                        Target[ByteIndex] = Current;
-                    }
-                }
-            );
+            Stream.WriteCompressed(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<byte> Span, bool Compression)
         {
-            Stream.Reserve(Span.Length);
-            Stream.UseSpan
-            (
-                Span.Length,
-                Span,
-                static (Target, Source) =>
-                {
-                    Source.CopyTo(Target);
-                }
-            );
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<sbyte> Span, bool Compression)
         {
-            Stream.Reserve(Span.Length);
-            Stream.UseSpan
-            (
-                Span.Length,
-                Span,
-                static (Target, Source) =>
-                {
-                    MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                }
-            );
+            Stream.Write(MemoryMarshal.AsBytes(Span));
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<short> Span, bool Compression)
         {
-            int Capacity = Span.Length * sizeof(short);
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                static (Target, Source) =>
-                {
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                    }
-                    else
-                    {
-                        BinaryPrimitives.ReverseEndianness
-                        (
-                            Source,
-                            MemoryMarshal.Cast<byte, short>(Target)
-                        );
-                    }
-                }
-            );            
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<int> Span, bool Compression)
@@ -297,29 +207,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(int);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                Source,
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -331,57 +219,13 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(long);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                Source,
-                                MemoryMarshal.Cast<byte, long>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<ushort> Span, bool Compression)
         {
-            int Capacity = Span.Length * sizeof(ushort);
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                static (Target, Source) =>
-                {
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                    }
-                    else
-                    {
-                        BinaryPrimitives.ReverseEndianness
-                        (
-                            Source,
-                            MemoryMarshal.Cast<byte, ushort>(Target)
-                        );
-                    }
-                }
-            );
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<uint> Span, bool Compression)
@@ -392,29 +236,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(uint);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                Source,
-                                MemoryMarshal.Cast<byte, uint>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -426,57 +248,13 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(ulong);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                Source,
-                                MemoryMarshal.Cast<byte, ulong>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<char> Span, bool Compression)
         {
-            int Capacity = Span.Length * sizeof(char);
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                static (Target, Source) =>
-                {
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                    }
-                    else
-                    {
-                        BinaryPrimitives.ReverseEndianness
-                        (
-                            MemoryMarshal.Cast<char, short>(Source),
-                            MemoryMarshal.Cast<byte, short>(Target)
-                        );
-                    }
-                }
-            );   
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<float> Span, bool Compression)
@@ -487,29 +265,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(float);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<float, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -521,29 +277,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(double);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<double, long>(Source),
-                                MemoryMarshal.Cast<byte, long>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -555,59 +289,13 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * sizeof(decimal);
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            var UIntSource = MemoryMarshal.Cast<decimal, uint>(Source);
-                            var UIntTarget = MemoryMarshal.Cast<byte, uint>(Target);
-
-                            for (int i = 0; i < UIntSource.Length; i++)
-                            {
-                                UIntTarget[i] = BinaryPrimitives.ReverseEndianness(UIntSource[i]);
-                            }
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<Half> Span, bool Compression)
         {
-            int Capacity = Span.Length * 2;
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                static (Target, Source) =>
-                {
-                    if (BitConverter.IsLittleEndian)
-                    {
-                        MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                    }
-                    else
-                    {
-                        BinaryPrimitives.ReverseEndianness
-                        (
-                            MemoryMarshal.Cast<Half, short>(Source),
-                            MemoryMarshal.Cast<byte, short>(Target)
-                        );
-                    }
-                }
-            );
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<Index> Span, bool Compression)
@@ -618,29 +306,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * 4;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<Index, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -652,62 +318,18 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * 8;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<Range, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<RGBColor> Span, bool Compression)
         {
-            int Capacity = Span.Length * 3;
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                static (Target, Source) =>
-                {
-                    MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                }
-            );
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<RGBAColor> Span, bool Compression)
         {
-            int Capacity = Span.Length * 4;
-
-            Stream.Reserve(Capacity);
-            Stream.UseSpan
-            (
-                Capacity,
-                Span,
-                static (Target, Source) =>
-                {
-                    MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                }
-            );
+            Stream.Write(Span);
         }
 
         public static void Write(ArenaStream Stream, ReadOnlySpan<Vector2> Span, bool Compression)
@@ -718,29 +340,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * 8;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<Vector2, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -752,29 +352,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * 8;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<Vector2Int, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -786,29 +364,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * 12;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<Vector3, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -820,97 +376,7 @@ namespace Zion.ADF
             }
             else
             {
-                int Capacity = Span.Length * 12;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<Vector3Int, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
-            }
-        }
-
-        public static void Write(ArenaStream Stream, ReadOnlySpan<System.Numerics.Vector2> Span, bool Compression)
-        {
-            if (Compression)
-            {
-                WriteCompressed(Stream, MemoryMarshal.Cast<System.Numerics.Vector2, float>(Span));
-            }
-            else
-            {
-                int Capacity = Span.Length * 8;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<System.Numerics.Vector2, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
-            }
-        }
-
-        public static void Write(ArenaStream Stream, ReadOnlySpan<System.Numerics.Vector3> Span, bool Compression)
-        {
-            if (Compression)
-            {
-                WriteCompressed(Stream, MemoryMarshal.Cast<System.Numerics.Vector3, float>(Span));
-            }
-            else
-            {
-                int Capacity = Span.Length * 12;
-
-                Stream.Reserve(Capacity);
-                Stream.UseSpan
-                (
-                    Capacity,
-                    Span,
-                    static (Target, Source) =>
-                    {
-                        if (BitConverter.IsLittleEndian)
-                        {
-                            MemoryMarshal.AsBytes(Source).CopyTo(Target);
-                        }
-                        else
-                        {
-                            BinaryPrimitives.ReverseEndianness
-                            (
-                                MemoryMarshal.Cast<System.Numerics.Vector3, int>(Source),
-                                MemoryMarshal.Cast<byte, int>(Target)
-                            );
-                        }
-                    }
-                );
+                Stream.Write(Span);
             }
         }
 
@@ -952,267 +418,255 @@ namespace Zion.ADF
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<int> Span)
         {
-            var Written = 0;
-
-            Stream.Reserve(Span.Length * 5);
+            var Capacity = Span.Length * 5;
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<int>(Span, ref Written),
-                static (Target, State) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written = 0;
+                    var Writer = new VarIntWriter(Stream, Target);
 
-                    foreach (var Value in State.Source)
+                    foreach (var Value in Source)
                     {
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Value);
+                        Writer.WriteVarInt(Value);
                     }
 
-                    State.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<uint> Span)
         {
-            var Written = 0;
-
-            Stream.Reserve(Span.Length * 5);
+            var Capacity = Span.Length * 5;
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<uint>(Span, ref Written),
-                static (Target, State) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written = 0;
+                    var Writer = new VarIntWriter(Stream, Target);
 
-                    foreach (var Value in State.Source)
+                    foreach (var Value in Source)
                     {
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Value);
+                        Writer.WriteVarInt(Value);
                     }
 
-                    State.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<long> Span)
         {
-            var Written = 0;
-
-            Stream.Reserve(Span.Length * 10);
+            var Capacity = Span.Length * 10;
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<long>(Span, ref Written),
-                static (Target, State) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written = 0;
+                    var Writer = new VarIntWriter(Stream, Target);
 
-                    foreach (var Value in State.Source)
+                    foreach (var Value in Source)
                     {
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Value);
+                        Writer.WriteVarInt(Value);
                     }
 
-                    State.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<ulong> Span)
         {
-            var Written = 0;
-
-            Stream.Reserve(Span.Length * 10);
+            var Capacity = Span.Length * 10;
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<ulong>(Span, ref Written),
-                static (Target, State) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written = 0;
+                    var Writer = new VarIntWriter(Stream, Target);
 
-                    foreach (var Value in State.Source)
+                    foreach (var Value in Source)
                     {
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Value);
+                        Writer.WriteVarInt(Value);
                     }
 
-                    State.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<float> Span)
         {
-            Stream.Reserve(Span.Length * 5);
-
-            var Written = 0;
-
+            var Capacity = Span.Length * 5;
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<float>(Span, ref Written),
-                static (Target, Source) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written  = 0;
+                    var Writer = new VarIntWriter(Stream, Target);
                     var Previous = 0u;
 
-                    foreach (var Value in Source.Source)
+                    foreach (var Value in Source)
                     {
-                        var Raw  = Unsafe.As<float, uint>(ref Unsafe.AsRef(in Value));
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Raw ^ Previous);
+                        var Raw = Unsafe.As<float, uint>(ref Unsafe.AsRef(in Value));
+                        Writer.WriteVarInt(Raw ^ Previous);
                         Previous = Raw;
                     }
 
-                    Source.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<double> Span)
         {
-            Stream.Reserve(Span.Length * 10);
-
-            var Written = 0;
-
+            var Capacity = Span.Length * 10;
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<double>(Span, ref Written),
-                static (Target, Source) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written = 0;
-                    var Previous = 0UL;
+                    var Writer = new VarIntWriter(Stream, Target);
+                    var Previous = 0L;
 
-                    foreach (var Value in Source.Source)
+                    foreach (var Value in Source)
                     {
-                        var Raw  = Unsafe.As<double, ulong>(ref Unsafe.AsRef(in Value));
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Raw ^ Previous);
+                        var Raw = Unsafe.As<double, long>(ref Unsafe.AsRef(in Value));
+                        Writer.WriteVarInt(Raw ^ Previous);
                         Previous = Raw;
                     }
 
-                    Source.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
         private static void WriteCompressed(ArenaStream Stream, ReadOnlySpan<decimal> Span)
         {
-            Stream.Reserve(Span.Length * sizeof(decimal));
-
-            int Written = 0;
-
+            var Capacity = Span.Length * sizeof(decimal);
+            Stream.Reserve(Capacity);
             Stream.UseSpan
             (
-                new NumberSpanState<decimal>(Span, ref Written),
-                static (Target, State) =>
+                Capacity,
+                Span,
+                (Target, Source) =>
                 {
-                    ref var Destination = ref MemoryMarshal.GetReference(Target);
-                    var Written = 0;
-
+                    var Writer = new VarIntWriter(Stream, Target);
                     Span<int> Bits = stackalloc int[4];
 
-                    foreach (var Value in State.Source)
+                    foreach (var Value in Source)
                     {
-                        decimal.GetBits(Value, Bits);
+                        Decimal.GetBits(Value, Bits);
 
-                        var Lo    = unchecked((uint)Bits[0]);
-                        var Mid   = unchecked((uint)Bits[1]);
-                        var Hi    = unchecked((uint)Bits[2]);
+                        var Lo = unchecked((uint)Bits[0]);
+                        var Mid = unchecked((uint)Bits[1]);
+                        var Hi = unchecked((uint)Bits[2]);
                         var Flags = unchecked((uint)Bits[3]);
 
-                        var Sign      = (Flags & 0x80000000u) != 0;
-                        var Scale     = (byte)((Flags >> 16) & 0xFF);
+                        var Sign = (Flags & 0x80000000u) != 0;
+                        var Scale = (byte)((Flags >> 16) & 0xFF);
                         var SignScale = (byte)((Sign ? 0x80 : 0) | (Scale & 0x7F));
 
-                        Unsafe.Add(ref Destination, Written++) = SignScale;
+                        Writer.WriteByte(SignScale);
 
                         var Low64 = Lo | ((ulong)Mid << 32);
-
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Low64);
-                        Written += WriteVarInt(ref Unsafe.Add(ref Destination, Written), Hi);
+                        Writer.WriteVarInt(Low64);
+                        Writer.WriteVarInt(Hi);
                     }
 
-                    State.Written = Written;
+                    Writer.Complete();
                 }
             );
-
-            Stream.TrimExcess(Written);
         }
 
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int WriteVarInt(ref byte Destination, int Value)
+        private ref struct VarIntWriter
         {
-            return WriteVarInt(ref Destination, (uint)((Value << 1) ^ (Value >> 31)));
-        }
+            private readonly ArenaStream                Stream;
+            private readonly ArenaChunkEnumerator<byte> Chunks;
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int WriteVarInt(ref byte Destination, uint value)
-        {
-            if (value < 0x80)
+            private Span<byte> Current;
+            private int        Index;
+            private int        Written;
+
+
+            public VarIntWriter(ArenaStream Stream, ArenaSpan<byte> Target)
             {
-                Destination = (byte)value;
-                return 1;
+                this.Stream = Stream;
+
+                Chunks = Target.Chunks.GetEnumerator();
+                Chunks.MoveNext();
+                Current = Chunks.Current;
+
+                Index = 0;
+                Written = 0;
             }
 
-            int i = 0;
-            while (value >= 0x80)
+            
+            public void WriteByte(byte Value)
             {
-                Unsafe.Add(ref Destination, i++) = (byte)(value | 0x80);
-                value >>= 7;
-            }
-            Unsafe.Add(ref Destination, i++) = (byte)value;
-            return i;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int WriteVarInt(ref byte Destination, ulong Value)
-        {
-            if (Value < 0x80)
-            {
-                Destination = (byte)Value;
-                return 1;
+                EnsureSpace(1);
+                Current[Index++] = Value;
+                Written++;
             }
 
-            int i = 0;
-            while (Value >= 0x80)
+            public void WriteVarInt(int Value)
             {
-                Unsafe.Add(ref Destination, i++) = (byte)(Value | 0x80);
-                Value >>= 7;
+                WriteVarInt((uint)((Value << 1) ^ (Value >> 31)));
             }
-            Unsafe.Add(ref Destination, i++) = (byte)Value;
-            return i;
-        }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static int WriteVarInt(ref byte Destination, long Value)
-        {
-            return WriteVarInt(ref Destination, (ulong)((Value << 1) ^ (Value >> 63)));
-        }
-
-
-        private ref struct NumberSpanState<T> where T : unmanaged
-        {
-            public ReadOnlySpan<T> Source;
-            public ref int Written;
-
-            public NumberSpanState(ReadOnlySpan<T> Source, ref int Written)
+            public void WriteVarInt(uint Value)
             {
-                this.Source = Source;
-                this.Written = ref Written;
+                while (Value >= 0x80)
+                {
+                    WriteByte((byte)(Value | 0x80));
+                    Value >>= 7;
+                }
+                WriteByte((byte)Value);
+            }
+
+            public void WriteVarInt(long Value)
+            {
+                WriteVarInt((ulong)((Value << 1) ^ (Value >> 63)));
+            }
+
+            public void WriteVarInt(ulong Value)
+            {
+                while (Value >= 0x80)
+                {
+                    WriteByte((byte)(Value | 0x80));
+                    Value >>= 7;
+                }
+                WriteByte((byte)Value);
+            }
+            
+            
+            private void EnsureSpace(int Size)
+            {
+                while (Index + Size > Current.Length)
+                {
+                    Current = Chunks.Current;
+                    Index = 0;
+                }
+            }
+
+            
+            public void Complete()
+            {
+                Stream.TrimExcess(Written);
             }
         }
     }

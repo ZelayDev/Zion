@@ -1,5 +1,4 @@
 ﻿using System.Numerics;
-using System.Xml.Linq;
 using Zion.Geometry;
 using Vector2 = Zion.Geometry.Vector2;
 using Vector3 = Zion.Geometry.Vector3;

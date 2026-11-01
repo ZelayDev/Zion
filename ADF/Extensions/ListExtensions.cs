@@ -6,18 +6,17 @@ namespace Zion.ADF
     {
         extension<T>(List<T> List)
         {
-            //TODO: Check SetCount
-            public Span<T> AsSpan()
+            public ReadOnlySpan<T> AsSpan()
             {
                 return CollectionsMarshal.AsSpan(List);
             }
 
-            public Span<T> AsSpan(int Start)
+            public ReadOnlySpan<T> AsSpan(int Start)
             {
                 return CollectionsMarshal.AsSpan(List).Slice(Start);
             }
 
-            public Span<T> AsSpan(int Start, int Count)
+            public ReadOnlySpan<T> AsSpan(int Start, int Count)
             {
                 return CollectionsMarshal.AsSpan(List).Slice(Start, Count);
             }

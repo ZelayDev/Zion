@@ -91,6 +91,11 @@ namespace Zion
         #endregion
 
         #region OverrideMethods
+        public override string ToString()
+        {
+            return $"[Start:{Start}, Length:{Length}]";
+        }
+        
         public override bool Equals([NotNullWhen(true)] object? Object)
         {
             return Object is ArenaRegion<T> Region && this == Region;

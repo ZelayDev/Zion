@@ -30,7 +30,7 @@ namespace Zion.ADF
 
         private static void WriteEnum<T>(ADFWritingContext Context, StreamGroup Target, T Value) where T : struct, Enum
         {
-            Target.BaseStream.WriteStruct(Value);
+            Target.BaseStream.WriteEnum(Value);
         }
 
         private static void Write<T>(ADFWritingContext Context, StreamGroup Target, T Value)
