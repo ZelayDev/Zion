@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 
 namespace Zion.ADF
 {
@@ -29,11 +30,7 @@ namespace Zion.ADF
 
         private static void WriteEnum<T>(ADFWritingContext Context, StreamGroup Target, T Value) where T : struct, Enum
         {
-            Target.BaseStream.UseSpan
-            (
-                Unsafe.SizeOf<T>(),
-                span => Unsafe.WriteUnaligned(ref span[0], Value)
-            );
+            Target.BaseStream.WriteStruct(Value);
         }
 
         private static void Write<T>(ADFWritingContext Context, StreamGroup Target, T Value)

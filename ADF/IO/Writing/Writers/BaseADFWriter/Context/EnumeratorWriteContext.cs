@@ -35,7 +35,7 @@
             Span<T> Buffer = stackalloc T[32];
 
             Target.BaseStream.WriteCompressed(Context, Link);
-            Stream.Position = 4;
+            Stream.SetPosition(4);
 
             while (Enumerator.MoveNext())
             {
@@ -54,7 +54,7 @@
                 WriteSpan(Stream, Buffer.Slice(BufferIndex), Compression);
             }
 
-            Stream.Position = 0;
+            Stream.SetPosition(0);
             Stream.Write(Index);
 
             Target.Add(Stream);

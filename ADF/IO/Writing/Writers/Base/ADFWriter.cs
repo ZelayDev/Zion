@@ -92,7 +92,7 @@
 
             Flush(BaseStream);
 
-            Context.Arena.DisposeAll();
+            Context.Arena.Clear();
             Context.CurrentPage++;
             Context.CurrentPosition = 0;
         }

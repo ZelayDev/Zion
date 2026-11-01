@@ -24,9 +24,9 @@ namespace Zion.ADF
             IWriteStrategy<BigInteger[]>,
             IWriteStrategy<RGBColor[]>,
             IWriteStrategy<RGBAColor[]>,
-            IWriteStrategy<Vectors.Vector2[]>,
+            IWriteStrategy<Geometry.Vector2[]>,
             IWriteStrategy<Vector2Int[]>,
-            IWriteStrategy<Vectors.Vector3[]>,
+            IWriteStrategy<Geometry.Vector3[]>,
             IWriteStrategy<Vector3Int[]>
     {
         public static readonly ArrayWriteStrategy Instance = new();
@@ -132,7 +132,7 @@ namespace Zion.ADF
             SequenceWriteHelper.Write(Context, Target, Value, Value.AsSpan());
         }
 
-        public void WriteData(ADFWritingContext Context, StreamGroup Target, Vectors.Vector2[] Value)
+        public void WriteData(ADFWritingContext Context, StreamGroup Target, Geometry.Vector2[] Value)
         {
             SequenceWriteHelper.Write(Context, Target, Value, Value.AsSpan());
         }
@@ -142,7 +142,7 @@ namespace Zion.ADF
             SequenceWriteHelper.Write(Context, Target, Value, Value.AsSpan());
         }
 
-        public void WriteData(ADFWritingContext Context, StreamGroup Target, Vectors.Vector3[] Value)
+        public void WriteData(ADFWritingContext Context, StreamGroup Target, Geometry.Vector3[] Value)
         {
             SequenceWriteHelper.Write(Context, Target, Value, Value.AsSpan());
         }

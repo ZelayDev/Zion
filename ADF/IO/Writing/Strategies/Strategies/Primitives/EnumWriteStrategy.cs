@@ -15,11 +15,9 @@ namespace Zion.ADF
 
         public void WriteData(ADFWritingContext Context, StreamGroup Target, T Value)
         {
-            Target.BaseStream.UseSpan
-            (
-                Unsafe.SizeOf<T>(),
-                Span => Unsafe.WriteUnaligned(ref Span[0], Value)
-            );
+            Span<byte> Buffer = stackalloc byte[Unsafe.SizeOf<T>()];
+            Unsafe.WriteUnaligned(ref Buffer[0], Value);
+            Target.BaseStream.Write(Buffer);
         }
     }
 }

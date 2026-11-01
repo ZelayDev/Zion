@@ -51,11 +51,37 @@ namespace Zion
             Source.Release(Collection);
         }
 
+        
         public ArenaSpan<T> AsSpan()
         {
             return Region.AsSpan();
         }
 
+        public bool TryGetSpan(int Start, int Length, out Span<T> Span)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(Start);
+            ArgumentOutOfRangeException.ThrowIfNegative(Length);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(Start + Length, Region.Length);
+            
+            var End = Start + Length;
+
+            var FirstChunk = Arena<T>.GetChunkIndex(Start);
+            var LastChunk = Arena<T>.GetChunkIndex(End);
+            
+            if (FirstChunk == LastChunk)
+            {
+                var Chunk = Region.Chunks[FirstChunk];
+                var LocalStart = Arena<T>.GetLocalIndex(Start);
+
+                Span = new Span<T>(Chunk, LocalStart, Length);
+                return true;
+            }
+
+            Span = Span<T>.Empty;
+            return false;
+        }
+        
+        
         public A Allocate<A>(int Capacity) where A : ArenaCollection<T>, new()
         {
             return Source.Allocate<A>(Capacity);

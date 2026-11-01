@@ -5,7 +5,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using Zion.Geometry;
 using static System.Buffers.Binary.BinaryPrimitives;
-using Vector2 = System.Numerics.Vector2;
+using Vector2 = Zion.Geometry.Vector2;
 using Vector3 = Zion.Geometry.Vector3;
 
 namespace Zion
@@ -14,7 +14,7 @@ namespace Zion
     {
         private const int BufferThreshold = 256;
 
-        private int Position;
+        public int Position { get; private set; }
 
         public int Length
         {
@@ -58,23 +58,40 @@ namespace Zion
 
         public void Write(int Value)
         {
-            Reserve(sizeof(int));
+            const int Size = sizeof(int);
 
-            Span<byte> Buffer = stackalloc byte[sizeof(int)];
-            WriteInt32LittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, sizeof(int)));
+            Reserve(Size);
 
-            Advance(sizeof(int));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteInt32LittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteInt32LittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
+
+            Advance(Size);
         }
 
         public void Write(uint Value)
         {
             const int Size = sizeof(uint);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteUInt32LittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteUInt32LittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteUInt32LittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -82,11 +99,19 @@ namespace Zion
         public void Write(long Value)
         {
             const int Size = sizeof(long);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteInt64LittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteInt64LittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteInt64LittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -94,11 +119,19 @@ namespace Zion
         public void Write(ulong Value)
         {
             const int Size = sizeof(ulong);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteUInt64LittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteUInt64LittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteUInt64LittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -106,11 +139,19 @@ namespace Zion
         public void Write(short Value)
         {
             const int Size = sizeof(short);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteInt16LittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteInt16LittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteInt16LittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -118,11 +159,19 @@ namespace Zion
         public void Write(ushort Value)
         {
             const int Size = sizeof(ushort);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteUInt32LittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteUInt16LittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteUInt16LittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -130,11 +179,19 @@ namespace Zion
         public void Write(float Value)
         {
             const int Size = sizeof(float);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteSingleLittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteSingleLittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteSingleLittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -142,11 +199,19 @@ namespace Zion
         public void Write(double Value)
         {
             const int Size = sizeof(double);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteDoubleLittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteDoubleLittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteDoubleLittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -154,11 +219,19 @@ namespace Zion
         public void Write(decimal Value)
         {
             const int Size = sizeof(decimal);
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            Decimal.GetBits(Value, MemoryMarshal.Cast<byte, int>(Buffer));
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                Decimal.GetBits(Value, MemoryMarshal.Cast<byte, int>(Span));
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -172,9 +245,28 @@ namespace Zion
         {
             ArgumentNullException.ThrowIfNull(Value);
 
-            var MaxLength = Value.Length * 3;
+            if (Value.Length == 0)
+            {
+                Write7BitEncoded(0);
+                return;
+            }
 
-            if (MaxLength <= BufferThreshold)
+            var MaxLength = Value.Length * 4 + 5;
+
+            if (TryGetSpan(Position, MaxLength, out var Span))
+            {
+                var StartPosition = Position;
+                var Length = Encoding.UTF8.GetByteCount(Value);
+
+                Write7BitEncoded(Length);
+                Reserve(Length);
+
+                Span = Span.Slice(Position - StartPosition, Length);
+
+                Encoding.UTF8.GetBytes(Value, Span);
+                Advance(Length);
+            }
+            else if (MaxLength <= BufferThreshold)
             {
                 Span<byte> Buffer = stackalloc byte[MaxLength];
 
@@ -183,14 +275,13 @@ namespace Zion
                 Write7BitEncoded(Length);
                 Reserve(Length);
 
-                Buffer.CopyTo(AsSpan(Position, Length));
-
+                Buffer.Slice(0, Length).CopyTo(AsSpan(Position, Length));
                 Advance(Length);
             }
             else
             {
-                var Encoder = Encoding.UTF8.GetEncoder();
                 var Length = Encoding.UTF8.GetByteCount(Value);
+                var Encoder = Encoding.UTF8.GetEncoder();
 
                 ReadOnlySpan<char> Chars = Value;
 
@@ -201,7 +292,6 @@ namespace Zion
                 {
                     Encoder.Convert(Chars, Chunk, false, out var CharsUsed, out _, out _);
                     Chars = Chars.Slice(CharsUsed);
-
                     if (Chars.IsEmpty)
                     {
                         break;
@@ -221,11 +311,19 @@ namespace Zion
         public void Write(Half Value)
         {
             const int Size = 2;
+
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteHalfLittleEndian(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteHalfLittleEndian(Span, Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteHalfLittleEndian(Buffer, Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -238,16 +336,24 @@ namespace Zion
         public void Write(Range Value)
         {
             const int Size = 8;
-            Reserve(Size);
 
             var Start = Value.Start;
             var End = Value.End;
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            WriteInt32LittleEndian(Buffer, Unsafe.As<Index, int>(ref Start));
-            WriteInt32LittleEndian(Buffer.Slice(4), Unsafe.As<Index, int>(ref End));
+            Reserve(Size);
 
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                WriteInt32LittleEndian(Span, Unsafe.As<Index, int>(ref Start));
+                WriteInt32LittleEndian(Span.Slice(4), Unsafe.As<Index, int>(ref End));
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                WriteInt32LittleEndian(Buffer, Unsafe.As<Index, int>(ref Start));
+                WriteInt32LittleEndian(Buffer.Slice(4), Unsafe.As<Index, int>(ref End));
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -259,21 +365,27 @@ namespace Zion
             Write7BitEncoded(Length);
             Reserve(Length);
 
-            var Span = AsSpan(Position, Length);
+            if (TryGetSpan(Position, Length, out var Span))
+            {
+                Value.TryWriteBytes(Span, out _);
+                return;
+            }
+
+            var Destination = AsSpan(Position, Length);
 
             if (Length <= BufferThreshold)
             {
                 Span<byte> Buffer = stackalloc byte[Length];
 
                 Value.TryWriteBytes(Buffer, out _);
-                Buffer.CopyTo(Span);
+                Buffer.CopyTo(Destination);
             }
             else
             {
                 var Buffer = ArrayPool<byte>.Shared.Rent(Length);
 
                 Value.TryWriteBytes(Buffer, out _);
-                Buffer.CopyTo(Span);
+                Buffer.CopyTo(Destination);
 
                 ArrayPool<byte>.Shared.Return(Buffer);
             }
@@ -287,9 +399,16 @@ namespace Zion
             const int Size = 3;
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -299,9 +418,16 @@ namespace Zion
             const int Size = 4;
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -309,24 +435,38 @@ namespace Zion
 
         public void Write(Vector2 Value)
         {
-            var Size = Unsafe.SizeOf<Geometry.Vector2>();
+            const int Size = 8;
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
 
         public void Write(Vector2Int Value)
         {
-            var Size = Unsafe.SizeOf<Vector2Int>();
+            const int Size = 8;
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -389,24 +529,38 @@ namespace Zion
 
         public void Write(Vector3 Value)
         {
-            var Size = Unsafe.SizeOf<Vector3>();
+            const int Size = 12;
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
 
         public void Write(Vector3Int Value)
         {
-            var Size = Unsafe.SizeOf<Vector3Int>();
+            const int Size = 12;
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -467,6 +621,29 @@ namespace Zion
         }
 
 
+        public void Write(Span<byte> Span)
+        {
+            Reserve(Span.Length);
+            Span.CopyTo(AsSpan(Position, Span.Length));
+        }
+
+        public void Write(ArenaSpan<byte> Span)
+        {
+            Reserve(Span.Length);
+            Span.CopyTo(AsSpan(Position, Span.Length));
+        }
+
+        public void Write(ArenaStream Stream)
+        {
+            Reserve(Stream.Length);
+
+            var Source = Stream.AsSpan();
+            var Destination = AsSpan(Position, Source.Length);
+
+            Source.CopyTo(Destination);
+        }
+
+
         public void Write7BitEncoded(int Value)
         {
             Write7BitEncoded((uint)((Value << 1) ^ (Value >> 31)));
@@ -479,34 +656,64 @@ namespace Zion
 
         public void Write7BitEncoded(uint Value)
         {
-            Reserve(5);
+            const int Size = 5;
+
+            Reserve(Size);
 
             var Index = 0;
-            var Span = AsSpan(0, 5);
 
-            while (Value >= 0x80)
+            if (TryGetSpan(Position, Size, out var Span))
             {
-                Span[Index++] = (byte)(Value | 0x80);
-                Value >>= 7;
+                while (Value >= 0x80)
+                {
+                    Span[Index++] = (byte)(Value | 0x80);
+                    Value >>= 7;
+                }
+                Span[Index++] = (byte)Value;
             }
-            Span[Index++] = (byte)Value;
+            else
+            {
+                var ArenaSpan = AsSpan(Position, Size);
+
+                while (Value >= 0x80)
+                {
+                    ArenaSpan[Index++] = (byte)(Value | 0x80);
+                    Value >>= 7;
+                }
+                ArenaSpan[Index++] = (byte)Value;
+            }
 
             Advance(Index);
         }
 
         public void Write7BitEncoded(ulong Value)
         {
-            Reserve(10);
+            const int Size = 10;
+
+            Reserve(Size);
 
             var Index = 0;
-            var Span = AsSpan(0, 10);
 
-            while (Value >= 0x80)
+            if (TryGetSpan(Position, Size, out var Span))
             {
-                Span[Index++] = (byte)(Value | 0x80);
-                Value >>= 7;
+                while (Value >= 0x80)
+                {
+                    Span[Index++] = (byte)(Value | 0x80);
+                    Value >>= 7;
+                }
+                Span[Index++] = (byte)Value;
             }
-            Span[Index++] = (byte)Value;
+            else
+            {
+                var ArenaSpan = AsSpan(Position, Size);
+
+                while (Value >= 0x80)
+                {
+                    ArenaSpan[Index++] = (byte)(Value | 0x80);
+                    Value >>= 7;
+                }
+                ArenaSpan[Index++] = (byte)Value;
+            }
 
             Advance(Index);
         }
@@ -516,6 +723,45 @@ namespace Zion
             Write7BitEncoded(Unsafe.As<Index, uint>(ref Value));
         }
 
+
+        public void WriteStruct<T>(T Value) where T : struct
+        {
+            var Size = Unsafe.SizeOf<T>();
+
+            Reserve(Size);
+
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+                return;
+            }
+            
+            var Destination = AsSpan(Position, Size);
+            
+            if (Size <= BufferThreshold)
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(Destination);
+            }
+            else
+            {
+                var Buffer = ArrayPool<byte>.Shared.Rent(Length);
+
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.AsSpan().Slice(0, Size).CopyTo(Destination);
+
+                ArrayPool<byte>.Shared.Return(Buffer);
+            }
+        }
+
+
+        public void SetPosition(int Position)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(Position);
+            this.Position = Position;
+        }
+        
 
         public byte[] ToArray()
         {
@@ -669,9 +915,16 @@ namespace Zion
             var Size = Vector2<T>.GetByteCount();
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }
@@ -681,9 +934,16 @@ namespace Zion
             var Size = Vector3<T>.GetByteCount();
             Reserve(Size);
 
-            Span<byte> Buffer = stackalloc byte[Size];
-            MemoryMarshal.Write(Buffer, Value);
-            Buffer.CopyTo(AsSpan(Position, Size));
+            if (TryGetSpan(Position, Size, out var Span))
+            {
+                MemoryMarshal.Write(Span, in Value);
+            }
+            else
+            {
+                Span<byte> Buffer = stackalloc byte[Size];
+                MemoryMarshal.Write(Buffer, in Value);
+                Buffer.CopyTo(AsSpan(Position, Size));
+            }
 
             Advance(Size);
         }

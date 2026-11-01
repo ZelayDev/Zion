@@ -95,7 +95,7 @@ namespace Zion.ADF
 
         public void Write(string Name, BigInteger Value)
         {
-            WritePrimitive<BigInteger>(Name, in Value, ADFPrimitives.BigInteger, PrimitivesWriteStrategy.Instance);
+            WritePrimitive(Name, in Value, ADFPrimitives.BigInteger, PrimitivesWriteStrategy.Instance);
         }
 
         public void Write(string Name, RGBColor Value)

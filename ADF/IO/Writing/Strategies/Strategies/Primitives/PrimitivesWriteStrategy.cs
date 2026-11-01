@@ -26,10 +26,8 @@ namespace Zion.ADF
           IWriteStrategy<RGBAColor>,
           IWriteStrategy<Vector2Int>,
           IWriteStrategy<Vector3Int>,
-          IWriteStrategy<Vectors.Vector2>,
-          IWriteStrategy<Vectors.Vector3>,
-          IWriteStrategy<System.Numerics.Vector2>,
-          IWriteStrategy<System.Numerics.Vector3>
+          IWriteStrategy<Geometry.Vector2>,
+          IWriteStrategy<Geometry.Vector3>
     {
         public static readonly PrimitivesWriteStrategy Instance = new();
 
@@ -173,7 +171,6 @@ namespace Zion.ADF
 
         public void WriteData(ADFWritingContext Context, StreamGroup Target, BigInteger Value)
         {
-            var BaseStream = Target.BaseStream;
             var Stream = Context.Arena.GetStream(1);
             var Link = Reference.CreateNewReference(Target.ChildsLength);
 
@@ -220,22 +217,12 @@ namespace Zion.ADF
             }
         }
 
-        public void WriteData(ADFWritingContext Context, StreamGroup Target, Vectors.Vector2 Value)
+        public void WriteData(ADFWritingContext Context, StreamGroup Target, Geometry.Vector2 Value)
         {
             Target.BaseStream.Write(Value);
         }
 
-        public void WriteData(ADFWritingContext Context, StreamGroup Target, Vectors.Vector3 Value)
-        {
-            Target.BaseStream.Write(Value);
-        }
-
-        public void WriteData(ADFWritingContext Context, StreamGroup Target, System.Numerics.Vector2 Value)
-        {
-            Target.BaseStream.Write(Value);
-        }
-
-        public void WriteData(ADFWritingContext Context, StreamGroup Target, System.Numerics.Vector3 Value)
+        public void WriteData(ADFWritingContext Context, StreamGroup Target, Geometry.Vector3 Value)
         {
             Target.BaseStream.Write(Value);
         }

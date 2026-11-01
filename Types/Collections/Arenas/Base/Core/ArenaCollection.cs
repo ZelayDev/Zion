@@ -126,6 +126,13 @@
         }
 
 
+        protected bool TryGetSpan(int Start, int Length, out Span<T> Span)
+        {
+            ArgumentOutOfRangeException.ThrowIfWithout(Start + Length, Limit);
+            return Bridge.TryGetSpan(Start, Length, out Span);
+        }
+        
+        
         protected void UseSpan(Action<ArenaSpan<T>> Action)
         {
             Action.Invoke(AsSpan());
