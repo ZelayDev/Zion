@@ -28,17 +28,10 @@
 
     <ItemGroup>
         <Folder Include="Geometry\Extensions\"/>
-        <Folder Include="STP\Dynamic\Tokens\Container\Base\"/>
         <Folder Include="Extensions\Collections\Linear\"/>
         <Folder Include="Extensions\Collections\Dictionaries\"/>
         <Folder Include="Extensions\Collections\Buffers\"/>
         <Folder Include="Serialization\BinarySerialization\Serializers\Object\"/>
-        <Folder Include="STP\Parser\Static\"/>
-        <Folder Include="STP\Parser\Dynamic\"/>
-        <Folder Include="STP\Semantic\Data\"/>
-        <Folder Include="STP\Source\Text\Document\"/>
-        <Folder Include="STP\Source\Text\Source\Base\"/>
-        <Folder Include="STP\Source\Text\Source\Source\"/>
     </ItemGroup>
 
 </Project>
