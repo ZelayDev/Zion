@@ -27,7 +27,6 @@
     </ItemGroup>
 
     <ItemGroup>
-        <Folder Include="Geometry\Extensions\"/>
         <Folder Include="Extensions\Collections\Linear\"/>
         <Folder Include="Extensions\Collections\Dictionaries\"/>
         <Folder Include="Extensions\Collections\Buffers\"/>

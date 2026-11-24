@@ -1,45 +1,44 @@
-﻿using System.Diagnostics.CodeAnalysis;
+using System.Diagnostics.CodeAnalysis;
 using System.Runtime.InteropServices;
 using System.Runtime.Serialization;
 using Zion.Serialization;
 
 namespace Zion.Geometry
 {
-    [Serializable, StructLayout(LayoutKind.Sequential)]
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
     public struct Vector2Int : IBinarySerializable<Vector2Int>, IEquatable<Vector2Int>, IEqualityComparer<Vector2Int>, IRandomizable<Vector2Int>
     {
         #region Constants
-        public static readonly Vector2Int Zero   = new Vector2Int(0, 0);
-        public static readonly Vector2Int Left   = new Vector2Int(-1, 0);
-        public static readonly Vector2Int Right  = new Vector2Int(1, 0);
-        public static readonly Vector2Int Down   = new Vector2Int(0, -1);
-        public static readonly Vector2Int Up     = new Vector2Int(0, 1);
-        public static readonly Vector2Int OneOne = new Vector2Int(1);
-
+        public static readonly Vector2Int Zero   = new(0, 0);
+        public static readonly Vector2Int Left   = new(-1, 0);
+        public static readonly Vector2Int Right  = new(1, 0);
+        public static readonly Vector2Int Down   = new(0, -1);
+        public static readonly Vector2Int Up     = new(0, 1);
+        public static readonly Vector2Int OneOne = new(1);
         #endregion
 
         #region Data
         public int X, Y;
-
         #endregion
 
         #region Properties
         public float Magnitude => MathF.Sqrt(LengthSquared);
 
-        public int LengthSquared => (X * X) + (Y * Y);
-
-        public Vector2Int Reversed => new Vector2Int(Y, X);
+        public int LengthSquared => X * X + Y * Y;
 
         public Vector2Int Normal
         {
             get
             {
-                if (this == Zero) { return Zero; }
-                float Magnitude = this.Magnitude;
+                if (this == Zero)
+                {
+                    return Zero;
+                }
+                var Magnitude = this.Magnitude;
                 return new Vector2Int((int)(X / Magnitude), (int)(Y / Magnitude));
             }
         }
-
         #endregion
 
         #region Constructors
@@ -60,7 +59,6 @@ namespace Zion.Geometry
             X = Info.GetInt32("X");
             Y = Info.GetInt32("Y");
         }
-
         #endregion
 
         #region Operators
@@ -69,26 +67,32 @@ namespace Zion.Geometry
         {
             return new Vector2Int(A.X + B.X, A.Y + B.Y);
         }
+
         public static Vector2Int operator +(Vector2Int A, Direction B)
         {
             return A + B.ToVector2Int();
         }
-        public static Vector2Int operator +(Vector2Int A, HorizontalDirection B) 
+
+        public static Vector2Int operator +(Vector2Int A, HorizontalDirection B)
         {
             return A with { X = A.X + (int)B };
         }
+
         public static Vector2Int operator +(Vector2Int A, VerticalDirection B)
         {
             return A with { Y = A.Y + (int)B };
         }
+
         public static Vector2Int operator +(Direction A, Vector2Int B)
         {
             return B + A;
         }
+
         public static Vector2Int operator +(HorizontalDirection A, Vector2Int B)
         {
             return B + A;
         }
+
         public static Vector2Int operator +(VerticalDirection A, Vector2Int B)
         {
             return B + A;
@@ -98,26 +102,32 @@ namespace Zion.Geometry
         {
             return new Vector2Int(A.X - B.X, A.Y - B.Y);
         }
+
         public static Vector2Int operator -(Vector2Int A, Direction B)
         {
             return A - B.ToVector2Int();
         }
+
         public static Vector2Int operator -(Vector2Int A, HorizontalDirection B)
         {
             return A with { X = A.X - (int)B };
         }
+
         public static Vector2Int operator -(Vector2Int A, VerticalDirection B)
         {
             return A with { Y = A.Y - (int)B };
         }
+
         public static Vector2Int operator -(Direction A, Vector2Int B)
         {
             return A.ToVector2Int() - B;
         }
+
         public static Vector2Int operator -(HorizontalDirection A, Vector2Int B)
         {
             return B with { X = (int)A - B.X };
         }
+
         public static Vector2Int operator -(VerticalDirection A, Vector2Int B)
         {
             return B with { Y = (int)A - B.Y };
@@ -127,6 +137,7 @@ namespace Zion.Geometry
         {
             return new Vector2Int(A.X * B, A.Y * B);
         }
+
         public static Vector2Int operator /(Vector2Int A, int B)
         {
             return new Vector2Int(A.X / B, A.Y / B);
@@ -136,6 +147,7 @@ namespace Zion.Geometry
         {
             return new Vector2Int(A.X & B, A.Y & B);
         }
+
         public static Vector2Int operator &(Vector2Int A, Axes B)
         {
             return new Vector2Int
@@ -144,6 +156,7 @@ namespace Zion.Geometry
                 B.HasFlag(Axes.Y) ? A.Y : 0
             );
         }
+
         public static Vector2Int operator &(Vector2Int A, Vector2Int B)
         {
             return new Vector2Int(A.X & B.X, A.Y & B.Y);
@@ -153,15 +166,17 @@ namespace Zion.Geometry
         {
             return new Vector2Int(A.X | B, A.Y | B);
         }
+
         public static Vector2Int operator |(Vector2Int A, Vector2Int B)
         {
             return new Vector2Int(A.X | B.X, A.Y | B.Y);
         }
 
-        public static Vector2Int operator >>(Vector2Int A, int B)
+        public static Vector2Int operator >> (Vector2Int A, int B)
         {
             return new Vector2Int(A.X >> B, A.Y >> B);
         }
+
         public static Vector2Int operator <<(Vector2Int A, int B)
         {
             return new Vector2Int(A.X << B, A.Y << B);
@@ -173,6 +188,7 @@ namespace Zion.Geometry
             Value.Y++;
             return Value;
         }
+
         public static Vector2Int operator --(Vector2Int Value)
         {
             Value.X--;
@@ -184,14 +200,14 @@ namespace Zion.Geometry
         {
             return new Vector2Int(-Value.X, -Value.Y);
         }
-
         #endregion
 
         #region ComparisonOperators
         public static bool operator ==(Vector2Int A, Vector2Int B)
         {
-             return A.X == B.X && A.Y == B.Y;
+            return A.X == B.X && A.Y == B.Y;
         }
+
         public static bool operator ==(Vector2Int A, Vector2 B)
         {
             return A.X == B.X && A.Y == B.Y;
@@ -199,8 +215,9 @@ namespace Zion.Geometry
 
         public static bool operator !=(Vector2Int A, Vector2Int B)
         {
-             return A.X != B.X || A.Y != B.Y;
+            return A.X != B.X || A.Y != B.Y;
         }
+
         public static bool operator !=(Vector2Int A, Vector2 B)
         {
             return A.X != B.X || A.Y != B.Y;
@@ -208,8 +225,9 @@ namespace Zion.Geometry
 
         public static bool operator <(Vector2Int A, Vector2Int B)
         {
-             return A.X < B.X && A.Y < B.Y;
+            return A.X < B.X && A.Y < B.Y;
         }
+
         public static bool operator <(Vector2Int A, Vector2 B)
         {
             return A.X < B.X && A.Y < B.Y;
@@ -217,8 +235,9 @@ namespace Zion.Geometry
 
         public static bool operator >(Vector2Int A, Vector2Int B)
         {
-             return A.X > B.X && A.Y > B.Y;
+            return A.X > B.X && A.Y > B.Y;
         }
+
         public static bool operator >(Vector2Int A, Vector2 B)
         {
             return A.X > B.X && A.Y > B.Y;
@@ -226,8 +245,9 @@ namespace Zion.Geometry
 
         public static bool operator <=(Vector2Int A, Vector2Int B)
         {
-             return A.X <= B.X && A.Y <= B.Y;
+            return A.X <= B.X && A.Y <= B.Y;
         }
+
         public static bool operator <=(Vector2Int A, Vector2 B)
         {
             return A.X <= B.X && A.Y <= B.Y;
@@ -235,13 +255,13 @@ namespace Zion.Geometry
 
         public static bool operator >=(Vector2Int A, Vector2Int B)
         {
-             return A.X >= B.X && A.Y >= B.Y;
+            return A.X >= B.X && A.Y >= B.Y;
         }
+
         public static bool operator >=(Vector2Int A, Vector2 B)
         {
             return A.X >= B.X && A.Y >= B.Y;
         }
-
         #endregion
 
         #region ConversionOperators
@@ -249,27 +269,24 @@ namespace Zion.Geometry
         {
             return new Vector2Int((int)Value.X, (int)Value.Y);
         }
-
         #endregion
-
         #endregion
 
         #region OverrideMethods
-        public override readonly string ToString()
+        public readonly override string ToString()
         {
             return $"[{X}; {Y}]";
         }
 
-        public override readonly bool Equals([NotNullWhen(true)] object? Object)
+        public readonly override bool Equals([NotNullWhen(true)] object? Object)
         {
             return Object is Vector2Int Value && this == Value;
         }
 
-        public override readonly int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return HashCode.Combine(X, Y);
         }
-
         #endregion
 
         #region IEquatable & IEqualityComparer
@@ -287,7 +304,6 @@ namespace Zion.Geometry
         {
             return Object.GetHashCode();
         }
-
         #endregion
 
         #region ISerializable & IBinarySerializable
@@ -311,7 +327,6 @@ namespace Zion.Geometry
                 Reader.ReadInt32()
             );
         }
-
         #endregion
 
         #region IRandomizable
@@ -319,7 +334,6 @@ namespace Zion.Geometry
         {
             return new Vector2Int(Random.Next(Min.X, Max.X), Random.Next(Min.Y, Max.Y));
         }
-
         #endregion
 
         #region Methods
@@ -328,15 +342,6 @@ namespace Zion.Geometry
         {
             this = Normal;
         }
-        
-        #endregion
-
-        #region Conversion
-        public void Reverse()
-        {
-            this = Reversed;
-        }
-
         #endregion
 
         #region Math
@@ -344,9 +349,9 @@ namespace Zion.Geometry
         {
             ArgumentNullException.ThrowIfNull(Values);
 
-            Vector2Int Result = Zero;
+            var Result = Zero;
 
-            foreach (Vector2Int Value in Values)
+            foreach (var Value in Values)
             {
                 Result += Value;
             }
@@ -362,7 +367,7 @@ namespace Zion.Geometry
 
         public static Vector2Int Sign(in Vector2Int Value)
         {
-            return new Vector2Int(int.Sign(Value.X), int.Sign(Value.Y));
+            return new Vector2Int(Int32.Sign(Value.X), Int32.Sign(Value.Y));
         }
 
 
@@ -405,16 +410,14 @@ namespace Zion.Geometry
 
         public static bool IsPositive(in Vector2Int Value)
         {
-            return int.IsPositive(Value.X) && int.IsPositive(Value.Y);
+            return Int32.IsPositive(Value.X) && Int32.IsPositive(Value.Y);
         }
 
         public static bool IsNegative(in Vector2Int Value)
         {
-            return int.IsNegative(Value.X) || int.IsNegative(Value.Y);
+            return Int32.IsNegative(Value.X) || Int32.IsNegative(Value.Y);
         }
-
         #endregion
-
         #endregion
     }
 }

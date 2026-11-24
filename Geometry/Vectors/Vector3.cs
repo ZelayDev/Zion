@@ -5,40 +5,41 @@ using Zion.Serialization;
 
 namespace Zion.Geometry
 {
-    [Serializable, StructLayout(LayoutKind.Sequential)]
-    public struct Vector3 : IBinarySerializable<Vector3>, IEquatable<Vector3>, IEqualityComparer<Vector3>,  IRandomizable<Vector3>
+    [Serializable]
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Vector3 : IBinarySerializable<Vector3>, IEquatable<Vector3>, IEqualityComparer<Vector3>, IRandomizable<Vector3>
     {
         #region Constants
-        public static readonly Vector3 Zero    = new Vector3(0f);
-        public static readonly Vector3 Left    = new Vector3(-1f, 0f, 0f);
-        public static readonly Vector3 Right   = new Vector3(1f, 0f, 0f);
-        public static readonly Vector3 Down    = new Vector3(0f, -1f, 0f);
-        public static readonly Vector3 Up      = new Vector3(0f, 1f, 0f);
-        public static readonly Vector3 Back    = new Vector3(0f, 0f, -1f);
-        public static readonly Vector3 Forward = new Vector3(0f, 0f, 1f);
-
+        public static readonly Vector3 Zero    = new(0f);
+        public static readonly Vector3 Left    = new(-1f, 0f, 0f);
+        public static readonly Vector3 Right   = new(1f, 0f, 0f);
+        public static readonly Vector3 Down    = new(0f, -1f, 0f);
+        public static readonly Vector3 Up      = new(0f, 1f, 0f);
+        public static readonly Vector3 Back    = new(0f, 0f, -1f);
+        public static readonly Vector3 Forward = new(0f, 0f, 1f);
         #endregion
 
         #region Data
         public float X, Y, Z;
-
         #endregion
 
         #region Properties
         public float Magnitude => MathF.Sqrt(LengthSquared);
 
-        public float LengthSquared => (X * X) + (Y * Y) + (Z * Z);
+        public float LengthSquared => X * X + Y * Y + Z * Z;
 
         public Vector3 Normal
         {
             get
             {
-                if (this == Zero) { return Zero; }
-                float Magnitude = this.Magnitude;
+                if (this == Zero)
+                {
+                    return Zero;
+                }
+                var Magnitude = this.Magnitude;
                 return new Vector3(X / Magnitude, Y / Magnitude, Z / Magnitude);
             }
         }
-
         #endregion
 
         #region Constructors
@@ -48,7 +49,7 @@ namespace Zion.Geometry
             Y = Axes;
             Z = Axes;
         }
-        
+
         public Vector3(float X, float Y, float Z)
         {
             this.X = X;
@@ -62,8 +63,6 @@ namespace Zion.Geometry
             Y = Info.GetSingle("Y");
             Z = Info.GetSingle("Z");
         }
-
-
         #endregion
 
         #region Operators
@@ -72,42 +71,52 @@ namespace Zion.Geometry
         {
             return new Vector3(A.X + B.X, A.Y + B.Y, A.Z + B.Z);
         }
+
         public static Vector3 operator +(Vector3 A, Direction B)
         {
             return A + B.ToVector3();
         }
+
         public static Vector3 operator +(Vector3 A, Direction3 B)
         {
             return A + B.ToVector3();
         }
+
         public static Vector3 operator +(Vector3 A, HorizontalDirection B)
         {
             return A with { X = A.X + (int)B };
         }
+
         public static Vector3 operator +(Vector3 A, VerticalDirection B)
         {
             return A with { Y = A.Y + (int)B };
         }
+
         public static Vector3 operator +(Vector3 A, DepthDirection B)
         {
             return A with { Z = A.Z + (int)B };
         }
+
         public static Vector3 operator +(Direction A, Vector3 B)
         {
             return B + A;
         }
+
         public static Vector3 operator +(Direction3 A, Vector3 B)
         {
             return B + A;
         }
+
         public static Vector3 operator +(HorizontalDirection A, Vector3 B)
         {
             return B + A;
         }
+
         public static Vector3 operator +(VerticalDirection A, Vector3 B)
         {
             return B + A;
         }
+
         public static Vector3 operator +(DepthDirection A, Vector3 B)
         {
             return B + A;
@@ -117,42 +126,52 @@ namespace Zion.Geometry
         {
             return new Vector3(A.X - B.X, A.Y - B.Y, A.Z - B.Z);
         }
+
         public static Vector3 operator -(Vector3 A, Direction B)
         {
             return A - B.ToVector3();
         }
+
         public static Vector3 operator -(Vector3 A, Direction3 B)
         {
             return A - B.ToVector3();
         }
+
         public static Vector3 operator -(Vector3 A, HorizontalDirection B)
         {
             return A with { X = A.X - (int)B };
         }
+
         public static Vector3 operator -(Vector3 A, VerticalDirection B)
         {
             return A with { Y = A.Y - (int)B };
         }
+
         public static Vector3 operator -(Vector3 A, DepthDirection B)
         {
             return A with { Z = A.Z - (int)B };
         }
+
         public static Vector3 operator -(Direction A, Vector3 B)
         {
             return A.ToVector3() - B;
         }
+
         public static Vector3 operator -(Direction3 A, Vector3 B)
         {
             return A.ToVector3() - B;
         }
+
         public static Vector3 operator -(HorizontalDirection A, Vector3 B)
         {
             return B with { X = (int)A - B.X };
         }
+
         public static Vector3 operator -(VerticalDirection A, Vector3 B)
         {
             return B with { Y = (int)A - B.Y };
         }
+
         public static Vector3 operator -(DepthDirection A, Vector3 B)
         {
             return B with { Z = (int)A - B.Z };
@@ -162,6 +181,7 @@ namespace Zion.Geometry
         {
             return new Vector3(A.X * B, A.Y * B, A.Z * B);
         }
+
         public static Vector3 operator /(Vector3 A, float B)
         {
             return new Vector3(A.X / B, A.Y / B, A.Z / B);
@@ -184,6 +204,7 @@ namespace Zion.Geometry
             Value.Z++;
             return Value;
         }
+
         public static Vector3 operator --(Vector3 Value)
         {
             Value.X--;
@@ -196,7 +217,6 @@ namespace Zion.Geometry
         {
             return new Vector3(-Value.X, -Value.Y, -Value.Z);
         }
-
         #endregion
 
         #region ComprasionOperators
@@ -204,15 +224,17 @@ namespace Zion.Geometry
         {
             return A.X == B.X && A.Y == B.Y && A.Z == B.Z;
         }
+
         public static bool operator ==(Vector3 A, Vector3Int B)
         {
             return A.X == B.X && A.Y == B.Y && A.Z == B.Z;
         }
-        
+
         public static bool operator !=(Vector3 A, Vector3 B)
         {
             return A.X != B.X || A.Y != B.Y || A.Z != B.Z;
         }
+
         public static bool operator !=(Vector3 A, Vector3Int B)
         {
             return A.X != B.X || A.Y != B.Y || A.Z != B.Z;
@@ -222,6 +244,7 @@ namespace Zion.Geometry
         {
             return A.X < B.X && A.Y < B.Y && A.Z < B.Z;
         }
+
         public static bool operator <(Vector3 A, Vector3Int B)
         {
             return A.X < B.X && A.Y < B.Y && A.Z < B.Z;
@@ -231,6 +254,7 @@ namespace Zion.Geometry
         {
             return A.X > B.X && A.Y > B.Y && A.Z > B.Z;
         }
+
         public static bool operator >(Vector3 A, Vector3Int B)
         {
             return A.X > B.X && A.Y > B.Y && A.Z > B.Z;
@@ -240,6 +264,7 @@ namespace Zion.Geometry
         {
             return A.X <= B.X && A.Y <= B.Y && A.Z <= B.Z;
         }
+
         public static bool operator <=(Vector3 A, Vector3Int B)
         {
             return A.X <= B.X && A.Y <= B.Y && A.Z <= B.Z;
@@ -249,11 +274,11 @@ namespace Zion.Geometry
         {
             return A.X >= B.X && A.Y >= B.Y && A.Z >= B.Z;
         }
+
         public static bool operator >=(Vector3 A, Vector3Int B)
         {
             return A.X >= B.X && A.Y >= B.Y && A.Z >= B.Z;
         }
-
         #endregion
 
         #region ConversionOperators
@@ -261,27 +286,24 @@ namespace Zion.Geometry
         {
             return new Vector3(Value.X, Value.Y, Value.Z);
         }
-
         #endregion
-
         #endregion
 
         #region OverrideMethods
-        public override readonly string ToString()
+        public readonly override string ToString()
         {
             return $"[{X}; {Y}; {Z}]";
         }
 
-        public override readonly bool Equals([NotNullWhen(true)] object? Object)
+        public readonly override bool Equals([NotNullWhen(true)] object? Object)
         {
             return Object is Vector3 Value && this == Value;
         }
 
-        public override readonly int GetHashCode()
+        public readonly override int GetHashCode()
         {
             return HashCode.Combine(X, Y, Z);
         }
-
         #endregion
 
         #region IEquatable & IEqualityComparer
@@ -299,7 +321,6 @@ namespace Zion.Geometry
         {
             return Object.GetHashCode();
         }
-
         #endregion
 
         #region ISerializable & IBinarySerializable
@@ -326,7 +347,6 @@ namespace Zion.Geometry
                 Reader.ReadSingle()
             );
         }
-
         #endregion
 
         #region IRandomizable
@@ -339,7 +359,6 @@ namespace Zion.Geometry
                 Random.NextFloat(Min.Z, Max.Z)
             );
         }
-
         #endregion
 
         #region Methods
@@ -348,7 +367,6 @@ namespace Zion.Geometry
         {
             this = Normal;
         }
-
         #endregion
 
         #region Math
@@ -356,9 +374,9 @@ namespace Zion.Geometry
         {
             ArgumentNullException.ThrowIfNull(Values);
 
-            Vector3 Result = Zero;
+            var Result = Zero;
 
-            foreach (Vector3 Value in Values)
+            foreach (var Value in Values)
             {
                 Result += Value;
             }
@@ -379,7 +397,7 @@ namespace Zion.Geometry
 
         public static Vector3 Sign(in Vector3 Value)
         {
-            return new Vector3(float.Sign(Value.X), float.Sign(Value.Y), float.Sign(Value.Z));
+            return new Vector3(Single.Sign(Value.X), Single.Sign(Value.Y), Single.Sign(Value.Z));
         }
 
 
@@ -403,16 +421,16 @@ namespace Zion.Geometry
             );
         }
 
-        
+
         public static Vector3 Lerp(in Vector3 A, in Vector3 B, float Alpha)
         {
-            return A + ((B - A) * Alpha);
+            return A + (B - A) * Alpha;
         }
 
         public static Vector3 MoveTowards(Vector3 Current, Vector3 Target, float MaxDelta)
         {
-            Vector3 Difference = Target - Current;
-            float DistanceSquared = Difference.LengthSquared;
+            var Difference      = Target - Current;
+            var DistanceSquared = Difference.LengthSquared;
 
             return DistanceSquared == 0f || DistanceSquared <= MaxDelta * MaxDelta
                 ? Target
@@ -459,16 +477,14 @@ namespace Zion.Geometry
 
         public static bool IsPositive(in Vector3 Value)
         {
-            return float.IsPositive(Value.X) && float.IsPositive(Value.Y) && float.IsPositive(Value.Z);
+            return Single.IsPositive(Value.X) && Single.IsPositive(Value.Y) && Single.IsPositive(Value.Z);
         }
 
         public static bool IsNegative(in Vector3 Value)
         {
-            return float.IsNegative(Value.X) || float.IsNegative(Value.Y) || float.IsNegative(Value.Z);
+            return Single.IsNegative(Value.X) || Single.IsNegative(Value.Y) || Single.IsNegative(Value.Z);
         }
-
         #endregion
-
         #endregion
     }
 }
