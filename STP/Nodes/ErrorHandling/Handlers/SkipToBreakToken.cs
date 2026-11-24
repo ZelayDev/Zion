@@ -15,11 +15,11 @@
             {
                 if (BreakTokens.Contains(Tokens[i].GetType()))
                 {
-                    return new Node() { TokensCount = i };
+                    return new Node() { TokenCount = i };
                 }
             }
 
-            return new Node() { TokensCount = Tokens.Count - 1 };
+            return new Node() { TokenCount = Tokens.Count - 1 };
         }
     }
 }

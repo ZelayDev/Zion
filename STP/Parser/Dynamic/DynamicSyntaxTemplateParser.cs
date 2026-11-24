@@ -47,13 +47,18 @@
         }
 
 
-        public void Parse()
+        public void Initialize()
         {
         }
 
 
         public void Change(TextChange<TPointer> Change)
         {
+        }
+
+        public ParsingResult<Node> GetResult()
+        {
+            throw new NotImplementedException();
         }
     }
 }
