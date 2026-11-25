@@ -2,7 +2,7 @@
 
 namespace Zion.Geometry
 {
-    public struct Vector3<T>
+    public struct Vector3<T> : IEquatable<Vector3<T>>
     {
         #region Data
         public T X, Y, Z;
@@ -25,14 +25,25 @@ namespace Zion.Geometry
         #endregion
 
         #region OverrideMethods
-        public override string ToString()
+        public readonly override string ToString()
         {
             return $"[{X}; {Y}; {Z}]";
         }
 
-        public override int GetHashCode()
+        public readonly override bool Equals(object? Object)
         {
-            return HashCode.Combine(X, Y, Z);
+            return Object is Vector3<T> Other && Equals(Other);
+        }
+
+        public readonly override int GetHashCode()
+        {
+            return HashCode.Combine(X, Y);
+        }
+
+        public readonly bool Equals(Vector3<T> Other)
+        {
+            var Comparer = EqualityComparer<T>.Default;
+            return Comparer.Equals(X, Other.X) && Comparer.Equals(Y, Other.Y) && Comparer.Equals(Z, Other.Z);
         }
         #endregion
 
