@@ -134,7 +134,9 @@ namespace Zion.Geometry
                 return new Vector2<T>(A.X >>> B, A.Y >>> B);
             }
         }
-
+        #endregion
+        
+        #region Functions
         extension<T>(Vector2<T> Value) where T : INumberBase<T>
         {
             public static Vector2<T> Zero   => new(T.Zero);
@@ -306,7 +308,15 @@ namespace Zion.Geometry
         {
             public T Magnitude => T.Sqrt(Value.LengthSquared);
 
-            public T LengthSquared => Value.X * Value.X + Value.Y * Value.Y;
+            public T LengthSquared
+            {
+                get
+                {
+                    var X = Value.X;
+                    var Y = Value.Y;
+                    return X * X + Y * Y;
+                }
+            }
 
             public Vector2<T> Normal
             {
@@ -321,6 +331,12 @@ namespace Zion.Geometry
                     T Magnitude = Value.Magnitude;
                     return new Vector2<T>(Value.X / Magnitude, Value.Y / Magnitude);
                 }
+            }
+
+
+            public static T Distance(Vector2<T> A, Vector2<T> B)
+            {
+                return (B - A).Magnitude;
             }
         }
         #endregion

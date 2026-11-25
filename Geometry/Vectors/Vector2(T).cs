@@ -1,5 +1,4 @@
-﻿using System.Diagnostics.CodeAnalysis;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 
 namespace Zion.Geometry
 {
@@ -27,11 +26,6 @@ namespace Zion.Geometry
         public readonly override string ToString()
         {
             return $"[{X}; {Y}]";
-        }
-
-        public readonly override bool Equals([NotNullWhen(true)] object? Object)
-        {
-            return Object is Vector2<T> Value && X!.Equals(Value.X) && Y!.Equals(Value.Y);
         }
 
         public readonly override int GetHashCode()
