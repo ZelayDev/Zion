@@ -8,18 +8,6 @@
     </PropertyGroup>
 
     <ItemGroup>
-        <Compile Remove="MathExpressions\**"/>
-        <Compile Remove="Serialization\BinarySerialization\ADF\**"/>
-        <Compile Remove="Serialization\BinarySerialization\NSD\**"/>
-        <EmbeddedResource Remove="MathExpressions\**"/>
-        <EmbeddedResource Remove="Serialization\BinarySerialization\ADF\**"/>
-        <EmbeddedResource Remove="Serialization\BinarySerialization\NSD\**"/>
-        <None Remove="MathExpressions\**"/>
-        <None Remove="Serialization\BinarySerialization\ADF\**"/>
-        <None Remove="Serialization\BinarySerialization\NSD\**"/>
-    </ItemGroup>
-
-    <ItemGroup>
         <None Remove=".gitattributes"/>
         <None Remove=".gitignore"/>
         <None Remove="LICENSE"/>
